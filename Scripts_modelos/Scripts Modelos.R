@@ -29,46 +29,7 @@ pib_ipc_AUS<- pib_ipc %>% filter(Country == "Australia")
 #Juntar df
 df_final <- exogenos_AUS %>%
   left_join(pib_ipc_AUS, by = c("Country", "Code", "ContinentCode", "Year", "Month"))
-
-
-
-
-#########################           IMPUTAR VALORES DE NA                #################################
-
-#Mirar cantidad de NA-s
-miss_var_summary(df_final)
-#HAY MISSINGS EN VARIABLES --> SE DEBE IMPUTAR (Unemployment rate percent,Money supply billion currency units,Stock market index )
-
-#Identificar que instancias tienen NA, para buscarlas en internet.
-instancias_NA <- df_final %>%
-  filter(
-    is.na(`Unemployment rate percent`) |
-      is.na(`Money supply billion currency units`) |
-      is.na(`Stock market index`))
-instancias_NA
-
-#Voy a imputar los valores de 2022 apartir del mes 8, el 8 inlcuido ya que no tengo mas datos de ahi para adelante.
-
-#2022-7--> Unemployment Rate
-df_final$`Unemployment rate percent`[df_final$Country == "Australia" & 
-                                       df_final$Code == "AUS" & 
-                                       df_final$Year == 2022 &
-                                       df_final$Month == 7] <- 3.40
-
-#2022-8--> Money supply billion currency units 
-df_final$`Money supply billion currency units`[df_final$Country == "Australia" & 
-                                       df_final$Code == "AUS" & 
-                                       df_final$Year == 2022 &
-                                       df_final$Month == 8] <- 2780.6
-#2022-8--> Unemployment rate percent
-df_final$`Unemployment rate percent`[df_final$Country == "Australia" & 
-                                                 df_final$Code == "AUS" & 
-                                                 df_final$Year == 2022 &
-                                                 df_final$Month == 8] <- 3.5
-
-#Links usados--> https://tradingeconomics.com/australia/unemployment-rate
-#                https://tradingeconomics.com/australia/money-supply-m3 
-
+dim(df_final)
 
 
 ###################################       DATOS TRIMESTRALES       ################################
@@ -110,6 +71,186 @@ monthly_to_quarterly <- function(df) {
   return(df_quarterly)
 }
 
-# Ejecutar la función
 df_trimestral <- monthly_to_quarterly(df_final)
+
+
+
+
+#############################################################################################################################################3
+class(serie)
+frequency(df_trimestral)
+start(df_trimestral)
+end(df_trimestral)
+autoplot(df_trimestral)
+tsdisplay(df_trimestral)
+tsdisplay(diff(df_trimestral))
+
+serie<- ts(df_trimestral)
+
+
+
+
+#######################   TESTSES PARA CONVERTIR CADA VARIABLE A ESTACIONARIA  #######################3
+
+#mirar la varianza y en casode que tenga quitarla
+
+####################          MONEY SUPLLY BILLION CURRENCY UNITS               ####################
+####################################################################################################
+####--------           PRIMERA RONDA (Serie Original) SIN HACER DIFF           -----------------------------
+# Test ADF
+adf_ms <- adf.test(df$Money.supply.billion.currency.units)
+if (adf_ms$p.value < 0.05) {
+  print("ADF: estacionaria")
+  } else {
+  print("ADF: NO estacionaria")}
+
+#Test KPSS
+kpss_ms <- kpss.test(df$Money.supply.billion.currency.units, null="Level")
+if (kpss_ms$p.value < 0.05) {
+  print("KPSS: NO estacionaria")
+  } else {
+  print("KPSS: estacionaria")}
+
+####---------------------          PRIMER DIFF                        ---------------------------------------------------
+ms_diff1 <- diff(df$Money.supply.billion.currency.units, differences = 1)
+adf_ms1 <- adf.test(ms_diff1)
+if (adf_ms1$p.value < 0.05) {
+  print("ADF (diff1): estacionaria")
+  } else {
+  print("ADF (diff1): NO estacionaria")}
+
+kpss_ms1 <- kpss.test(ms_diff1, null="Level")
+if (kpss_ms1$p.value < 0.05) {
+  print("KPSS (diff1): NO estacionaria")
+  } else {
+  print("KPSS (diff1): estacionaria")}
+
+
+####################          UNEMPLOYMENT RATE (%)                ######################################
+####################################################################################################
+####--------           PRIMERA RONDA (Serie Original) SIN HACER DIFF           -----------------------------
+adf_ur <- adf.test(df$Unemployment.rate.percent)
+if (adf_ur$p.value < 0.05) {
+  print("ADF: estacionaria")
+  } else {
+  print("ADF: NO estacionaria")}
+
+kpss_ur <- kpss.test(df$Unemployment.rate.percent, null="Level")
+if (kpss_ur$p.value < 0.05) {
+  print("KPSS: NO estacionaria")
+  } else {
+  print("KPSS: estacionaria")}
+
+####---------------------          PRIMER DIFF                        ---------------------------------------------------
+
+ur_diff1 <- diff(df$Unemployment.rate.percent, differences = 1)
+adf_ur1 <- adf.test(ur_diff1)
+if (adf_ur1$p.value < 0.05) {
+  print("ADF (diff1): estacionaria")
+  } else {
+  print("ADF (diff1): NO estacionaria")}
+
+kpss_ur1 <- kpss.test(ur_diff1, null="Level")
+if (kpss_ur1$p.value < 0.05) {
+  print("KPSS (diff1): NO estacionaria")
+  } else {
+  print("KPSS (diff1): estacionaria")}
+
+
+####################          STOCK MARKET INDEX                ######################################
+####################################################################################################
+
+
+####--------           PRIMERA RONDA (Serie Original) SIN HACER DIFF           -----------------------------
+adf_sm <- adf.test(df$Stock.market.index)
+if (adf_sm$p.value < 0.05) {
+  print("ADF: estacionaria")
+} else {
+    print("ADF: NO estacionaria")}
+
+kpss_sm <- kpss.test(df$Stock.market.index, null="Level")
+if (kpss_sm$p.value < 0.05) {
+  print("KPSS: NO estacionaria")
+} else {
+    print("KPSS: estacionaria")}
+
+####---------------------          PRIMER DIFF                        ---------------------------------------------------
+
+sm_diff1 <- diff(df$Stock.market.index, differences = 1)
+adf_sm1 <- adf.test(sm_diff1)
+if (adf_sm1$p.value < 0.05) {
+  print("ADF (diff1): estacionaria")
+} else {
+    print("ADF (diff1): NO estacionaria")}
+
+kpss_sm1 <- kpss.test(sm_diff1, null="Level")
+if (kpss_sm1$p.value < 0.05) {
+  print("KPSS (diff1): NO estacionaria")
+} else {
+    print("KPSS (diff1): estacionaria")}
+
+
+####################          GDP (Billion currency units)                ######################################
+####################################################################################################
+
+
+####--------           PRIMERA RONDA (Serie Original) SIN HACER DIFF           -----------------------------
+adf_gdp <- adf.test(df$GDP.billion.currency.units)
+if (adf_gdp$p.value < 0.05) {
+  print("ADF: estacionaria")
+} else {
+    print("ADF: NO estacionaria")}
+
+kpss_gdp <- kpss.test(df$GDP.billion.currency.units, null="Level")
+if (kpss_gdp$p.value < 0.05) {
+  print("KPSS: NO estacionaria")
+} else {
+    print("KPSS: estacionaria")}
+
+####---------------------          PRIMER DIFF                        ---------------------------------------------------
+
+gdp_diff1 <- diff(df$GDP.billion.currency.units, differences = 1)
+adf_gdp1 <- adf.test(gdp_diff1)
+if (adf_gdp1$p.value < 0.05) {
+  print("ADF (diff1): estacionaria")
+} else {
+    print("ADF (diff1): NO estacionaria")}
+
+kpss_gdp1 <- kpss.test(gdp_diff1, null="Level")
+if (kpss_gdp1$p.value < 0.05) {
+  print("KPSS (diff1): NO estacionaria")
+} else {
+    print("KPSS (diff1): estacionaria")}
+
+
+
+#####################          CONSUMER PRICE                #####################################
+##################################################################################################
+
+####--------           PRIMERA RONDA (Serie Original) SIN HACER DIFF           -----------------------------
+adf_cpi <- adf.test(df$Consumer.Price.Index..CPI.)
+if (adf_cpi$p.value < 0.05) {
+  print("ADF: estacionaria")
+} else {
+    print("ADF: NO estacionaria")}
+
+kpss_cpi <- kpss.test(df$Consumer.Price.Index..CPI., null="Level")
+if (kpss_cpi$p.value < 0.05) {
+  print("KPSS: NO estacionaria")
+} else {
+    print("KPSS: estacionaria")}
+
+# Primera diferencia
+cpi_diff1 <- diff(df$Consumer.Price.Index..CPI., differences = 1)
+adf_cpi1 <- adf.test(cpi_diff1)
+if (adf_cpi1$p.value < 0.05) {
+  print("ADF (diff1): estacionaria")
+} else {
+    print("ADF (diff1): NO estacionaria")}
+
+kpss_cpi1 <- kpss.test(cpi_diff1, null="Level")
+if (kpss_cpi1$p.value < 0.05) {
+  print("KPSS (diff1): NO estacionaria")
+} else {
+    print("KPSS (diff1): estacionaria")}
 
