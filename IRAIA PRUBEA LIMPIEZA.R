@@ -133,9 +133,14 @@ gdp_ts_trimestral <- ts(gdp_vals, start=c(1996,3), frequency=4)
 # ---- CONVERTIR VARIABLES MENSUALES A TRIMESTRALES ----
 # Promediando los valores de cada trimestre
 #!!! HE HECHO EN TODOS LA MEDIA PERO NI IDEA
+
+#money supply y stock market quedarse con el ulitmo valor es decir (enero,febrero, marzo quedarnos con MARZO)
+# Unemployment: media trimestral
 unemployment_ts_trimestral <- aggregate(unemployment_ts_mensual, nfrequency=4, FUN=mean)
-money_supply_ts_trimestral <- aggregate(money_supply_ts_mensual, nfrequency=4, FUN=mean)
-stock_market_ts_trimestral <- aggregate(stock_market_ts_mensual, nfrequency=4, FUN=mean)
+# Money supply: último valor del trimestre
+money_supply_ts_trimestral <- aggregate(money_supply_ts_mensual, nfrequency = 4, FUN = function(x) tail(x, 1))
+# Stock market: último valor del trimestre
+stock_market_ts_trimestral <- aggregate(stock_market_ts_mensual, nfrequency = 4, FUN = function(x) tail(x, 1))
 
 
 # =========================
@@ -267,13 +272,15 @@ plot_outliers(gdp_ts_trimestral, gdp_ts_trimestral_sin_outliers, "GDP (Trimestra
 #11. TIENEN VARIANZA?
 #======================
 
+#!!!!!!!!!!!!! hacer con tsplot los grafcio de la varianza
+
 #Mirar si tienen picos conforme avanza el tiempo, para ver si tienen varianza creciente.
 #--> GDP
 plot(gdp_ts_trimestral_sin_outliers, type="l", col="steelblue", lwd=2,
      main="GDP - Serie limpia",
      ylab="Valor", xlab="Tiempo")
 abline(h=mean(gdp_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
-#Varianza Creciente
+#Varianza Creciente--> rosa tienes estacionalidad, y poca varianza creciente
 
 #--> CPI
 plot(cpi_ts_trimestral_sin_outliers, type="l", col="steelblue", lwd=2,
@@ -321,6 +328,119 @@ gdp_ts_trimestral_sin_outliers <- log(gdp_ts_trimestral_sin_outliers)
 # 10. SON SERIES ESTACIONARIAS?
 #=======================
 
+#los lags de las diferencias van en funcion de si hay estacionalidad, se ven en los graficos de autocorrelacion. o con el decompose 
+#!!!! HAY QUE USAR TS.DISPLAY, AUTOCORRELACION , Y AUTOCORRELACION PARCIAL
+#HAY QUE IR MIRANDO ESTO DE POCO EN POCO Y A LA VEZ APLICAR LOS TESES PARA CONFIRMAR.
+
+
+########### ---------- Money Supply (TRIMESTRAL)  #####################
+#######################################################################
+
+#hacer los teses pirmero para ver el numero de diferencias
+
+#----------        Primera diferencia
+money_supply_diff1 <- diff(money_supply_ts_trimestral_sin_outliers, differences = 1)
+#Comprobar si ya es estacionaria
+
+#TEST ADF
+adf_test_money_supply_1 <- adf.test(money_supply_diff1)
+if(adf_test_money_supply_1$p.value < 0.05){
+  print("Money Supply - ADF (diff1): estacionaria")
+} else{
+  print("Money Supply - ADF (diff1): NO estacionaria")
+}
+#NO ESTACIONARIA diff=1
+
+#TEST KPSS
+kpss_test_money_supply_1 <- kpss.test(money_supply_diff1, null="Level")
+if(kpss_test_money_supply_1$p.value < 0.05){
+  print("Money Supply - KPSS (diff1): NO estacionaria")
+} else{
+  print("Money Supply - KPSS (diff1): estacionaria")
+}
+#NO ESTACIONARIA diff=1
+
+#TEST LJUNG-BOX
+LBtest_money_supply_1 <- Box.test(money_supply_diff1, lag = 20, type="Ljung")
+if (LBtest_money_supply_1$p.value < 0.05) {
+  print("Money Supply - Ljung-Box (diff1): Existe correlación")
+} else {
+  print("Money Supply - Ljung-Box (diff1): Ausencia de correlación")
+}
+
+#EXISTE CORRELACION
+
+#----------        Segunda diferencia
+money_supply_diff2 <- diff(money_supply_ts_trimestral_sin_outliers, differences = 2)
+#Comprobar si ya es estacionaria
+
+#TEST ADF
+adf_test_money_supply_2 <- adf.test(money_supply_diff2)
+if(adf_test_money_supply_2$p.value < 0.05){
+  print("Money Supply - ADF (diff1): estacionaria")
+} else{
+  print("Money Supply - ADF (diff1): NO estacionaria")
+}
+# ESTACIONARIA diff=1
+
+#TEST KPSS
+kpss_test_money_supply_2 <- kpss.test(money_supply_diff2, null="Level")
+if(kpss_test_money_supply_2$p.value < 0.05){
+  print("Money Supply - KPSS (diff1): NO estacionaria")
+} else{
+  print("Money Supply - KPSS (diff1): estacionaria")
+}
+#ESTACIONARIA diff=1
+
+#TEST LJUNG-BOX
+LBtest_money_supply_1 <- Box.test(money_supply_diff1, lag = 20, type="Ljung")
+if (LBtest_money_supply_1$p.value < 0.05) {
+  print("Money Supply - Ljung-Box (diff1): Existe correlación")
+} else {
+  print("Money Supply - Ljung-Box (diff1): Ausencia de correlación")
+}
+
+
+#hacer los ts.display
+#me da que es estacionaria con las dos difernecias, entonces tengo que hacer ts.display
+
+tsdisplay(money_supply_ts_trimestral_sin_outliers,diff=1, lag=4)
+
+#cambiar el orden.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ###########            Money Supply (TRIMESTRAL)  #####################
 #######################################################################
 
@@ -344,7 +464,7 @@ if(kpss_test_money_supply$p.value < 0.05){
 #NO ESTACIONARIA diff=0
 #En ambas no es estacionaria por lo que habra que hacer la primera diferencia
 
-#TEST LB JUNG
+#TEST LB JUNG--> lag maximo para el cual quieres que analize que es estacionaria.
 LBtest_money_supply <- Box.test(money_supply_ts_trimestral_sin_outliers, 
                                 lag = 20, type="Ljung")
 if (LBtest_money_supply$p.value < 0.05) {
@@ -730,8 +850,19 @@ qqline(stock_market_ts_trimestral_sin_outliers_estacionaria, col="red")
 
 
 
+#CAMBIAR LOS GRAFICOS DE LA VRIANZA CON ST.PLOT
 
+#DEPENDE DE COMO DE ESTAICONARIA SEA HAY QUE APLICAR UN MODELO O OTRO DE ARIMA
+#MIRNAOD LA SERIE DESPUES DE LAS DIFERENCIAS VER COMO DE ESTACIOANRIA ES Y APLICAR UN MODELO U OTRO. CON AUTO.ARIMA
+# CUANDO HACES EL MODELO TE VA QUITANDO AL ESTACIONALIDAD TMAB. CHECK-REISUDALS MIRAR DESPUES DE MODELARLO.
 
+#HACER MODELOS DE IPC Y GDP EN BASE A ELLAS MISMAS. PARA CADA UNA DE ELLAS UN MODELO.
+#USAR SIMEPR EEL TS.DISPLAY PARA HACER LOS GRAFICOS.
+#HACER UN GRAFICO SIN APLICAR DIFERENICA Y MIRAR EL GRAFICO
+#LUEGO HACER UNA DIFERENCIA =1 Y LAG=4 Y HACER EL GRAFICO Y MIRAR SI YA ES ESTACIONARIA EN CASO DE QUE NO SEA HACER SEFUNDA DIFERENCIA DIFF(DIFF) 
+#USAR LA DIFERENCIA QUE COICIDAN LSO DOS TESES.
+#HACER LA TRAMPA DE MIRAR EN LOS TESES CUANTAS DIFERENCIAS TE DICE Y EN BASE A ESO HACER EL TS.DISPKAY LAS VECES QUE DIGAN CUNATAS DIFERENCIAS APLICAR. PERO EL TS.DISPLAY HAY QUE HACERLO ANTES DE APLCIAR LOS TESES PORQUE SE SUPONE QUE HAY QUE DECIDIR SI ES ESTACIONARIA MIRNADO LOS GRAFICOS DE TS.DISPLAY. 
+#ENTONCES HAREMOS LOS TESES PRIMERO PARA VER CUANTAS DIFERENCIAS Y LEUGO  HACER LOS TS.DISPLAYS PERO LEUGO CMABAIREMOS EL ORDEN PARA DAR A ENTENDER QUE PRIMERO HEMOS ECHO EL TS.DISPLAY Y LUEGO HEMOS COMPROBADO CON LOS TESES.
 
 
 
