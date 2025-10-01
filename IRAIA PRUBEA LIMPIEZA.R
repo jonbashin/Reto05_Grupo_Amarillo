@@ -336,12 +336,51 @@ gdp_ts_trimestral_sin_outliers <- log(gdp_ts_trimestral_sin_outliers)
 ########### ---------- Money Supply (TRIMESTRAL)  #####################
 #######################################################################
 
-#hacer los teses pirmero para ver el numero de diferencias
+#Aplicaremos ts.display() para ver si graficamente si son estacionarias o no
 
-#----------        Primera diferencia
+#----                 SIN DIFERENCIA
+
+tsdisplay(money_supply_ts_trimestral_sin_outliers)             
+#.......................................................
+# 1. Serie temporal:
+#   - Se observa una tendencia creciente clara.
+#   - La media no es constante en el tiempo.
+
+# 2. ACF:
+#   - Muestra autocorrelaciones muy altas y positivas.
+#   - Decae lentamente → típico de procesos no estacionarios.
+
+# 3. PACF:
+#   - Pico fuerte en el rezago 1.
+#   - Indica posible raíz unitaria.
+
+#--> La serie NO ES ESTACIONARIA → requiere al menos una diferenciación.
+#.......................................................
+
+
+#----               PRIMERA DIFERENCIA
+
+#Aplicar diferencia
 money_supply_diff1 <- diff(money_supply_ts_trimestral_sin_outliers, differences = 1)
-#Comprobar si ya es estacionaria
+tsdisplay(money_supply_diff1)
+#.......................................................
+# 1. Serie temporal:
+#   - La tendencia desaparece y oscila alrededor de una media estable.
+#   - Sin embargo, hay picos y cambios de volatilidad en ciertos periodos.
 
+# 2. ACF:
+#   - Autocorrelaciones más bajas que en la serie original.
+#   - Todavía algunos rezagos significativos → cierta dependencia.
+
+# 3. PACF:
+#   - Picos en los primeros rezagos (1-2), luego decae.
+#   - Indica posible estructura AR de bajo orden.
+
+# La 1ª diferencia mejora mucho la serie, pero aún no está claramente estacionaria.
+# Se deben aplicar los tests (ADF, KPSS) y, si es necesario, probar con una 2ª diferencia.
+#.......................................................
+
+#Aplicaremos los teses para asegurarnos de que no es estacionaria al 100%
 #TEST ADF
 adf_test_money_supply_1 <- adf.test(money_supply_diff1)
 if(adf_test_money_supply_1$p.value < 0.05){
@@ -370,203 +409,145 @@ if (LBtest_money_supply_1$p.value < 0.05) {
 
 #EXISTE CORRELACION
 
-#----------        Segunda diferencia
-money_supply_diff2 <- diff(money_supply_ts_trimestral_sin_outliers, differences = 2)
-#Comprobar si ya es estacionaria
 
+#----                 SEGUNDA DIFERENCIA
+
+money_supply_diff2 <- diff(money_supply_ts_trimestral_sin_outliers, differences = 2)
+tsdisplay(money_supply_diff2)
+
+#......................................................
+# 1. Serie temporal:
+#   - La tendencia desaparece por completo.
+#   - La serie oscila alrededor de cero de forma estable.
+#   - Aunque hay picos puntuales (volatilidad), no hay tendencia persistente.
+
+# 2. ACF:
+#   - Las autocorrelaciones están dentro de las bandas en la mayoría de rezagos.
+#   - No hay un decaimiento lento → señal de estacionariedad.
+
+# 3. PACF:
+#   - No se observan picos grandes persistentes.
+#   - Solo valores aislados en algunos rezagos → compatible con estacionariedad.
+
+# Con la 2ª diferencia, la serie puede considerarse estacionaria.
+# Falta confirmarlo con los tests ADF y KPSS, pero visualmente ya cumple
+# con los criterios de estacionariedad.
+#......................................................
+
+#Aplicar los teses
 #TEST ADF
 adf_test_money_supply_2 <- adf.test(money_supply_diff2)
 if(adf_test_money_supply_2$p.value < 0.05){
-  print("Money Supply - ADF (diff1): estacionaria")
+  print("Money Supply - ADF (diff2): estacionaria")
 } else{
-  print("Money Supply - ADF (diff1): NO estacionaria")
+  print("Money Supply - ADF (diff2): NO estacionaria")
 }
-# ESTACIONARIA diff=1
+# ESTACIONARIA diff=2
 
 #TEST KPSS
 kpss_test_money_supply_2 <- kpss.test(money_supply_diff2, null="Level")
 if(kpss_test_money_supply_2$p.value < 0.05){
-  print("Money Supply - KPSS (diff1): NO estacionaria")
+  print("Money Supply - KPSS (diff2): NO estacionaria")
 } else{
-  print("Money Supply - KPSS (diff1): estacionaria")
+  print("Money Supply - KPSS (diff2): estacionaria")
 }
-#ESTACIONARIA diff=1
+#ESTACIONARIA diff=2
 
 #TEST LJUNG-BOX
-LBtest_money_supply_1 <- Box.test(money_supply_diff1, lag = 20, type="Ljung")
-if (LBtest_money_supply_1$p.value < 0.05) {
-  print("Money Supply - Ljung-Box (diff1): Existe correlación")
+LBtest_money_supply_2 <- Box.test(money_supply_diff2, lag = 20, type="Ljung")
+if (LBtest_money_supply_2$p.value < 0.05) {
+  print("Money Supply - Ljung-Box (diff2): Existe correlación")
 } else {
-  print("Money Supply - Ljung-Box (diff1): Ausencia de correlación")
-}
-
-
-#hacer los ts.display
-#me da que es estacionaria con las dos difernecias, entonces tengo que hacer ts.display
-
-tsdisplay(money_supply_ts_trimestral_sin_outliers,diff=1, lag=4)
-
-#cambiar el orden.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-###########            Money Supply (TRIMESTRAL)  #####################
-#######################################################################
-
-#----------        Serie original sin diferencias
-#TEST ADF
-adf_test_money_supply <- adf.test(money_supply_ts_trimestral_sin_outliers)
-if(adf_test_money_supply$p.value < 0.05){
-  print("Money Supply - ADF: estacionaria")
-} else{
-  print("Money Supply - ADF: NO estacionaria")
-}
-#NO ESTACIONARIA diff=0
-
-#TEST KPSS
-kpss_test_money_supply <- kpss.test(money_supply_ts_trimestral_sin_outliers, null="Level")
-if(kpss_test_money_supply$p.value < 0.05){
-  print("Money Supply - KPSS: NO estacionaria")
-} else{
-  print("Money Supply - KPSS: estacionaria")
-}
-#NO ESTACIONARIA diff=0
-#En ambas no es estacionaria por lo que habra que hacer la primera diferencia
-
-#TEST LB JUNG--> lag maximo para el cual quieres que analize que es estacionaria.
-LBtest_money_supply <- Box.test(money_supply_ts_trimestral_sin_outliers, 
-                                lag = 20, type="Ljung")
-if (LBtest_money_supply$p.value < 0.05) {
-  print("Money Supply - Ljung-Box: Existe correlación")
-} else {
-  print("Money Supply - Ljung-Box: Ausencia de correlación")
-}
-#EXISTE CORRELACION --> Los valores pasados influyen en los presentes 
-
-
-
-#----------        Primera diferencia
-money_supply_diff1 <- diff(money_supply_ts_trimestral_sin_outliers, differences = 1)
-#Comprobar si ya es estacionaria
-
-#TEST ADF
-adf_test_money_supply_1 <- adf.test(money_supply_diff1)
-if(adf_test_money_supply_1$p.value < 0.05){
-  print("Money Supply - ADF (diff1): estacionaria")
-} else{
-  print("Money Supply - ADF (diff1): NO estacionaria")
-}
-#ESTACIONARIA diff=1
-
-#TEST KPSS
-kpss_test_money_supply_1 <- kpss.test(money_supply_diff1, null="Level")
-if(kpss_test_money_supply_1$p.value < 0.05){
-  print("Money Supply - KPSS (diff1): NO estacionaria")
-} else{
-  print("Money Supply - KPSS (diff1): estacionaria")
-}
-#NO ESTACIONARIA diff=1
-
-#TEST LJUNG-BOX
-LBtest_money_supply_1 <- Box.test(money_supply_diff1, lag = 20, type="Ljung")
-if (LBtest_money_supply_1$p.value < 0.05) {
-  print("Money Supply - Ljung-Box (diff1): Existe correlación")
-} else {
-  print("Money Supply - Ljung-Box (diff1): Ausencia de correlación")
-}
-
-#EXISTE CORRELACION
-
-#!!!! una me da estacionaria con un test y otra no estacioanria con el otro test. entonces que hago con la siguiente diferencia o como?
-#Hay contradicción entre ADF y KPSS, pero es muy común. En la práctica, se suele creer más en KPSS porque ADF tiene poca potencia en series pequeñas
-
-
-
-###########            Unemployment Rate (TRIMESTRAL)  #####################
-#######################################################################
-
-#----------        Serie original sin diferencias
-
-#TEST ADF
-adf_test_unemployment <- adf.test(unemployment_ts_trimestral_sin_outliers)
-if(adf_test_unemployment$p.value < 0.05){
-  print("Unemployment Rate - ADF: estacionaria")
-} else{
-  print("Unemployment Rate - ADF: NO estacionaria")
-}
-#NO ESTACIONARIA diff=0
-
-#TEST KPSS
-kpss_test_unemployment <- kpss.test(unemployment_ts_trimestral_sin_outliers, null="Level")
-if(kpss_test_unemployment$p.value < 0.05){
-  print("Unemployment Rate - KPSS: NO estacionaria")
-} else{
-  print("Unemployment Rate - KPSS: estacionaria")
-}
-#NO ESTACIONARIA diff=0
-#Ambas coinciden en no estacionaria habrá que hacer la primera diferencia
-
-#TEST LJUNG-BOX
-LBtest_unemployment <- Box.test(unemployment_ts_trimestral_sin_outliers, 
-                                lag = 20, type = "Ljung")
-if (LBtest_unemployment$p.value < 0.05) {
-  print("Unemployment Rate - Ljung-Box: Existe correlación")
-} else {
-  print("Unemployment Rate - Ljung-Box: Ausencia de correlación")
+  print("Money Supply - Ljung-Box (diff2): Ausencia de correlación")
 }
 #EXISTE CORRELACION
 
+#MONEY SUPPLY--> Estacionaria con la segunda diferencia!
+#Cambiamos el nombre para que sea mas faci
+money_supply_ts_trimestral_sin_outliers_estacionaria<- money_supply_diff2
 
-#----------        Primera diferencia
+#-----------------------------------------------------------------
+#Graficamos
+#-----------------------------------------------------------------
+#-------    SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparacion)
+par(mfrow=c(2,1))  # dos gráficos en una ventana
+plot(money_supply_ts_trimestral_sin_outliers, type="l", main="Money Supply (log) - Serie original", ylab="Nivel (log)")
+plot(money_supply_ts_trimestral_sin_outliers_estacionaria, type="l", main="Money Supply (log) - Segunda diferencia (estacionaria)", ylab="Cambio trimestral")
+par(mfrow=c(1,1))  
+
+#-------    ACF Y PACF
+p1 <- ggAcf(money_supply_ts_trimestral_sin_outliers_estacionaria) + ggtitle("ACF - Money Supply (log, diff2)")
+p2 <- ggPacf(money_supply_ts_trimestral_sin_outliers_estacionaria) + ggtitle("PACF - Money Supply (log, diff2)")
+grid.arrange(p1, p2, ncol=1)   
+
+#-------   QQ-PLOT 
+qqnorm(money_supply_ts_trimestral_sin_outliers_estacionaria, main="QQ-plot - Money Supply (log, diff2)")
+qqline(money_supply_ts_trimestral_sin_outliers_estacionaria, col="red")
+
+
+
+########### ---------- Unemployment Rate (TRIMESTRAL)  #####################
+#######################################################################
+
+#----                 SIN DIFERENCIA
+
+tsdisplay(unemployment_ts_trimestral_sin_outliers)             
+#.......................................................
+# 1. Serie temporal:
+#   - Presenta una tendencia decreciente → no es estacionaria.
+#   - No oscila alrededor de una media constante.
+#   - Caída abrupta reciente refuerza la no estacionariedad.
+
+# 2. ACF:
+#   - Esperamos un decaimiento lento → típica de series no estacionarias.
+
+# 3. PACF:
+#   - Picos significativos iniciales pueden indicar persistencia temporal.
+
+# NO ESTACIONARIA diff=0
+#.......................................................
+
+
+#----               PRIMERA DIFERENCIA
+
+#Aplicar diferencia
 unemployment_diff1 <- diff(unemployment_ts_trimestral_sin_outliers, differences = 1)
+tsdisplay(unemployment_diff1)
+#......................................................
+# 1. Serie temporal:
+#   - No hay tendencia visible → la serie fluctúa en torno a una media constante (~cero).
+#   - La varianza es relativamente constante, aunque con cierta volatilidad puntual (picos).
+#   - No se observa estacionalidad clara ni patrones sistemáticos.
 
-#Comprobar si ya es estacionaria
+# 2. ACF (Autocorrelation Function):
+#   - La mayoría de los rezagos están dentro de las bandas de confianza.
+#   - No hay decaimiento lento → lo que refuerza la hipótesis de estacionariedad.
+
+# 3. PACF (Partial ACF):
+#   - Pocos rezagos significativos → no hay estructura de dependencia persistente.
+#   - Compatible con un proceso ARIMA estacionario de bajo orden.
+
+#   → La serie parece estacionaria después de la primera diferenciación.
+#   → Es recomendable complementar con pruebas formales (ADF, KPSS, etc.) para confirmarlo.
+#SI ES ESTACIONARIA diff= 1
+#......................................................
+
+#Aplicaremos los tests para comprobra
+#TEST ADF
 adf_test_unemployment_1 <- adf.test(unemployment_diff1)
 if(adf_test_unemployment_1$p.value < 0.05){
   print("Unemployment Rate - ADF (diff1): estacionaria")
 } else{
   print("Unemployment Rate - ADF (diff1): NO estacionaria")
 }
-#ESTACIONARIA diff=1
 
+#TEST KPSS
 kpss_test_unemployment_1 <- kpss.test(unemployment_diff1, null="Level")
 if(kpss_test_unemployment_1$p.value < 0.05){
   print("Unemployment Rate - KPSS (diff1): NO estacionaria")
 } else{
   print("Unemployment Rate - KPSS (diff1): estacionaria")
 }
-#ESTACIONARIA diff=1
 
 #TEST LJUNG-BOX
 LBtest_unemployment_1 <- Box.test(unemployment_diff1, lag = 20, type="Ljung")
@@ -577,102 +558,253 @@ if (LBtest_unemployment_1$p.value < 0.05) {
 }
 #EXISTE CORRELACION
 
-#!!!! una me da estacionaria con un test y otra no estacioanria con el otro test. entonces que hago con la siguiente diferencia o como?
-#YA SON LAS DOS ESTACIONARIAS, PERO EXISTE CORRELACION TODAVIA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#HACER LOS GRAFICOS Y TODO
-
-
-
-###########            GDP (Billion currency units) (TRIMESTRAL)  #####################
-#######################################################################
-
-#----------        Serie original sin diferencias
-adf_test_gdp <- adf.test(gdp_ts_trimestral_sin_outliers)
-if(adf_test_gdp$p.value < 0.05){
-  print("GDP (log) - ADF: estacionaria")
-} else{
-  print("GDP (log) - ADF: NO estacionaria")
-}
-#NO ESTACIONARIA diff=0
-
-kpss_test_gdp <- kpss.test(gdp_ts_trimestral_sin_outliers, null="Level")
-if(kpss_test_gdp$p.value < 0.05){
-  print("GDP (log) - KPSS: NO estacionaria")
-} else{
-  print("GDP (log) - KPSS: estacionaria")
-}
-#NO ESTACIONARIA-> diff=0
-
-#TEST LJUNG-BOX
-LBtest_gdp <- Box.test(gdp_ts_trimestral_sin_outliers, 
-                                lag = 20, type = "Ljung")
-if (LBtest_gdp$p.value < 0.05) {
-  print("GDP (log) - Ljung-Box: Existe correlación")
-} else {
-  print("GDP (log) - Ljung-Box: Ausencia de correlación")
-}
-#EXISTE CORRELACION
-
-#Ambos indican no estacionaria, se pasa a primera diferencia
-
-#----------        Primera diferencia
-gdp_diff1 <- diff(gdp_ts_trimestral_sin_outliers, differences = 1)
-
-#Comprobar estacionariedad
-adf_test_gdp_1 <- adf.test(gdp_diff1)
-if(adf_test_gdp_1$p.value < 0.05){
-  print("GDP (log) - ADF (diff1): estacionaria")
-} else{
-  print("GDP (log) - ADF (diff1): NO estacionaria")
-}
-#ESTACIONARIA diff=1
-
-kpss_test_gdp_1 <- kpss.test(gdp_diff1, null="Level")
-if(kpss_test_gdp_1$p.value < 0.05){
-  print("GDP (log) - KPSS (diff1): NO estacionaria")
-} else{
-  print("GDP (log) - KPSS (diff1): estacionaria")
-}
-#ESTACIONARIA diff=1
-
-#Una vez que ya es estacionaria queda verificar si en esa serie diferenciada ya no queda correlacion significativa (residuos , ruido blanco)
-#TEST LJUNG-BOX
-LBtest_gdp_1 <- Box.test(gdp_diff1, lag = 20, type="Ljung")
-if (LBtest_gdp_1$p.value < 0.05) {
-  print("GDP (log) - Ljung-Box (diff1): Existe correlación")
-} else {
-  print("GDP (log) - Ljung-Box (diff1): Ausencia de correlación")
-}
-#AUSENCIA DE CORRELACION. 
-#Genial ya esta la dependecia temporal quitada y puedo usar modelos simple como ARIMA.
-
-#----> ESTACIONARIA CON LA DIFERENCIA 1 !!!!!
-
-#Cambiaremos el nombre a la variable
-gdp_ts_trimestral_sin_outliers_estacionaria<- gdp_diff1
+#Los teses afirman que la variable unemplyment rate es estacionaria con la primera diferencia
+#UNEMPLOYMENT RATE--> Estacionaria con la primera diferencia!
+#Cambiamos el nombre para que sea mas faci
+unemployment_ts_trimestral_sin_outliers_estacionaria<- unemployment_diff1
 
 #-----------------------------------------------------------------
 #Graficamos
 #-----------------------------------------------------------------
 #-------    SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparacion)
 par(mfrow=c(2,1))  # dos gráficos en una ventana
+plot(unemployment_ts_trimestral_sin_outliers, type="l", main="Unemployment Rate (log) - Serie original", ylab="Nivel (log)")
+plot(unemployment_ts_trimestral_sin_outliers_estacionaria, type="l", main="Unemployment Rate (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
+par(mfrow=c(1,1))  
+
+#-------    ACF Y PACF
+p1 <- ggAcf(unemployment_ts_trimestral_sin_outliers_estacionaria) + ggtitle("ACF - Unemployment Rate (log, diff1)")
+p2 <- ggPacf(unemployment_ts_trimestral_sin_outliers_estacionaria) + ggtitle("PACF - Unemployment Rate (log, diff1)")
+grid.arrange(p1, p2, ncol=1)   
+
+#-------   QQ-PLOT 
+qqnorm(unemployment_ts_trimestral_sin_outliers_estacionaria, main="QQ-plot - Unemployment Rate (log, diff1)")
+qqline(unemployment_ts_trimestral_sin_outliers_estacionaria, col="red")
+
+
+
+
+###########            GDP (Billion currency units) (TRIMESTRAL)  #####################
+#######################################################################
+
+#----                 SIN DIFERENCIA
+tsdisplay(gdp_ts_trimestral_sin_outliers)             
+#......................................................
+# Evaluación de estacionariedad: gdp_ts_trimestral_sin_outliers (sin diferenciar)
+
+# 1. Serie temporal:
+#   - Presenta una clara tendencia creciente → no fluctúa alrededor de una media constante.
+#   - No hay estabilidad en el nivel de la serie.
+#   - Aunque la varianza parece estable, la presencia de tendencia invalida la estacionariedad.
+
+# 2. ACF (Autocorrelation Function):
+#   - Las autocorrelaciones decaen lentamente → señal típica de no estacionariedad.
+#   - Las barras no caen rápidamente dentro de las bandas de confianza.
+
+# 3. PACF (Partial ACF):
+#   - Picos significativos en los primeros rezagos → también típico de series con tendencia.
+#   - La estructura refleja persistencia temporal.
+
+# Conclusión:
+#   → La serie **NO es estacionaria en nivel** (diff = 0).
+#   → Se recomienda aplicar **una primera diferencia** y re-evaluar.
+#......................................................
+
+
+#----               PRIMERA DIFERENCIA
+
+# Aplicar diferencia
+gdp_diff1 <- diff(gdp_ts_trimestral_sin_outliers, differences = 1)
+tsdisplay(gdp_diff1)
+#......................................................
+# Evaluación de estacionariedad: gdp_diff1 (primera diferencia)
+
+# 1. Serie temporal:
+#   - No hay tendencia visible → la serie fluctúa en torno a una media constante (~cero).
+#   - La varianza es relativamente constante en el tiempo.
+#   - Se observan oscilaciones regulares, pero sin patrón estacional evidente → comportamiento estable.
+
+# 2. ACF (Autocorrelation Function):
+#   - La mayoría de los rezagos están dentro de las bandas de confianza.
+#   - No hay un decaimiento lento como en la serie original → se elimina la dependencia de largo plazo.
+#   - Se observan picos aislados en algunos rezagos, pero no en bloque.
+
+# 3. PACF (Partial ACF):
+#   - Solo algunos rezagos son significativos (por encima de las bandas).
+#   - No se observa estructura de autocorrelación persistente.
+#   - Comportamiento compatible con un proceso ARIMA estacionario de bajo orden.
+
+# Conclusión:
+#   → La serie parece estacionaria después de la primera diferencia.
+#   → Es recomendable complementar con pruebas estadísticas como ADF y KPSS para confirmarlo formalmente.
+#SI ES ETSACIONARIA diff=1
+#......................................................
+
+# Aplicamos los tests para comprobar
+
+# TEST ADF
+adf_test_gdp_1 <- adf.test(gdp_diff1)
+if(adf_test_gdp_1$p.value < 0.05){
+  print("GDP - ADF (diff1): estacionaria")
+} else{
+  print("GDP - ADF (diff1): NO estacionaria")
+}
+#ESTACIONARIA diff=1
+
+# TEST KPSS
+kpss_test_gdp_1 <- kpss.test(gdp_diff1, null="Level")
+if(kpss_test_gdp_1$p.value < 0.05){
+  print("GDP - KPSS (diff1): NO estacionaria")
+} else{
+  print("GDP - KPSS (diff1): estacionaria")
+}
+#ESTACIONARIA diff=1
+
+
+# TEST LJUNG-BOX
+LBtest_gdp_1 <- Box.test(gdp_diff1, lag = 20, type="Ljung")
+if (LBtest_gdp_1$p.value < 0.05) {
+  print("GDP - Ljung-Box (diff1): Existe correlación")
+} else {
+  print("GDP - Ljung-Box (diff1): Ausencia de correlación")
+}
+#EXISTE CORRELACION
+
+# Los tests indican que la variable GDP es estacionaria con la primera diferencia.
+# GDP --> Estacionaria con la primera diferencia!
+# Cambiamos el nombre para facilitar su uso.
+gdp_ts_trimestral_sin_outliers_estacionaria <- gdp_diff1
+
+
+#-----------------------------------------------------------------
+# Graficamos
+#-----------------------------------------------------------------
+#-------    SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparación)
+par(mfrow=c(2,1))
 plot(gdp_ts_trimestral_sin_outliers, type="l", main="GDP (log) - Serie original", ylab="Nivel (log)")
 plot(gdp_ts_trimestral_sin_outliers_estacionaria, type="l", main="GDP (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
 par(mfrow=c(1,1))  
 
 #-------    ACF Y PACF
-#Muy utiles para ver la dependecia temporal y sugerir ordenes a AR/MA en modelos ARIMA:
 p1 <- ggAcf(gdp_ts_trimestral_sin_outliers_estacionaria) + ggtitle("ACF - GDP (log, diff1)")
 p2 <- ggPacf(gdp_ts_trimestral_sin_outliers_estacionaria) + ggtitle("PACF - GDP (log, diff1)")
 grid.arrange(p1, p2, ncol=1)   
 
 #-------   QQ-PLOT 
-#Comprobar si los reisuod parecen normales:
-#Es util porque cuando modelamos con ARIMA , los resiudos deberian comportarse como ruido blanco.
 qqnorm(gdp_ts_trimestral_sin_outliers_estacionaria, main="QQ-plot - GDP (log, diff1)")
 qqline(gdp_ts_trimestral_sin_outliers_estacionaria, col="red")
-#El gráfico muestra que los datos no siguen perfectamente una normal, sobre todo en las colas. Esto es común en series económicas (como el PIB) porque suelen tener shocks o valores atípicos.
-#Si el análisis es de series temporales (ARIMA, VAR, etc.), no es raro que los residuos no sean normales y suele aceptarse mientras no haya autocorrelación grave.
+
+
+
+
+###########            CPI (Consumer Price Index) (TRIMESTRAL)  #####################
+#####################################################################################
+
+###### AQUIII ME QUEDO !!!!!!!!!! LO DE ABAJO ESTA MAL
+
+#----                 SIN DIFERENCIA
+tsdisplay(cpi_ts_trimestral_sin_outliers)             
+#......................................................
+# Evaluación de estacionariedad: cpi_ts_trimestral_sin_outliers (sin diferenciar)
+
+# 1. Serie temporal:
+#   - Presenta una clara tendencia creciente → no fluctúa alrededor de una media constante.
+#   - No hay estabilidad en el nivel de la serie.
+#   - Aunque la varianza parece estable, la tendencia indica que no es estacionaria.
+
+# 2. ACF (Autocorrelation Function):
+#   - Las autocorrelaciones decaen lentamente → señal típica de no estacionariedad.
+#   - Las barras no caen rápidamente dentro de las bandas de confianza.
+
+# 3. PACF (Partial ACF):
+#   - Picos significativos en los primeros rezagos → también típico de series con tendencia.
+#   - Persistencia en la correlación.
+
+# Conclusión:
+#   → La serie **NO es estacionaria en nivel** (diff = 0).
+#   → Se recomienda aplicar **una primera diferencia** y re-evaluar.
+#......................................................
+
+
+#----               PRIMERA DIFERENCIA
+
+# Aplicar diferencia
+cpi_diff1 <- diff(cpi_ts_trimestral_sin_outliers, differences = 1)
+tsdisplay(cpi_diff1)
+#......................................................
+# Evaluación de estacionariedad: cpi_diff1 (primera diferencia)
+
+# 1. Serie temporal:
+#   - No hay tendencia visible → la serie fluctúa en torno a una media constante (~cero).
+#   - La varianza es relativamente constante en el tiempo.
+#   - No hay evidencia de estacionalidad o patrones cíclicos claros.
+
+# 2. ACF (Autocorrelation Function):
+#   - La mayoría de los rezagos están dentro de las bandas de confianza.
+#   - No hay un decaimiento lento → se elimina la dependencia de largo plazo.
+#   - Se observan picos aislados, pero compatibles con ruido blanco.
+
+# 3. PACF (Partial ACF):
+#   - Pocos rezagos significativos.
+#   - No se observa estructura de autocorrelación persistente.
+#   - Compatible con un proceso ARIMA estacionario de bajo orden.
+
+# Conclusión:
+#   → La serie parece estacionaria después de la primera diferencia.
+#   → Es recomendable complementar con pruebas estadísticas como ADF y KPSS para confirmarlo formalmente.
+# SI ES ESTACIONARIA diff=1
+#......................................................
+
+
+#----               TESTS DE ESTACIONARIEDAD
+
+# TEST ADF
+adf_test_cpi_1 <- adf.test(cpi_diff1)
+if(adf_test_cpi_1$p.value < 0.05){
+  print("CPI - ADF (diff1): estacionaria")
+} else{
+  print("CPI - ADF (diff1): NO estacionaria")
+}
+
+# TEST KPSS
+kpss_test_cpi_1 <- kpss.test(cpi_diff1, null="Level")
+if(kpss_test_cpi_1$p.value < 0.05){
+  print("CPI - KPSS (diff1): NO estacionaria")
+} else{
+  print("CPI - KPSS (diff1): estacionaria")
+}
+
+# TEST LJUNG-BOX
+LBtest_cpi_1 <- Box.test(cpi_diff1, lag = 20, type="Ljung")
+if (LBtest_cpi_1$p.value < 0.05) {
+  print("CPI - Ljung-Box (diff1): Existe correlación")
+} else {
+  print("CPI - Ljung-Box (diff1): Ausencia de correlación")
+}
+#......................................................
+# Los tests indicarán si CPI es estacionaria con la primera diferencia.
+# CPI --> Estacionaria con la primera diferencia!
+# Cambiamos el nombre para facilitar su uso.
+cpi_ts_trimestral_sin_outliers_estacionaria <- cpi_diff1
+
+
+#-----------------------------------------------------------------
+# Graficamos
+#-----------------------------------------------------------------
+#-------    SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparación)
+par(mfrow=c(2,1))
+plot(cpi_ts_trimestral_sin_outliers, type="l", main="CPI (log) - Serie original", ylab="Nivel (log)")
+plot(cpi_ts_trimestral_sin_outliers_estacionaria, type="l", main="CPI (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
+par(mfrow=c(1,1))  
+
+#-------    ACF Y PACF
+p1 <- ggAcf(cpi_ts_trimestral_sin_outliers_estacionaria) + ggtitle("ACF - CPI (log, diff1)")
+p2 <- ggPacf(cpi_ts_trimestral_sin_outliers_estacionaria) + ggtitle("PACF - CPI (log, diff1)")
+grid.arrange(p1, p2, ncol=1)   
+
+#-------   QQ-PLOT 
+qqnorm(cpi_ts_trimestral_sin_outliers_estacionaria, main="QQ-plot - CPI (log, diff1)")
+qqline(cpi_ts_trimestral_sin_outliers_estacionaria, col="red")
 
 
 
