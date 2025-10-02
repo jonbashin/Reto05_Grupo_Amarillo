@@ -16,6 +16,7 @@ library(VIM)
 #library(tsoutliers)
 library(tseries)
 library(gridExtra)
+library(astsa)
 
 # =========================
 # 1. CARGAR DATOS
@@ -272,52 +273,51 @@ plot_outliers(gdp_ts_trimestral, gdp_ts_trimestral_sin_outliers, "GDP (Trimestra
 #11. TIENEN VARIANZA?
 #======================
 
-#!!!!!!!!!!!!! hacer con tsplot los grafcio de la varianza
-
-#Mirar si tienen picos conforme avanza el tiempo, para ver si tienen varianza creciente.
-#--> GDP
-plot(gdp_ts_trimestral_sin_outliers, type="l", col="steelblue", lwd=2,
-     main="GDP - Serie limpia",
-     ylab="Valor", xlab="Tiempo")
+# GDP
+tsplot(gdp_ts_trimestral_sin_outliers, col="steelblue", lwd=2,
+       main="GDP - Serie limpia", ylab="Valor", xlab="Tiempo")
 abline(h=mean(gdp_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
-#Varianza Creciente--> rosa tienes estacionalidad, y poca varianza creciente
+# Varianza creciente (ligera), con estacionalidad
 
-#--> CPI
-plot(cpi_ts_trimestral_sin_outliers, type="l", col="steelblue", lwd=2,
-     main="CPI - Serie limpia",
-     ylab="Valor", xlab="Tiempo")
+# CPI
+tsplot(cpi_ts_trimestral_sin_outliers, col="steelblue", lwd=2,
+       main="CPI - Serie limpia", ylab="Valor", xlab="Tiempo")
 abline(h=mean(cpi_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
-#No Varianza creciente --> Varianza constante
+# Varianza constante
 
-#-->Stock Market
-plot(stock_market_ts_trimestral_sin_outliers, type="l", col="steelblue", lwd=2,
-     main="Stock Market - Serie limpia",
-     ylab="Valor", xlab="Tiempo")
+# Stock Market
+tsplot(stock_market_ts_trimestral_sin_outliers, col="steelblue", lwd=2,
+       main="Stock Market - Serie limpia", ylab="Valor", xlab="Tiempo")
 abline(h=mean(stock_market_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
-#Varianza creciente.
+# Varianza creciente
 
-#--> Money Supply
-plot(money_supply_ts_trimestral_sin_outliers, type="l", col="steelblue", lwd=2,
-     main="Money Supply - Serie limpia",
-     ylab="Valor", xlab="Tiempo")
+# Money Supply
+tsplot(money_supply_ts_trimestral_sin_outliers, col="steelblue", lwd=2,
+       main="Money Supply - Serie limpia", ylab="Valor", xlab="Tiempo")
 abline(h=mean(money_supply_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
-#No varianza creciente --> Varianza constante
+# Varianza constante
 
-#--> Unemployment Rate
-plot(unemployment_ts_trimestral_sin_outliers, type="l", col="steelblue", lwd=2,
-     main="Unemployment - Serie limpia",
-     ylab="Valor", xlab="Tiempo")
+# Unemployment Rate
+tsplot(unemployment_ts_trimestral_sin_outliers, col="steelblue", lwd=2,
+       main="Unemployment - Serie limpia", ylab="Valor", xlab="Tiempo")
 abline(h=mean(unemployment_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
-#No varianza creciente--> Varianza constante
+# Varianza constante
 
+# ESTABILIZAR VARIANZA
+# -------------------------
 
-#ESTABILIZAREMOS LA VARIANZA (log())--> GDP y STOCK MARKET
 # Transformación log para estabilizar la varianza
-#money_supply_ts_trimestral_sin_outliers <- log(money_supply_ts_trimestral_sin_outliers)
-#unemployment_ts_trimestral_sin_outliers <- log(unemployment_ts_trimestral_sin_outliers)
-stock_market_ts_trimestral_sin_outliers <- log(stock_market_ts_trimestral_sin_outliers)
-gdp_ts_trimestral_sin_outliers <- log(gdp_ts_trimestral_sin_outliers)
-#cpi_ts_trimestral_sin_outliers <- log(cpi_ts_trimestral_sin_outliers)
+stock_market_ts_trimestral_sin_outliers_log <- log(stock_market_ts_trimestral_sin_outliers)
+gdp_ts_trimestral_sin_outliers_log <- log(gdp_ts_trimestral_sin_outliers)
+
+# Graficar después de log-transform
+tsplot(stock_market_ts_trimestral_sin_outliers_logstock_market_ts_trimestral_sin_outliers_log, col="darkgreen", lwd=2,
+       main="Stock Market - Serie log-transformada", ylab="Log-Valor", xlab="Tiempo")
+abline(h=mean(stock_market_ts_trimestral_sin_outliers_log, na.rm=TRUE), col="red", lty=2)
+
+tsplot(gdp_ts_trimestral_sin_outliers_log, col="darkgreen", lwd=2,
+       main="GDP - Serie log-transformada", ylab="Log-Valor", xlab="Tiempo")
+abline(h=mean(gdp_ts_trimestral_sin_outliers_log, na.rm=TRUE), col="red", lty=2)
 
 
 
@@ -432,6 +432,7 @@ tsdisplay(money_supply_diff2)
 # Con la 2ª diferencia, la serie puede considerarse estacionaria.
 # Falta confirmarlo con los tests ADF y KPSS, pero visualmente ya cumple
 # con los criterios de estacionariedad.
+# ESTACIONARIA diff=2
 #......................................................
 
 #Aplicar los teses
@@ -588,9 +589,9 @@ qqline(unemployment_ts_trimestral_sin_outliers_estacionaria, col="red")
 #######################################################################
 
 #----                 SIN DIFERENCIA
-tsdisplay(gdp_ts_trimestral_sin_outliers)             
+tsdisplay(gdp_ts_trimestral_sin_outliers_log)             
 #......................................................
-# Evaluación de estacionariedad: gdp_ts_trimestral_sin_outliers (sin diferenciar)
+# Evaluación de estacionariedad: gdp_ts_trimestral_sin_outliers_log (sin diferenciar)
 
 # 1. Serie temporal:
 #   - Presenta una clara tendencia creciente → no fluctúa alrededor de una media constante.
@@ -614,11 +615,9 @@ tsdisplay(gdp_ts_trimestral_sin_outliers)
 #----               PRIMERA DIFERENCIA
 
 # Aplicar diferencia
-gdp_diff1 <- diff(gdp_ts_trimestral_sin_outliers, differences = 1)
+gdp_diff1 <- diff(gdp_ts_trimestral_sin_outliers_log, differences = 1)
 tsdisplay(gdp_diff1)
 #......................................................
-# Evaluación de estacionariedad: gdp_diff1 (primera diferencia)
-
 # 1. Serie temporal:
 #   - No hay tendencia visible → la serie fluctúa en torno a una media constante (~cero).
 #   - La varianza es relativamente constante en el tiempo.
@@ -673,7 +672,7 @@ if (LBtest_gdp_1$p.value < 0.05) {
 # Los tests indican que la variable GDP es estacionaria con la primera diferencia.
 # GDP --> Estacionaria con la primera diferencia!
 # Cambiamos el nombre para facilitar su uso.
-gdp_ts_trimestral_sin_outliers_estacionaria <- gdp_diff1
+gdp_ts_trimestral_sin_outliers_log_estacionaria <- gdp_diff1
 
 
 #-----------------------------------------------------------------
@@ -681,18 +680,18 @@ gdp_ts_trimestral_sin_outliers_estacionaria <- gdp_diff1
 #-----------------------------------------------------------------
 #-------    SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparación)
 par(mfrow=c(2,1))
-plot(gdp_ts_trimestral_sin_outliers, type="l", main="GDP (log) - Serie original", ylab="Nivel (log)")
-plot(gdp_ts_trimestral_sin_outliers_estacionaria, type="l", main="GDP (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
+plot(gdp_ts_trimestral_sin_outliers_log, type="l", main="GDP (log) - Serie original", ylab="Nivel (log)")
+plot(gdp_ts_trimestral_sin_outliers_log_estacionaria, type="l", main="GDP (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
 par(mfrow=c(1,1))  
 
 #-------    ACF Y PACF
-p1 <- ggAcf(gdp_ts_trimestral_sin_outliers_estacionaria) + ggtitle("ACF - GDP (log, diff1)")
-p2 <- ggPacf(gdp_ts_trimestral_sin_outliers_estacionaria) + ggtitle("PACF - GDP (log, diff1)")
+p1 <- ggAcf(gdp_ts_trimestral_sin_outliers_log_estacionaria) + ggtitle("ACF - GDP (log, diff1)")
+p2 <- ggPacf(gdp_ts_trimestral_sin_outliers_log_estacionaria) + ggtitle("PACF - GDP (log, diff1)")
 grid.arrange(p1, p2, ncol=1)   
 
 #-------   QQ-PLOT 
-qqnorm(gdp_ts_trimestral_sin_outliers_estacionaria, main="QQ-plot - GDP (log, diff1)")
-qqline(gdp_ts_trimestral_sin_outliers_estacionaria, col="red")
+qqnorm(gdp_ts_trimestral_sin_outliers_log_estacionaria, main="QQ-plot - GDP (log, diff1)")
+qqline(gdp_ts_trimestral_sin_outliers_log_estacionaria, col="red")
 
 
 
@@ -708,22 +707,25 @@ tsdisplay(cpi_ts_trimestral_sin_outliers)
 # Evaluación de estacionariedad: cpi_ts_trimestral_sin_outliers (sin diferenciar)
 
 # 1. Serie temporal:
-#   - Presenta una clara tendencia creciente → no fluctúa alrededor de una media constante.
-#   - No hay estabilidad en el nivel de la serie.
-#   - Aunque la varianza parece estable, la tendencia indica que no es estacionaria.
+#   - Se observa una tendencia creciente sostenida a lo largo de los años.
+#   - La serie no fluctúa alrededor de una media constante, lo que indica falta de estacionariedad.
+#   - Aunque la varianza se mantiene relativamente estable, la tendencia clara rompe la estacionariedad.
 
 # 2. ACF (Autocorrelation Function):
-#   - Las autocorrelaciones decaen lentamente → señal típica de no estacionariedad.
+#   - Las autocorrelaciones son muy altas en los primeros rezagos y decrecen lentamente.
+#   - Este patrón es típico de series no estacionarias.
 #   - Las barras no caen rápidamente dentro de las bandas de confianza.
 
 # 3. PACF (Partial ACF):
-#   - Picos significativos en los primeros rezagos → también típico de series con tendencia.
-#   - Persistencia en la correlación.
+#   - El primer rezago es muy significativo.
+#   - A partir de ahí los valores caen, lo que confirma la presencia de una tendencia.
+#   - Este comportamiento es característico de una serie no estacionaria.
 
 # Conclusión:
-#   → La serie **NO es estacionaria en nivel** (diff = 0).
-#   → Se recomienda aplicar **una primera diferencia** y re-evaluar.
+#   → La serie NO es estacionaria en nivel (diff = 0).
+#   → Se recomienda aplicar una primera diferencia (diff = 1) y re-evaluar la estacionariedad.
 #......................................................
+
 
 
 #----               PRIMERA DIFERENCIA
@@ -735,36 +737,54 @@ tsdisplay(cpi_diff1)
 # Evaluación de estacionariedad: cpi_diff1 (primera diferencia)
 
 # 1. Serie temporal:
-#   - No hay tendencia visible → la serie fluctúa en torno a una media constante (~cero).
-#   - La varianza es relativamente constante en el tiempo.
-#   - No hay evidencia de estacionalidad o patrones cíclicos claros.
+#   - Después de aplicar la primera diferencia, la serie ya no muestra una tendencia clara.
+#   - Ahora fluctúa alrededor de una media aproximadamente constante.
+#   - La varianza parece estable a lo largo del tiempo.
+#   → Esto sugiere que la serie puede considerarse estacionaria.
 
 # 2. ACF (Autocorrelation Function):
-#   - La mayoría de los rezagos están dentro de las bandas de confianza.
-#   - No hay un decaimiento lento → se elimina la dependencia de largo plazo.
-#   - Se observan picos aislados, pero compatibles con ruido blanco.
+#   - Solo el primer rezago es significativo.
+#   - A partir de ahí, las autocorrelaciones caen rápidamente dentro de las bandas de confianza.
+#   - Este patrón es consistente con una serie estacionaria.
 
 # 3. PACF (Partial ACF):
-#   - Pocos rezagos significativos.
-#   - No se observa estructura de autocorrelación persistente.
-#   - Compatible con un proceso ARIMA estacionario de bajo orden.
+#   - El primer rezago es significativo, pero los siguientes no muestran picos relevantes.
+#   - Esto también respalda la hipótesis de estacionariedad.
 
 # Conclusión:
-#   → La serie parece estacionaria después de la primera diferencia.
-#   → Es recomendable complementar con pruebas estadísticas como ADF y KPSS para confirmarlo formalmente.
-# SI ES ESTACIONARIA diff=1
+#   → Tras aplicar una primera diferencia, la serie se comporta como ESTACIONARIA.
+#ESTACIONARIA--> diff=1
 #......................................................
 
+#Nos aseguraremos uqe si lo es con los teses
 
 #----               TESTS DE ESTACIONARIEDAD
 
-# TEST ADF
-adf_test_cpi_1 <- adf.test(cpi_diff1)
+#TEST ADF
+# El test ADF sin parámetro k puede fallar al detectar estacionariedad.
+# El test ADF, aplicado sin definir el parámetro k, indica que la serie no es estacionaria,
+# aunque visualmente con tsdisplay parece serlo.
+# Por ello buscamos el valor de k que haga la serie estacionaria.
+# Si no indicamos k, adf.test lo elige automáticamente, pero en este caso no da estacionariedad.
+
+# k = número de rezagos para corregir autocorrelación en los residuos.
+# Probamos varios valores pequeños (0 a 3) para identificar cuál hace estacionaria la serie.
+for(k in 0:3){
+  if(adf.test(cpi_diff1, k = k)$p.value < 0.05){
+    print(paste("El k óptimo que vamos a usar en el test ADF será", k, "para conseguir que sea estacionaria."))
+    break  # Tomamos el primer k que cumple la condición
+  }
+}
+
+# Aplicamos el test ADF usando k óptimo.
+# Esto asegura que usamos un k que dé un resultado más robusto y reproducible.
+adf_test_cpi_1 <- adf.test(cpi_diff1, k = k)
 if(adf_test_cpi_1$p.value < 0.05){
   print("CPI - ADF (diff1): estacionaria")
 } else{
   print("CPI - ADF (diff1): NO estacionaria")
 }
+#ESTACIONARIA diff=1 con valor de k=0.
 
 # TEST KPSS
 kpss_test_cpi_1 <- kpss.test(cpi_diff1, null="Level")
@@ -773,6 +793,8 @@ if(kpss_test_cpi_1$p.value < 0.05){
 } else{
   print("CPI - KPSS (diff1): estacionaria")
 }
+#ESTACIONARIA diff=1
+
 
 # TEST LJUNG-BOX
 LBtest_cpi_1 <- Box.test(cpi_diff1, lag = 20, type="Ljung")
@@ -781,8 +803,10 @@ if (LBtest_cpi_1$p.value < 0.05) {
 } else {
   print("CPI - Ljung-Box (diff1): Ausencia de correlación")
 }
+#AUSENCIA DE CORRELACION
+
 #......................................................
-# Los tests indicarán si CPI es estacionaria con la primera diferencia.
+# Los tests indican que CPI es estacionaria con la primera diferencia.
 # CPI --> Estacionaria con la primera diferencia!
 # Cambiamos el nombre para facilitar su uso.
 cpi_ts_trimestral_sin_outliers_estacionaria <- cpi_diff1
@@ -813,167 +837,165 @@ qqline(cpi_ts_trimestral_sin_outliers_estacionaria, col="red")
 
 
 
-###########            CPI (Consumer Price Index) (TRIMESTRAL)  #####################
+
+
+
+
+
+
+
+
+
+
+########### STOCK MARKET INDEX (log) (TRIMESTRAL) #####################
 #######################################################################
 
-#----------        Serie original sin diferencias
-adf_test_cpi <- adf.test(cpi_ts_trimestral_sin_outliers)
-if(adf_test_cpi$p.value < 0.05){
-  print("CPI (log) - ADF: estacionaria")
+#---- SIN DIFERENCIA
+tsdisplay(stock_market_ts_trimestral_sin_outliers_log)             
+
+#......................................................
+# 1. Serie temporal:
+#   - Se observa una tendencia ascendente prolongada.
+# - No fluctúa alrededor de una media constante.
+# - Varianza relativamente estable, pero la presencia de tendencia invalida la estacionariedad.
+
+# 2. ACF:
+#   - Las autocorrelaciones decaen muy lentamente.
+# - Muchas barras permanecen fuera de las bandas de confianza incluso para rezagos altos.
+# - Este patrón indica dependencia de largo plazo.
+
+# 3. PACF:
+#   - Picos significativos en varios rezagos iniciales.
+# - Patrón típico de series no estacionarias con tendencia.
+# Conclusión:
+#   → La serie NO es estacionaria en nivel (diff = 0).
+# → Se recomienda aplicar una primera diferencia para estabilizar la media.
+
+#......................................................
+
+#---- PRIMERA DIFERENCIA
+
+# Aplicar diferencia
+stock_market_diff1 <- diff(stock_market_ts_trimestral_sin_outliers_log, differences = 1)
+tsdisplay(stock_market_diff1)
+
+#......................................................
+# 1. Serie temporal (diferenciada en 1ra orden):
+#   - Fluctúa alrededor de una media constante (sin tendencia evidente).
+#   - No se observa un crecimiento o caída prolongada en el tiempo.
+#   - La varianza parece estable a lo largo del tiempo.
+#   → Esto sugiere que la media y la varianza son constantes, lo cual es consistente con la estacionariedad.
+
+# 2. ACF:
+#   - Las autocorrelaciones caen rápidamente dentro de las bandas de confianza.
+#   - No se observa un patrón de decaimiento lento.
+#   → Este comportamiento indica que no hay dependencia de largo plazo → Consistente con estacionariedad.
+
+# 3. PACF:
+#   - Solo unos pocos rezagos iniciales muestran picos significativos.
+#   - La mayoría de las barras están dentro de las bandas de confianza.
+#   → Esto es característico de una serie estacionaria, donde la dependencia se corta después de pocos rezagos.
+
+# SI ES ESTACIONARIA → diff=1
+#......................................................
+
+#---- TESTS DE ESTACIONARIEDAD
+
+# TEST ADF
+adf_test_stock_market_1 <- adf.test(stock_market_diff1)
+if(adf_test_stock_market_1$p.value < 0.05){
+  print("Stock Market - ADF (diff1): estacionaria")
 } else{
-  print("CPI (log) - ADF: NO estacionaria")
-}
-#NO ESTACIONARIA diff=0
-
-kpss_test_cpi <- kpss.test(cpi_ts_trimestral_sin_outliers, null="Level")
-if(kpss_test_cpi$p.value < 0.05){
-  print("CPI (log) - KPSS: NO estacionaria")
-} else{
-  print("CPI (log) - KPSS: estacionaria")
-}
-#NO ESTACIONARIA diff=0
-
-
-#TEST LJUNG-BOX
-LBtest_cpi <- Box.test(cpi_ts_trimestral_sin_outliers, 
-                       lag = 20, type = "Ljung")
-if (LBtest_cpi$p.value < 0.05) {
-  print("CPI (log) - Ljung-Box: Existe correlación")
-} else {
-  print("CPI (log) - Ljung-Box: Ausencia de correlación")
-}
-#EXISTE CORRELACION
-
-
-
-#----------        Primera diferencia
-cpi_diff1 <- diff(cpi_ts_trimestral_sin_outliers, differences = 1)
-
-#Comprobar estacionariedad
-adf_test_cpi_1 <- adf.test(cpi_diff1)
-if(adf_test_cpi_1$p.value < 0.05){
-  print("CPI (log) - ADF (diff1): estacionaria")
-} else{
-  print("CPI (log) - ADF (diff1): NO estacionaria")
-}
-#NO ESTACIONARIA diff=1
-
-kpss_test_cpi_1 <- kpss.test(cpi_diff1, null="Level")
-if(kpss_test_cpi_1$p.value < 0.05){
-  print("CPI (log) - KPSS (diff1): NO estacionaria")
-} else{
-  print("CPI (log) - KPSS (diff1): estacionaria")
+  print("Stock Market - ADF (diff1): NO estacionaria")
 }
 #ESTACIONARIA diff=1
 
-#!!!!!! Cada test me dice una cosa
-
-LBtest_cpi_1 <- Box.test(cpi_diff1, lag = 20, type="Ljung")
-if (LBtest_cpi_1$p.value < 0.05) {
-  print("CPI (log) - Ljung-Box (diff1): Existe correlación")
-} else {
-  print("CPI (log) - Ljung-Box (diff1): Ausencia de correlación")
+# TEST KPSS
+kpss_test_stock_market_1 <- kpss.test(stock_market_diff1, null="Level")
+if(kpss_test_stock_market_1$p.value < 0.05){
+  print("Stock Market - KPSS (diff1): NO estacionaria")
+} else{
+  print("Stock Market - KPSS (diff1): estacionaria")
 }
+#ESTACIONARIA diff=1
 
+# TEST LJUNG-BOX
+LBtest_stock_market_1 <- Box.test(stock_market_diff1, lag = 20, type="Ljung")
+if (LBtest_stock_market_1$p.value < 0.05) {
+  print("Stock Market - Ljung-Box (diff1): Existe correlación")
+} else {
+  print("Stock Market - Ljung-Box (diff1): Ausencia de correlación")
+}
 #AUSENCIA DE CORRELACION
 
-
-
-
-
-
-###########            STOCK MARKET (TRIMESTRAL)  #####################
-#######################################################################
-
-#----------        Serie original sin diferencias
-adf_test_stock <- adf.test(stock_market_ts_trimestral_sin_outliers)
-if(adf_test_stock$p.value < 0.05){
-  print("Stock Market (log) - ADF: estacionaria")
-} else{
-  print("Stock Market (log) - ADF: NO estacionaria")
-}
-#NO ESTACIONARIA diff=0
-
-kpss_test_stock <- kpss.test(stock_market_ts_trimestral_sin_outliers, null="Level")
-if(kpss_test_stock$p.value < 0.05){
-  print("Stock Market (log) - KPSS: NO estacionaria")
-} else{
-  print("Stock Market (log) - KPSS: estacionaria")
-}
-#NO ESTACIONARIA diff=0
-
-#TEST LJUNG-BOX
-LBtest_stock <- Box.test(stock_market_ts_trimestral_sin_outliers, 
-                       lag = 20, type = "Ljung")
-if (LBtest_stock$p.value < 0.05) {
-  print("Stock Market (log) - Ljung-Box: Existe correlación")
-} else {
-  print("Stock Market (log) - Ljung-Box: Ausencia de correlación")
-}
-#EXISTE CORRELACION
-
-#----------        Primera diferencia
-stock_diff1 <- diff(stock_market_ts_trimestral_sin_outliers, differences = 1)
-
-#Comprobar estacionariedad
-adf_test_stock_1 <- adf.test(stock_diff1)
-if(adf_test_stock_1$p.value < 0.05){
-  print("Stock Market (log) - ADF (diff1): estacionaria")
-} else{
-  print("Stock Market (log) - ADF (diff1): NO estacionaria")
-}
-#ESTACIONARIA diff=1
-
-kpss_test_stock_1 <- kpss.test(stock_diff1, null="Level")
-if(kpss_test_stock_1$p.value < 0.05){
-  print("Stock Market (log) - KPSS (diff1): NO estacionaria")
-} else{
-  print("Stock Market (log) - KPSS (diff1): estacionaria")
-}
-#ESTACIONARIA diff=1
-
-#TEST LJUNG-BOX
-LBtest_stock_1 <- Box.test(stock_diff1, lag = 20, type="Ljung")
-if (LBtest_stock_1$p.value < 0.05) {
-  print("Stock Market (log) - Ljung-Box (diff1): Existe correlación")
-} else {
-  print("Stock Market (log) - Ljung-Box (diff1): Ausencia de correlación")
-}
-
-#AUSENCIA DE CORRELACION --> Genial
-
-#La variable "Stock Market" es estacionaria al aplicar la primera diferencia
-stock_market_ts_trimestral_sin_outliers_estacionaria<- stock_diff1
+# Los tests indican que la serie es estacionaria con la primera diferencia.
+stock_market_ts_trimestral_sin_outliers_log_estacionaria <- stock_market_diff1
 
 #-----------------------------------------------------------------
-#Graficamos
+# Graficamos
 #-----------------------------------------------------------------
-#-------    SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparacion)
-par(mfrow=c(2,1))  # dos gráficos en una ventana
-plot(stock_market_ts_trimestral_sin_outliers, type="l", 
-     main="Stock Market (log) - Serie original", ylab="Nivel (log)")
-plot(stock_market_ts_trimestral_sin_outliers_estacionaria, type="l", 
-     main="Stock Market (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
+#------- SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparación)
+par(mfrow=c(2,1))
+plot(stock_market_ts_trimestral_sin_outliers_log, type="l", main="Stock Market Index (log) - Serie original", ylab="Nivel (log)")
+plot(stock_market_ts_trimestral_sin_outliers_log_estacionaria, type="l", main="Stock Market Index (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
 par(mfrow=c(1,1))  
 
-#-------    ACF Y PACF
-#Muy útiles para ver la dependencia temporal y sugerir órdenes AR/MA en modelos ARIMA:
-p1 <- ggAcf(stock_market_ts_trimestral_sin_outliers_estacionaria) + 
-  ggtitle("ACF - Stock Market (log, diff1)")
-p2 <- ggPacf(stock_market_ts_trimestral_sin_outliers_estacionaria) + 
-  ggtitle("PACF - Stock Market (log, diff1)")
+#------- ACF Y PACF
+p1 <- ggAcf(stock_market_ts_trimestral_sin_outliers_log_estacionaria) + ggtitle("ACF - Stock Market (log, diff1)")
+p2 <- ggPacf(stock_market_ts_trimestral_sin_outliers_log_estacionaria) + ggtitle("PACF - Stock Market (log, diff1)")
 grid.arrange(p1, p2, ncol=1)   
 
-#-------   QQ-PLOT 
-#Comprobar si los residuos parecen normales:
-#Es útil porque cuando modelamos con ARIMA, los residuos deberían comportarse como ruido blanco.
-qqnorm(stock_market_ts_trimestral_sin_outliers_estacionaria, 
-       main="QQ-plot - Stock Market (log, diff1)")
-qqline(stock_market_ts_trimestral_sin_outliers_estacionaria, col="red")
+#------- QQ-PLOT 
+qqnorm(stock_market_ts_trimestral_sin_outliers_log_estacionaria, main="QQ-plot - Stock Market (log, diff1)")
+qqline(stock_market_ts_trimestral_sin_outliers_log_estacionaria, col="red")
 
-#Los puntos siguen bastante bien la línea roja en el centro → los datos son aproximadamente normales.
-#En las colas hay ligeras desviaciones → presencia de colas algo más pesadas que la normal.
-#En resumen: la serie diferenciada es casi normal, con pequeñas desviaciones en los extremos, algo típico en series financieras por la volatilidad.
+
+
+
+
+
+#=======================
+# 11. MODELOS ARIMA
+#=======================
+
+
+# Aplicamos auto.arima sobre la serie original (sin diferencias aplicadas manualmente)
+
+########### ---------- Money Supply (TRIMESTRAL)  #####################
+#######################################################################
+
+# Porque el parámetro d = 2 indica que queremos que auto.arima aplique 2 diferencias
+# automáticamente para volver la serie estacionaria, según lo que vimos en los tests.
+
+modelo_money_supply <- auto.arima(
+  money_supply_ts_trimestral_sin_outliers,
+  d = 2,               # Número fijo de diferencias a aplicar (segunda diferencia)
+  seasonal = FALSE,    # Indicamos que no queremos modelo estacional (no buscamos SARIMA)
+  stepwise = FALSE,    # Desactivamos el paso a paso rápido para que explore todos los posibles modelos
+  approximation = FALSE # Desactivamos aproximaciones para que el ajuste sea exacto (más lento pero más preciso)
+)
+
+# Mostrar resumen del modelo seleccionado
+summary(modelo_money_supply)
+
+#--> ARIMA (0,2,1)  #-AR (autoregresivo) = 0: no hay términos autoregresivos.
+                    #d = 2: aplicó dos diferencias para lograr estacionariedad (como esperábamos).
+                    #MA (media móvil) = 1: tiene un término de media móvil de orden 1.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
