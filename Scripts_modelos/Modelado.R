@@ -82,7 +82,7 @@ money_supply_ts_trimestral <- aggregate(money_supply_ts_mensual, nfrequency = 4,
 #--Stock market: último valor del trimestre
 stock_market_ts_trimestral <- aggregate(stock_market_ts_mensual, nfrequency = 4, FUN = function(x) tail(x, 1))
 #Guardar
-#saveRDS(stock_market_ts_trimestral, "stock_market_ts_trimestral.rds")
+saveRDS(stock_market_ts_trimestral, "stock_market_ts_trimestral.rds")
 
 
 # =========================
