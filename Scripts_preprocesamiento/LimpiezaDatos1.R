@@ -105,3 +105,4 @@ miss_var_summary(df_final)
 
 #Guardamos la base de datos limpia
 #write.csv(df_final, file = "Datos_Limpios_Australia.csv", row.names = FALSE)
+
