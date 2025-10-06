@@ -151,62 +151,47 @@ stock_market_ts_trimestral <- aggregate(stock_market_ts_mensual, nfrequency = 4,
 # ---- SERIES MENSUALES ----
 #--------------------------------------------------------------------------
 par(mfrow=c(3,1), mar=c(4,4,2,1))  # 3 filas, 1 columna
-#png("graficos_unemployment_mensual.png", width=800, height=600)
+
 plot(unemployment_ts_mensual, type="l", col="blue", lwd=2,
      main="Tasa de Desempleo Mensual - Australia",
      ylab="%", xlab="Año")
-#dev.off()
 
-#png("graficos_money_supply_mensual.png", width=800, height=600)
 plot(money_supply_ts_mensual, type="l", col="darkgreen", lwd=2,
      main="Money Supply Mensual - Australia",
      ylab="Billion Currency Units", xlab="Año")
-#dev.off()
 
-#png("graficos_stock_market_mensual.png", width=800, height=600)
 plot(stock_market_ts_mensual, type="l", col="red", lwd=2,
      main="Stock Market Index Mensual - Australia",
      ylab="Index", xlab="Año")
-#dev.off()
 
 # ---- SERIES TRIMESTRALES ----
 #--------------------------------------------------------------------------
 par(mfrow=c(5,1), mar=c(4,4,2,1))  # 5 filas, 1 columna
 
 # Unemployment trimestral
-#png("graficos_unemployment_trimestral.png", width=800, height=600)
 plot(unemployment_ts_trimestral, type="l", col="blue", lwd=2,
      main="Tasa de Desempleo Trimestral - Australia",
      ylab="%", xlab="Año")
-#dev.off()
 
 # Money supply trimestral
-#png("graficos_money_supply_trimestral.png", width=800, height=600)
 plot(money_supply_ts_trimestral, type="l", col="darkgreen", lwd=2,
      main="Money Supply Trimestral - Australia",
      ylab="Billion Currency Units", xlab="Año")
-#dev.off()
 
 # Stock market trimestral
-#png("graficos_stock_market_trimestral.png", width=800, height=600)
 plot(stock_market_ts_trimestral, type="l", col="red", lwd=2,
      main="Stock Market Index Trimestral - Australia",
      ylab="Index", xlab="Año")
-#dev.off()
 
 # CPI trimestral
-#png("graficos_cpi_trimestral.png", width=800, height=600)
 plot(cpi_ts_trimestral, type="l", col="purple", lwd=2,
      main="CPI Trimestral - Australia",
      ylab="Index", xlab="Año")
-#dev.off()
 
 # GDP trimestral
-#png("graficos_gdp_trimestral.png", width=800, height=600)
 plot(gdp_ts_trimestral, type="l", col="orange", lwd=2,
      main="GDP Trimestral - Australia",
      ylab="Billion Currency Units", xlab="Año")
-#dev.off()
 
 # Restaurar parámetros gráficos por defecto
 par(mfrow=c(1,1))
@@ -276,26 +261,11 @@ plot_outliers <- function(original_ts, clean_ts, titulo){
 
 
 # ---- 3. Aplicar a cada variable ----
-# Guardar cada comparación de outliers
-#png("outliers_unemployment.png", width=800, height=800)
 plot_outliers(unemployment_ts_trimestral, unemployment_ts_trimestral_sin_outliers, "Unemployment Rate (Trimestral, Australia)")
-#dev.off()
-
-#png("outliers_money_supply.png", width=800, height=800)
 plot_outliers(money_supply_ts_trimestral, money_supply_ts_trimestral_sin_outliers, "Money Supply (Trimestral, Australia)")
-#dev.off()
-
-#png("outliers_stock_market.png", width=800, height=800)
 plot_outliers(stock_market_ts_trimestral, stock_market_ts_trimestral_sin_outliers, "Stock Market Index (Trimestral, Australia)")
-#dev.off()
-
-#png("outliers_cpi.png", width=800, height=800)
 plot_outliers(cpi_ts_trimestral, cpi_ts_trimestral_sin_outliers, "CPI (Trimestral, Australia)")
-#dev.off()
-
-#png("outliers_gdp.png", width=800, height=800)
 plot_outliers(gdp_ts_trimestral, gdp_ts_trimestral_sin_outliers, "GDP (Trimestral, Australia)")
-#dev.off()
 
 
 
@@ -341,17 +311,13 @@ stock_market_ts_trimestral_sin_outliers_log <- log(stock_market_ts_trimestral_si
 gdp_ts_trimestral_sin_outliers_log <- log(gdp_ts_trimestral_sin_outliers)
 
 # Graficar después de log-transform
-#png("stock_market_log.png", width=800, height=600)
-tsplot(stock_market_ts_trimestral_sin_outliers_log, col="darkgreen", lwd=2,
+tsplot(stock_market_ts_trimestral_sin_outliers_logstock_market_ts_trimestral_sin_outliers_log, col="darkgreen", lwd=2,
        main="Stock Market - Serie log-transformada", ylab="Log-Valor", xlab="Tiempo")
 abline(h=mean(stock_market_ts_trimestral_sin_outliers_log, na.rm=TRUE), col="red", lty=2)
-#dev.off()
 
-#png("gdp_log.png", width=800, height=600)
 tsplot(gdp_ts_trimestral_sin_outliers_log, col="darkgreen", lwd=2,
        main="GDP - Serie log-transformada", ylab="Log-Valor", xlab="Tiempo")
 abline(h=mean(gdp_ts_trimestral_sin_outliers_log, na.rm=TRUE), col="red", lty=2)
-#dev.off()
 
 
 
@@ -516,10 +482,9 @@ p2 <- ggPacf(money_supply_ts_trimestral_sin_outliers_estacionaria) + ggtitle("PA
 grid.arrange(p1, p2, ncol=1)   
 
 #-------   QQ-PLOT 
-#png("QQ_money_supply.png", width=800, height=600)
 qqnorm(money_supply_ts_trimestral_sin_outliers_estacionaria, main="QQ-plot - Money Supply (log, diff2)")
 qqline(money_supply_ts_trimestral_sin_outliers_estacionaria, col="red")
-#dev.off()
+
 
 
 ########### ---------- Unemployment Rate (TRIMESTRAL)  #####################
@@ -614,10 +579,9 @@ p2 <- ggPacf(unemployment_ts_trimestral_sin_outliers_estacionaria) + ggtitle("PA
 grid.arrange(p1, p2, ncol=1)   
 
 #-------   QQ-PLOT 
-#png("QQ_unemployment.png", width=800, height=600)
 qqnorm(unemployment_ts_trimestral_sin_outliers_estacionaria, main="QQ-plot - Unemployment Rate (log, diff1)")
 qqline(unemployment_ts_trimestral_sin_outliers_estacionaria, col="red")
-#dev.off()
+
 
 
 
@@ -725,11 +689,10 @@ p1 <- ggAcf(gdp_ts_trimestral_sin_outliers_log_estacionaria) + ggtitle("ACF - GD
 p2 <- ggPacf(gdp_ts_trimestral_sin_outliers_log_estacionaria) + ggtitle("PACF - GDP (log, diff1)")
 grid.arrange(p1, p2, ncol=1)   
 
-#-------   QQ-PLOT
-#png("QQ_gdp.png", width=800, height=600)
+#-------   QQ-PLOT 
 qqnorm(gdp_ts_trimestral_sin_outliers_log_estacionaria, main="QQ-plot - GDP (log, diff1)")
 qqline(gdp_ts_trimestral_sin_outliers_log_estacionaria, col="red")
-#dev.off()
+
 
 
 
@@ -864,10 +827,9 @@ p2 <- ggPacf(cpi_ts_trimestral_sin_outliers_estacionaria) + ggtitle("PACF - CPI 
 grid.arrange(p1, p2, ncol=1)   
 
 #-------   QQ-PLOT 
-#png("QQ_cpi.png", width=800, height=600)
 qqnorm(cpi_ts_trimestral_sin_outliers_estacionaria, main="QQ-plot - CPI (log, diff1)")
 qqline(cpi_ts_trimestral_sin_outliers_estacionaria, col="red")
-#dev.off()
+
 
 
 
@@ -984,21 +946,12 @@ p2 <- ggPacf(stock_market_ts_trimestral_sin_outliers_log_estacionaria) + ggtitle
 grid.arrange(p1, p2, ncol=1)   
 
 #------- QQ-PLOT 
-#png("QQ_stock_market.png", width=800, height=600)
 qqnorm(stock_market_ts_trimestral_sin_outliers_log_estacionaria, main="QQ-plot - Stock Market (log, diff1)")
 qqline(stock_market_ts_trimestral_sin_outliers_log_estacionaria, col="red")
-#dev.off()
 
 
-#Descargar graficos
-#-- ACF- PACF
-# ggsave("ACF_PACF_money_supply.png", grid.arrange(p1, p2, ncol=1), width=8, height=6)
-# ggsave("ACF_PACF_unemployment.png", grid.arrange(p1, p2, ncol=1), width=8, height=6)
-# ggsave("ACF_PACF_gdp.png", grid.arrange(p1, p2, ncol=1), width=8, height=6)
-# ggsave("ACF_PACF_cpi.png", grid.arrange(p1, p2, ncol=1), width=8, height=6)
-# ggsave("ACF_PACF_stock_market.png", grid.arrange(p1, p2, ncol=1), width=8, height=6)
 
-#-- QQ PLOTS
+
 
 
 #=======================
