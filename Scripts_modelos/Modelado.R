@@ -292,13 +292,67 @@ abline(h=mean(gdp_ts_trimestral_sin_outliers_log, na.rm=TRUE), col="red", lty=2)
 #=======================
 #DESCOPOSICION DE LA SERIE
 #=======================
+# Descomposición de la serie de IPC
+descomposicion_ipc <- decompose(cpi_ts_trimestral_sin_outliers)
+plot(descomposicion_ipc, col= "#8db41c")
+descomposicion_ipc$seasonal #estacionalidad
+descomposicion_ipc$trend #tendencia
+random_ipc<-descomposicion_ipc$random #residuo
 
+# Descomposición de la serie de PIB
+descomposicion_pib <- decompose(gdp_ts_trimestral_sin_outliers_log)
+plot(descomposicion_pib, col= "#93044e")
+descomposicion_pib$seasonal #estacionalidad
+descomposicion_pib$trend #tendencia
+random_pib<-descomposicion_pib$random #residuo
+
+# Descomposición de la serie de masa monetaria
+descomposicion_money_supply <- decompose(money_supply_ts_trimestral_sin_outliers)
+plot(descomposicion_money_supply, col= "#c88fb2")
+descomposicion_money_supply$seasonal #estacionalidad
+descomposicion_money_supply$trend #tendencia
+random_money_supply<-descomposicion_money_supply$random #residuo
+
+# Descomposición de la serie de indice bursatil
+descomposicion_stock_markey <- decompose(stock_market_ts_trimestral_sin_outliers_log)
+plot(descomposicion_stock_markey, col= "#c88fb2")
+descomposicion_stock_markey$seasonal #estacionalidad
+descomposicion_stock_markey$trend #tendencia
+random_stock_market<-descomposicion_stock_markey$random #residuo
+
+# Descomposición de la serie del paro
+descomposicion_unemployment <- decompose(unemployment_ts_trimestral_sin_outliers)
+plot(descomposicion_unemployment, col= "#c88fb2")
+descomposicion_unemployment$seasonal #estacionalidad
+descomposicion_unemployment$trend #tendencia
+random_unemployment<-descomposicion_unemployment$random #residuo
 
 
 
 #=======================
 #ANALISIS DE AUTOCORRELACION
 #=======================
+# ACF y PACF
+cpi_ts_trimestral_sin_outliers <- na.omit(cpi_ts_trimestral_sin_outliers)
+gdp_ts_trimestral_sin_outliers_log <- na.omit(gdp_ts_trimestral_sin_outliers_log)
+stock_market_ts_trimestral_sin_outliers_log <- na.omit(stock_market_ts_trimestral_sin_outliers_log)
+money_supply_ts_trimestral_sin_outliers <- na.omit(money_supply_ts_trimestral_sin_outliers)
+unemployment_ts_trimestral_sin_outliers <- na.omit(unemployment_ts_trimestral_sin_outliers)
+
+acf(cpi_ts_trimestral_sin_outliers, main = "ACF del IPC", col= "#8db41c") #analiza la estacionalidad
+pacf(cpi_ts_trimestral_sin_outliers, main = "PACF del IPC", col= "#8db41c")
+
+acf(money_supply_ts_trimestral_sin_outliers, main = "ACF de Money Supply", col= "#c88fb2") 
+pacf(money_supply_ts_trimestral_sin_outliers, main = "PACF de Money Supply", col= "#c88fb2")
+
+acf(gdp_ts_trimestral_sin_outliers_log, main = "ACF del GDP", col= "#93044e")
+pacf(gdp_ts_trimestral_sin_outliers_log, main = "PACF del GDP", col= "#93044e")
+
+acf(stock_market_ts_trimestral_sin_outliers_log, main = "ACF del Stock Market", col= "#c88fb2")
+pacf(stock_market_ts_trimestral_sin_outliers_log, main = "PACF del Stock Market", col= "#c88fb2")
+
+acf(unemployment_ts_trimestral_sin_outliers, main = "ACF de Unemployment Rate", col= "#c88fb2")
+pacf(unemployment_ts_trimestral_sin_outliers, main = "PACF de Unemployment Rate", col= "#c88fb2")
 
 
 
@@ -941,6 +995,147 @@ qqline(stock_market_ts_trimestral_sin_outliers_log_estacionaria, col="red")
 # ggsave("ACF_PACF_stock_market.png", grid.arrange(p1, p2, ncol=1), width=8, height=6)
 
 #-- QQ PLOTS
+
+
+#==================
+#TRAIN - TEST
+#==================
+#Queremos predecir datos que ya tenemos para evaluar los modelos
+#Separar datos en train y test
+
+train_ipc<-window(cpi_ts_trimestral_sin_outliers_estacionaria,start= c(1997,1),end=c(2016,1))
+test_ipc<-window(cpi_ts_trimestral_sin_outliers_estacionaria,start=c(2016,1), end= c(2022,2))
+
+train_pib<-window(gdp_ts_trimestral_sin_outliers_log_estacionaria,start= c(1997,1),end=c(2016,1))
+test_pib<-window(gdp_ts_trimestral_sin_outliers_log_estacionaria,start=c(2016,1), end= c(2022,2))
+
+#Ajustar modelos de prediccion
+#-- NAIVE
+naive_ipc<-naive(train_ipc,h=length(test_ipc))
+naive_pib<-naive(train_pib,h=length(test_pib))
+
+#-- SNAIVE
+snaive_ipc<-snaive(train_ipc,h=length(test_ipc))
+snaive_pib<-snaive(train_pib,h=length(test_pib))
+
+
+#MEAN FORECAST
+meanf_pib<-meanf(train_pib,h=length(test_pib))
+meanf_ipc<-meanf(train_ipc,h=length(test_ipc))
+
+#PROMEDIO MOVIL (MA)
+ma_pib <- Arima(train_pib, order = c(0,0,1))
+prediccion_ma_pib <- forecast(ma_pib, h = length(test_pib))
+
+ma_ipc <- Arima(train_ipc, order = c(0,0,1))
+prediccion_ma_ipc <- forecast(ma_ipc, h = length(test_ipc))
+
+#MODELO AUTOREGRESIVO (AR)
+ar_ipc<-Arima(train_ipc,order = c(2,0,0))
+ar_ipc_forecast<-forecast(ar_ipc,h=length(test_ipc))
+
+ar_pib<-Arima(train_pib,order = c(2,0,0))
+ar_pib_forecast<-forecast(ar_pib,h=length(test_pib))
+
+#ARMA
+arma_ipc<-Arima(train_ipc,order = c(1,0,1))
+arma_ipc_forecast<-forecast(arma_ipc,h=length(test_ipc))
+
+arma_pib<-Arima(train_pib,order = c(1,0,1))
+arma_pib_forecast<-forecast(arma_pib,h=length(test_pib))
+
+#ARIMA
+modelo_arima_ipc <- auto.arima(train_ipc,seasonal = FALSE)
+summary(modelo_arima_ipc)
+arima_forecast_ipc<-forecast(modelo_arima_ipc,h=length(test_ipc))
+
+modelo_arima_pib <- auto.arima(train_pib,seasonal = FALSE)
+summary(modelo_arima_pib)
+arima_forecast_pib<-forecast(modelo_arima_pib,h=length(test_pib))
+
+#SARIMA
+modelo_sarima_ipc <- auto.arima(train_ipc, seasonal = TRUE)
+forecast_sarima_ipc <- forecast(modelo_sarima_ipc, h = length(test_ipc))
+
+modelo_sarima_pib <- auto.arima(train_pib, seasonal = TRUE)
+forecast_sarima_pib <- forecast(modelo_sarima_pib, h = length(test_pib))
+
+
+#Analizamos los resultados para ver que modelo es el más preciso
+resultados_pib <- data.frame(Modelo = character(),
+                             MAE = numeric(),
+                             RMSE = numeric(),
+                             MAPE = numeric(),stringsAsFactors = FALSE)
+
+agregar_resultado <- function(nombre, prediccion, real) {
+  metrica <- accuracy(prediccion, real)
+  resultados_pib <<- rbind(resultados_pib, data.frame(
+    Modelo = nombre,
+    MAE = metrica["Test set", "MAE"],
+    RMSE = metrica["Test set", "RMSE"],
+    MAPE = metrica["Test set", "MAPE"]
+  ))
+}
+
+
+# Evaluar cada modelo y almacenar sus resultados
+agregar_resultado("AutoARIMA", arima_forecast_pib, test_pib)
+agregar_resultado("Mean Forecast", meanf_pib, test_pib)
+agregar_resultado("SNaive", snaive_pib, test_pib)
+agregar_resultado("Naive", naive_pib, test_pib)
+agregar_resultado("AR", ar_pib_forecast, test_pib)
+agregar_resultado("MA", prediccion_ma_pib, test_pib)
+agregar_resultado("ARMA", arma_pib_forecast, test_pib)
+agregar_resultado("SARIMA", forecast_sarima_pib, test_pib)
+
+# Ordenar la tabla de resultados por la métrica
+resultados_pib <- resultados_pib[order(resultados_pib$MAPE), ]
+resultados_pib
+head(resultados_pib) 
+
+######
+
+resultados_ipc <- data.frame(
+  Modelo = character(),
+  MAE = numeric(),
+  RMSE = numeric(),
+  MAPE = numeric(),
+  stringsAsFactors = FALSE
+)
+
+agregar_resultado <- function(nombre, prediccion, real) {
+  metrica <- accuracy(prediccion, real)
+  resultados_ipc <<- rbind(resultados_ipc, data.frame(
+    Modelo = nombre,
+    MAE = metrica["Test set", "MAE"],
+    RMSE = metrica["Test set", "RMSE"],
+    MAPE = metrica["Test set", "MAPE"]
+  ))
+}
+
+
+# Evaluar cada modelo y almacenar sus resultados
+agregar_resultado("AutoARIMA", arima_forecast_ipc, test_ipc)
+agregar_resultado("Mean Forecast", meanf_ipc, test_ipc)
+agregar_resultado("SNaive", snaive_ipc, test_ipc)
+agregar_resultado("Naive", naive_ipc, test_ipc)
+agregar_resultado("AR", ar_ipc_forecast, test_ipc)
+agregar_resultado("MA", prediccion_ma_ipc, test_ipc)
+agregar_resultado("ARMA", arma_ipc_forecast, test_ipc)
+agregar_resultado("SARIMA", forecast_sarima_ipc, test_ipc)
+
+# Ordenar la tabla de resultados por la métrica
+resultados_ipc <- resultados_ipc[order(resultados_ipc$MAPE), ]
+resultados_ipc
+head(resultados_ipc) 
+
+
+
+
+
+
+
+
 
 
 #=======================
