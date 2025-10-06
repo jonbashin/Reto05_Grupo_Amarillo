@@ -41,9 +41,9 @@ stock_market_ts_mensual<- ts(as.numeric(datos_limpios_AUS$Stock.market.index), s
 #CPI y GDP son trimestrales por lo que no se pude sacar el mensual
 
 #Guardar series temporales Mensuales
-#saveRDS(unemployment_ts_mensual, "unemployment_ts_mensual.rds")
-#saveRDS(money_supply_ts_mensual, "money_supply_ts_mensual.rds")
-#saveRDS(stock_market_ts_mensual, "stock_market_ts_mensual.rds")
+# saveRDS(unemployment_ts_mensual, "unemployment_ts_mensual.rds")
+# saveRDS(money_supply_ts_mensual, "money_supply_ts_mensual.rds")
+# saveRDS(stock_market_ts_mensual, "stock_market_ts_mensual.rds")
 
 
 # ---- VARIABLES TRIMESTRALES (CPI y GDP)----
