@@ -30,6 +30,7 @@ colnames(datos_limpios_AUS)
 #Las variables PCI y GDP las tenemos en trimestrales ya en los datos Originales, en cmabio Unemployment, money supply y Stock Market estan en mensuales.
 #Por lo que las pasaremos a series trimestrals las tres que estan en mensual, ya que trabajaremos con datos trimestrales para hacer la prediccion.
 
+
 # =========================
 # 1. PASAR A SERIES TEMPORALES TRIMESTRALES
 # =========================
@@ -42,9 +43,9 @@ stock_market_ts_mensual<- ts(as.numeric(datos_limpios_AUS$Stock.market.index), s
 #CPI y GDP son trimestrales por lo que no se pude sacar el mensual
 
 #Guardar series temporales Mensuales
-saveRDS(unemployment_ts_mensual, "unemployment_ts_mensual.rds")
-saveRDS(money_supply_ts_mensual, "money_supply_ts_mensual.rds")
-saveRDS(stock_market_ts_mensual, "stock_market_ts_mensual.rds")
+# saveRDS(unemployment_ts_mensual, "unemployment_ts_mensual.rds")
+# saveRDS(money_supply_ts_mensual, "money_supply_ts_mensual.rds")
+# saveRDS(stock_market_ts_mensual, "stock_market_ts_mensual.rds")
 
 
 # ---- VARIABLES TRIMESTRALES (CPI y GDP)----
@@ -55,15 +56,13 @@ cpi_vals <- na.omit(as.numeric(datos_limpios_AUS$Consumer.Price.Index..CPI.))
 # Crear serie trimestral empezando en el primer año y trimestre válido
 cpi_ts_trimestral <- ts(cpi_vals, start=c(1996,3), frequency=4)
 #Guardar
-saveRDS(cpi_ts_trimestral, "cpi_ts_trimestral.rds")
+#saveRDS(cpi_ts_trimestral, "cpi_ts_trimestral.rds")
 
 #-->GDP
-# Tomar solo los valores numéricos (sin NAs iniciales)
 gdp_vals <- na.omit(as.numeric(datos_limpios_AUS$GDP.billion.currency.units))
-# Crear serie trimestral empezando en el primer trimestre válido (ajusta si no es Q3 1996)
 gdp_ts_trimestral <- ts(gdp_vals, start=c(1996,3), frequency=4)
 #Guardar
-saveRDS(gdp_ts_trimestral, "gdp_ts_trimestral.rds")
+#saveRDS(gdp_ts_trimestral, "gdp_ts_trimestral.rds")
 
 
 # ---- CONVERTIR VARIABLES MENSUALES A TRIMESTRALES ----
@@ -73,26 +72,27 @@ saveRDS(gdp_ts_trimestral, "gdp_ts_trimestral.rds")
 #--Unemployment: media trimestral
 unemployment_ts_trimestral <- aggregate(unemployment_ts_mensual, nfrequency=4, FUN=mean)
 #Guardar
-saveRDS(unemployment_ts_trimestral, "unemployment_ts_trimestral.rds")
+#saveRDS(unemployment_ts_trimestral, "unemployment_ts_trimestral.rds")
 
 #--Money supply: último valor del trimestre
 money_supply_ts_trimestral <- aggregate(money_supply_ts_mensual, nfrequency = 4, FUN = function(x) tail(x, 1))
 #Guardar
-saveRDS(money_supply_ts_trimestral, "money_supply_ts_trimestral.rds")
+#saveRDS(money_supply_ts_trimestral, "money_supply_ts_trimestral.rds")
 
 #--Stock market: último valor del trimestre
 stock_market_ts_trimestral <- aggregate(stock_market_ts_mensual, nfrequency = 4, FUN = function(x) tail(x, 1))
 #Guardar
-saveRDS(stock_market_ts_trimestral, "stock_market_ts_trimestral.rds")
+#saveRDS(stock_market_ts_trimestral, "stock_market_ts_trimestral.rds")
+
 
 
 # =========================
-# 6. VISUALIZACIÓN DE SERIES MENSUALES Y TRIMESTRALES - AUSTRALIA
+# 6. GRAFICAR SERIES MENSUALES Y TRIMESTRALES 
 # =========================
 
 # ---- SERIES MENSUALES ----
 #--------------------------------------------------------------------------
-png("graficos_series_mensuales.png", width=800, height=1200)
+#png("graficos_series_mensuales.png", width=800, height=1200)
 
 par(mfrow=c(3,1), mar=c(4,4,2,1))  # 3 filas, 1 columna
 plot(unemployment_ts_mensual, type="l", col="blue", lwd=2,
@@ -108,13 +108,13 @@ plot(stock_market_ts_mensual, type="l", col="red", lwd=2,
      ylab="Index", xlab="Año")
 
 par(mfrow=c(1,1))
-dev.off()
+#dev.off()
 
 
 
 # ---- SERIES TRIMESTRALES ----
 #--------------------------------------------------------------------------
-png("graficos_series_trimestrales.png", width=800, height=1200)
+#png("graficos_series_trimestrales.png", width=800, height=1200)
 
 par(mfrow=c(5,1), mar=c(4,4,2,1))  # 5 filas, 1 columna
 
@@ -144,7 +144,7 @@ plot(gdp_ts_trimestral, type="l", col="orange", lwd=2,
      ylab="Billion Currency Units", xlab="Año")
 
 par(mfrow=c(1,1))
-dev.off()
+#dev.off()
 
 
 
@@ -212,25 +212,25 @@ plot_outliers <- function(original_ts, clean_ts, titulo){
 
 # ---- 3. Aplicar a cada variable ----
 # Guardar cada comparación de outliers
-png("outliers_unemployment.png", width=800, height=800)
+#png("outliers_unemployment.png", width=800, height=800)
 plot_outliers(unemployment_ts_trimestral, unemployment_ts_trimestral_sin_outliers, "Unemployment Rate (Trimestral, Australia)")
-dev.off()
+#dev.off()
 
-png("outliers_money_supply.png", width=800, height=800)
+#png("outliers_money_supply.png", width=800, height=800)
 plot_outliers(money_supply_ts_trimestral, money_supply_ts_trimestral_sin_outliers, "Money Supply (Trimestral, Australia)")
-dev.off()
+#dev.off()
 
-png("outliers_stock_market.png", width=800, height=800)
+#png("outliers_stock_market.png", width=800, height=800)
 plot_outliers(stock_market_ts_trimestral, stock_market_ts_trimestral_sin_outliers, "Stock Market Index (Trimestral, Australia)")
-dev.off()
+#dev.off()
 
-png("outliers_cpi.png", width=800, height=800)
+#png("outliers_cpi.png", width=800, height=800)
 plot_outliers(cpi_ts_trimestral, cpi_ts_trimestral_sin_outliers, "CPI (Trimestral, Australia)")
-dev.off()
+#dev.off()
 
-png("outliers_gdp.png", width=800, height=800)
+#png("outliers_gdp.png", width=800, height=800)
 plot_outliers(gdp_ts_trimestral, gdp_ts_trimestral_sin_outliers, "GDP (Trimestral, Australia)")
-dev.off()
+#dev.off()
 
 
 
@@ -276,20 +276,29 @@ stock_market_ts_trimestral_sin_outliers_log <- log(stock_market_ts_trimestral_si
 gdp_ts_trimestral_sin_outliers_log <- log(gdp_ts_trimestral_sin_outliers)
 
 # Graficar después de log-transform
-png("stock_market_log.png", width=800, height=600)
+#png("stock_market_log.png", width=800, height=600)
 tsplot(stock_market_ts_trimestral_sin_outliers_log, col="darkgreen", lwd=2,
        main="Stock Market - Serie log-transformada", ylab="Log-Valor", xlab="Tiempo")
 abline(h=mean(stock_market_ts_trimestral_sin_outliers_log, na.rm=TRUE), col="red", lty=2)
-dev.off()
+#dev.off()
 
-png("gdp_log.png", width=800, height=600)
+#png("gdp_log.png", width=800, height=600)
 tsplot(gdp_ts_trimestral_sin_outliers_log, col="darkgreen", lwd=2,
        main="GDP - Serie log-transformada", ylab="Log-Valor", xlab="Tiempo")
 abline(h=mean(gdp_ts_trimestral_sin_outliers_log, na.rm=TRUE), col="red", lty=2)
-dev.off()
+#dev.off()
+
+
+#=======================
+#DESCOPOSICION DE LA SERIE
+#=======================
 
 
 
+
+#=======================
+#ANALISIS DE AUTOCORRELACION
+#=======================
 
 
 
