@@ -104,6 +104,11 @@ miss_var_summary(df_final)
 #Solo quedan NA-s en la variables GDP y CPI porque hay solo datos trimestrales para esas variables
 #Los NA-s de la variables money supply, unemplyment rate y stock market son lo que hay que predecir.
 
+#Guardamos la base de datos limpia
+write.csv(df_final, file = "Datos_Limpios_Australia.csv", row.names = FALSE)
+
+
+datos_limpios_AUS<- read.csv("DATOS/limpios/Datos_Limpios_Australia.csv")
 
 # =========================
 # 5. PASAR A SERIES TEMPORALES TRIMESTRALES
@@ -117,6 +122,12 @@ money_supply_ts_mensual<- ts(as.numeric(df_final$`Money supply billion currency 
 stock_market_ts_mensual<- ts(as.numeric(df_final$`Stock market index`), start= c(1996,1), frequency=12)
 #CPI y GDP son trimestrales por lo que no se pude sacar el mensual
 
+#Guardar series temporales
+saveRDS(unemployment_ts_mensual, "unemployment_ts_mensual.rds")
+saveRDS(money_supply_ts_mensual, "money_supply_ts_mensual.rds")
+saveRDS(stock_market_ts_mensual, "stock_market_ts_mensual.rds")
+
+
 # ---- VARIABLES TRIMESTRALES (CPI y GDP)----
 # CPI y GDP ya son trimestrales. Pasaremos a series temporales pero necesitaremos eliminar los NA-s
 #-->CPI
@@ -124,24 +135,37 @@ stock_market_ts_mensual<- ts(as.numeric(df_final$`Stock market index`), start= c
 cpi_vals <- na.omit(as.numeric(df_final$Consumer.Price.Index..CPI.))
 # Crear serie trimestral empezando en el primer año y trimestre válido
 cpi_ts_trimestral <- ts(cpi_vals, start=c(1996,3), frequency=4)
+#Guardar
+saveRDS(cpi_ts_trimestral, "cpi_ts_trimestral.rds")
 
 #-->GDP
 # Tomar solo los valores numéricos (sin NAs iniciales)
 gdp_vals <- na.omit(as.numeric(df_final$GDP.billion.currency.units))
 # Crear serie trimestral empezando en el primer trimestre válido (ajusta si no es Q3 1996)
 gdp_ts_trimestral <- ts(gdp_vals, start=c(1996,3), frequency=4)
+#Guardar
+saveRDS(gdp_ts_trimestral, "gdp_ts_trimestral.rds")
+
 
 # ---- CONVERTIR VARIABLES MENSUALES A TRIMESTRALES ----
 # Promediando los valores de cada trimestre
 #!!! HE HECHO EN TODOS LA MEDIA PERO NI IDEA
 
 #money supply y stock market quedarse con el ulitmo valor es decir (enero,febrero, marzo quedarnos con MARZO)
-# Unemployment: media trimestral
+#--Unemployment: media trimestral
 unemployment_ts_trimestral <- aggregate(unemployment_ts_mensual, nfrequency=4, FUN=mean)
-# Money supply: último valor del trimestre
+#Guardar
+saveRDS(unemployment_ts_trimestral, "unemployment_ts_trimestral.rds")
+
+#--Money supply: último valor del trimestre
 money_supply_ts_trimestral <- aggregate(money_supply_ts_mensual, nfrequency = 4, FUN = function(x) tail(x, 1))
-# Stock market: último valor del trimestre
+#Guardar
+saveRDS(money_supply_ts_trimestral, "money_supply_ts_trimestral.rds")
+
+#--Stock market: último valor del trimestre
 stock_market_ts_trimestral <- aggregate(stock_market_ts_mensual, nfrequency = 4, FUN = function(x) tail(x, 1))
+#Guardar
+saveRDS(stock_market_ts_trimestral, "stock_market_ts_trimestral.rds")
 
 
 # =========================
