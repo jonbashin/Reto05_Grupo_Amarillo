@@ -210,26 +210,24 @@ plot_outliers <- function(original_ts, clean_ts, titulo){
 }
 
 
-# ---- 3. Aplicar a cada variable ----
-# Guardar cada comparación de outliers
 #png("outliers_unemployment.png", width=800, height=800)
-plot_outliers(unemployment_ts_trimestral, unemployment_ts_trimestral_sin_outliers, "Unemployment Rate (Trimestral, Australia)")
+plot_outliers(unemployment_ts_trimestral, unemployment_ts_trimestral_sin_outliers, "Unemployment Rate (Trimestral)")
 #dev.off()
 
 #png("outliers_money_supply.png", width=800, height=800)
-plot_outliers(money_supply_ts_trimestral, money_supply_ts_trimestral_sin_outliers, "Money Supply (Trimestral, Australia)")
+plot_outliers(money_supply_ts_trimestral, money_supply_ts_trimestral_sin_outliers, "Money Supply (Trimestral)")
 #dev.off()
 
 #png("outliers_stock_market.png", width=800, height=800)
-plot_outliers(stock_market_ts_trimestral, stock_market_ts_trimestral_sin_outliers, "Stock Market Index (Trimestral, Australia)")
+plot_outliers(stock_market_ts_trimestral, stock_market_ts_trimestral_sin_outliers, "Stock Market Index (Trimestral)")
 #dev.off()
 
 #png("outliers_cpi.png", width=800, height=800)
-plot_outliers(cpi_ts_trimestral, cpi_ts_trimestral_sin_outliers, "CPI (Trimestral, Australia)")
+plot_outliers(cpi_ts_trimestral, cpi_ts_trimestral_sin_outliers, "CPI (Trimestral)")
 #dev.off()
 
 #png("outliers_gdp.png", width=800, height=800)
-plot_outliers(gdp_ts_trimestral, gdp_ts_trimestral_sin_outliers, "GDP (Trimestral, Australia)")
+plot_outliers(gdp_ts_trimestral, gdp_ts_trimestral_sin_outliers, "GDP (Trimestral)")
 #dev.off()
 
 
@@ -239,34 +237,45 @@ plot_outliers(gdp_ts_trimestral, gdp_ts_trimestral_sin_outliers, "GDP (Trimestra
 #======================
 
 # GDP
+#png("gdp_Serie_Sin_Outliers.png", width=800, height=600)
 tsplot(gdp_ts_trimestral_sin_outliers, col="steelblue", lwd=2,
-       main="GDP - Serie limpia", ylab="Valor", xlab="Tiempo")
-abline(h=mean(gdp_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
+       main="GDP (Sin outliers)  ", ylab="Valor", xlab="Tiempo")
+#dev.off()
 # Varianza creciente (ligera), con estacionalidad
 
 # CPI
+#png("cpi_Serie_Sin_Outliers.png", width=800, height=600)
 tsplot(cpi_ts_trimestral_sin_outliers, col="steelblue", lwd=2,
-       main="CPI - Serie limpia", ylab="Valor", xlab="Tiempo")
+       main="CPI (Sin Outliers)", ylab="Valor", xlab="Tiempo")
 abline(h=mean(cpi_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
-# Varianza constante
+#dev.off()
+#Varianza Constante
 
 # Stock Market
+#png("stock_market_Serie_Sin_Outliers.png", width=800, height=600)
 tsplot(stock_market_ts_trimestral_sin_outliers, col="steelblue", lwd=2,
-       main="Stock Market - Serie limpia", ylab="Valor", xlab="Tiempo")
+       main="Stock Market (Sin Outliers)", ylab="Valor", xlab="Tiempo")
 abline(h=mean(stock_market_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
-# Varianza creciente
+#dev.off()
+#Varianza Creciente
 
 # Money Supply
+#png("money_supply_Serie_Sin_Outliers.png", width=800, height=600)
 tsplot(money_supply_ts_trimestral_sin_outliers, col="steelblue", lwd=2,
-       main="Money Supply - Serie limpia", ylab="Valor", xlab="Tiempo")
+       main="Money Supply (Sin Outliers)", ylab="Valor", xlab="Tiempo")
 abline(h=mean(money_supply_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
-# Varianza constante
+#dev.off()
+#Varianza constante
 
-# Unemployment Rate
+# Unemployment
+#png("unemployment_Serie_Sin_Outliers.png", width=800, height=600)
 tsplot(unemployment_ts_trimestral_sin_outliers, col="steelblue", lwd=2,
-       main="Unemployment - Serie limpia", ylab="Valor", xlab="Tiempo")
+       main="Unemployment (Sin Outliers)", ylab="Valor", xlab="Tiempo")
 abline(h=mean(unemployment_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
-# Varianza constante
+#dev.off()
+#Varianza Constante
+
+
 
 # ESTABILIZAR VARIANZA
 # -------------------------
@@ -276,25 +285,25 @@ stock_market_ts_trimestral_sin_outliers_log <- log(stock_market_ts_trimestral_si
 gdp_ts_trimestral_sin_outliers_log <- log(gdp_ts_trimestral_sin_outliers)
 
 # Graficar después de log-transform
-#png("stock_market_log.png", width=800, height=600)
+#png("stock_market_Serie_Estabilizada_log.png", width=800, height=600)
 tsplot(stock_market_ts_trimestral_sin_outliers_log, col="darkgreen", lwd=2,
        main="Stock Market - Serie log-transformada", ylab="Log-Valor", xlab="Tiempo")
-abline(h=mean(stock_market_ts_trimestral_sin_outliers_log, na.rm=TRUE), col="red", lty=2)
 #dev.off()
 
-#png("gdp_log.png", width=800, height=600)
+#png("gdp_Serie_Estabilizada_log.png", width=800, height=600)
 tsplot(gdp_ts_trimestral_sin_outliers_log, col="darkgreen", lwd=2,
        main="GDP - Serie log-transformada", ylab="Log-Valor", xlab="Tiempo")
-abline(h=mean(gdp_ts_trimestral_sin_outliers_log, na.rm=TRUE), col="red", lty=2)
 #dev.off()
 
 
 #=======================
 #DESCOPOSICION DE LA SERIE
 #=======================
+#?? No puedo poner el titulo que yo quiero
 # Descomposición de la serie de IPC
 descomposicion_ipc <- decompose(cpi_ts_trimestral_sin_outliers)
-plot(descomposicion_ipc, col= "#8db41c")
+plot(descomposicion_ipc, col="#93044e")     # genera el gráfico con el título por defecto
+mtext("Descomposición del IPC - Serie limpia", side = 3, line = 0.5, cex = 1.2, font = 2)
 descomposicion_ipc$seasonal #estacionalidad
 descomposicion_ipc$trend #tendencia
 random_ipc<-descomposicion_ipc$random #residuo
@@ -308,21 +317,21 @@ random_pib<-descomposicion_pib$random #residuo
 
 # Descomposición de la serie de masa monetaria
 descomposicion_money_supply <- decompose(money_supply_ts_trimestral_sin_outliers)
-plot(descomposicion_money_supply, col= "#c88fb2")
+plot(descomposicion_money_supply, col= "#93044e")
 descomposicion_money_supply$seasonal #estacionalidad
 descomposicion_money_supply$trend #tendencia
 random_money_supply<-descomposicion_money_supply$random #residuo
 
 # Descomposición de la serie de indice bursatil
 descomposicion_stock_markey <- decompose(stock_market_ts_trimestral_sin_outliers_log)
-plot(descomposicion_stock_markey, col= "#c88fb2")
+plot(descomposicion_stock_markey, col= "#93044e")
 descomposicion_stock_markey$seasonal #estacionalidad
 descomposicion_stock_markey$trend #tendencia
 random_stock_market<-descomposicion_stock_markey$random #residuo
 
 # Descomposición de la serie del paro
 descomposicion_unemployment <- decompose(unemployment_ts_trimestral_sin_outliers)
-plot(descomposicion_unemployment, col= "#c88fb2")
+plot(descomposicion_unemployment, col= "#93044e")
 descomposicion_unemployment$seasonal #estacionalidad
 descomposicion_unemployment$trend #tendencia
 random_unemployment<-descomposicion_unemployment$random #residuo
@@ -339,20 +348,60 @@ stock_market_ts_trimestral_sin_outliers_log <- na.omit(stock_market_ts_trimestra
 money_supply_ts_trimestral_sin_outliers <- na.omit(money_supply_ts_trimestral_sin_outliers)
 unemployment_ts_trimestral_sin_outliers <- na.omit(unemployment_ts_trimestral_sin_outliers)
 
-acf(cpi_ts_trimestral_sin_outliers, main = "ACF del IPC", col= "#8db41c") #analiza la estacionalidad
-pacf(cpi_ts_trimestral_sin_outliers, main = "PACF del IPC", col= "#8db41c")
+# ---- IPC ----
+#png("ACF_IPC_Sin_Diferencia.png", width=800, height=600)
+acf(cpi_ts_trimestral_sin_outliers)
+title(main = "ACF del IPC (Sin Diferencia)")
+#dev.off()
 
-acf(money_supply_ts_trimestral_sin_outliers, main = "ACF de Money Supply", col= "#c88fb2") 
-pacf(money_supply_ts_trimestral_sin_outliers, main = "PACF de Money Supply", col= "#c88fb2")
+#png("PACF_IPC_Sin_Diferencia.png", width=800, height=600)
+pacf(cpi_ts_trimestral_sin_outliers)
+title(main = "PACF del IPC (Sin Diferencia)")
+#dev.off()
 
-acf(gdp_ts_trimestral_sin_outliers_log, main = "ACF del GDP", col= "#93044e")
-pacf(gdp_ts_trimestral_sin_outliers_log, main = "PACF del GDP", col= "#93044e")
+# ---- Money Supply ----
+#png("ACF_Money_Supply_Sin_Diferencia.png", width=800, height=600)
+acf(money_supply_ts_trimestral_sin_outliers)
+title(main = "ACF de Money Supply (Sin Diferencia)")
+#dev.off()
 
-acf(stock_market_ts_trimestral_sin_outliers_log, main = "ACF del Stock Market", col= "#c88fb2")
-pacf(stock_market_ts_trimestral_sin_outliers_log, main = "PACF del Stock Market", col= "#c88fb2")
+#png("PACF_Money_Supply_Sin_Diferencia.png", width=800, height=600)
+pacf(money_supply_ts_trimestral_sin_outliers)
+title(main = "PACF de Money Supply (Sin Diferencia)")
+#dev.off()
 
-acf(unemployment_ts_trimestral_sin_outliers, main = "ACF de Unemployment Rate", col= "#c88fb2")
-pacf(unemployment_ts_trimestral_sin_outliers, main = "PACF de Unemployment Rate", col= "#c88fb2")
+# ---- GDP ----
+#png("ACF_GDP_Sin_Diferencia.png", width=800, height=600)
+acf(gdp_ts_trimestral_sin_outliers_log)
+title(main = "ACF del GDP (Log, Sin Diferencia)")
+#dev.off()
+
+#png("PACF_GDP_Sin_Diferencia.png", width=800, height=600)
+pacf(gdp_ts_trimestral_sin_outliers_log)
+title(main = "PACF del GDP (Log, Sin Diferencia)")
+#dev.off()
+
+# ---- Stock Market ----
+#png("ACF_Stock_Market_Sin_Diferencia.png", width=800, height=600)
+acf(stock_market_ts_trimestral_sin_outliers_log)
+title(main = "ACF del Stock Market (Log, Sin Diferencia)")
+#dev.off()
+
+#png("PACF_Stock_Market_Sin_Diferencia.png", width=800, height=600)
+pacf(stock_market_ts_trimestral_sin_outliers_log)
+title(main = "PACF del Stock Market (Log, Sin Diferencia)")
+#dev.off()
+
+# ---- Unemployment Rate ----
+#png("ACF_Unemployment_Sin_Diferencia.png", width=800, height=600)
+acf(unemployment_ts_trimestral_sin_outliers)
+title(main = "ACF del Unemployment Rate (Sin Diferencia)")
+#dev.off()
+
+#png("PACF_Unemployment_Sin_Diferencia.png", width=800, height=600)
+pacf(unemployment_ts_trimestral_sin_outliers)
+title(main = "PACF del Unemployment Rate (Sin Diferencia)")
+#dev.off()
 
 
 
@@ -442,6 +491,65 @@ if (LBtest_money_supply_1$p.value < 0.05) {
 #EXISTE CORRELACION
 
 
+#---            PRIMERA DIFERRENCIA Y LAG                -----
+
+acf(money_supply_ts_trimestral_sin_outliers)
+money_supply_diff1_lag <- diff(money_supply_ts_trimestral_sin_outliers, differences = 1, lag=1)
+tsdisplay(money_supply_diff1_lag) #--> Se eligió lag = 1 porque la serie no presenta un patrón estacional trimestral pronunciado (picos cada 4 periodos en la ACF), y la primera diferencia con lag = 1 es suficiente para eliminar la tendencia y acercar la serie a la estacionariedad.
+
+#.........................................................................
+# 1. Serie temporal:
+#   - La tendencia general desaparece tras la primera diferencia.
+#   - La serie ahora oscila alrededor de una media aproximadamente constante.
+#   - Sin embargo, aún se observan algunos picos notables (especialmente después de 2020),
+#     lo que indica cambios de volatilidad en ciertos periodos.
+
+# 2. ACF:
+#   - Las autocorrelaciones son menores respecto a la serie original.
+#   - Aun así, algunos rezagos iniciales permanecen por encima del límite de significancia,
+#     lo que muestra algo de dependencia temporal.
+
+# 3. PACF:
+#   - Presenta picos en los primeros rezagos (1–2) y luego cae rápidamente.
+#   - Esto sugiere una posible estructura AR(1) o AR(2).
+
+# Conclusión:
+#   - La primera diferencia ha mejorado claramente la estacionariedad.
+#   - Sin embargo, no parece totalmente estacionaria, ya que persisten leves autocorrelaciones
+#     y variaciones de varianza.
+#   - Se recomienda aplicar pruebas formales (ADF, KPSS) y, si aún no pasa, considerar una segunda diferencia.
+#...................................................................
+
+#Aplicaremos los teses para asegurarnos de que no es estacionaria al 100%
+#TEST ADF
+adf_test_money_supply_1_lag <- adf.test(money_supply_diff1_lag)
+if(adf_test_money_supply_1_lag$p.value < 0.05){
+  print("Money Supply - ADF (diff1, lag): estacionaria")
+} else{
+  print("Money Supply - ADF (diff1, lag): NO estacionaria")
+}
+#NO ESTACIONARIA diff=1, lag=1
+
+#TEST KPSS
+kpss_test_money_supply_1_lag <- kpss.test(money_supply_diff1_lag, null="Level")
+if(kpss_test_money_supply_1_lag$p.value < 0.05){
+  print("Money Supply - KPSS (diff1, lag): NO estacionaria")
+} else{
+  print("Money Supply - KPSS (diff1, lag): estacionaria")
+}
+#NO ESTACIONARIA diff=1, lag=1
+
+#TEST LJUNG-BOX
+LBtest_money_supply_1_lag <- Box.test(money_supply_diff1_lag, lag = 20, type="Ljung")
+if (LBtest_money_supply_1_lag$p.value < 0.05) {
+  print("Money Supply - Ljung-Box (diff1, lag): Existe correlación")
+} else {
+  print("Money Supply - Ljung-Box (diff1, lag): Ausencia de correlación")
+}
+#EXISTE CORRELACION
+
+#Siuge sin dar por lo que aplicaremos la segunda diferencia
+
 #----                 SEGUNDA DIFERENCIA
 
 money_supply_diff2 <- diff(money_supply_ts_trimestral_sin_outliers, differences = 2)
@@ -503,22 +611,30 @@ money_supply_ts_trimestral_sin_outliers_estacionaria<- money_supply_diff2
 #Graficamos
 #-----------------------------------------------------------------
 #-------    SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparacion)
+#png("Money_supply_Original_vs_Diferenciada.png", width = 900, height = 700)
 par(mfrow=c(2,1))  # dos gráficos en una ventana
 plot(money_supply_ts_trimestral_sin_outliers, type="l", main="Money Supply (log) - Serie original", ylab="Nivel (log)")
 plot(money_supply_ts_trimestral_sin_outliers_estacionaria, type="l", main="Money Supply (log) - Segunda diferencia (estacionaria)", ylab="Cambio trimestral")
-par(mfrow=c(1,1))  
+par(mfrow=c(1,1)) 
+#dev.off()
 
 #-------    ACF Y PACF
-p1 <- ggAcf(money_supply_ts_trimestral_sin_outliers_estacionaria) + ggtitle("ACF - Money Supply (log, diff2)")
-p2 <- ggPacf(money_supply_ts_trimestral_sin_outliers_estacionaria) + ggtitle("PACF - Money Supply (log, diff2)")
-grid.arrange(p1, p2, ncol=1)   
+#png("ACF_Money_Supply_Segunda_Diferencia.png", width=800, height=600)
+acf(money_supply_ts_trimestral_sin_outliers_estacionaria)
+title(main = "ACF de Money Supply (Segunda Diferencia)")
+#dev.off()
 
-#-------   QQ-PLOT 
+#png("PACF_Money_Supply_Segunda_Diferencia.png", width=800, height=600)
+pacf(money_supply_ts_trimestral_sin_outliers_estacionaria)
+title(main = "PACF de Money Supply (Segunda Diferencia)")
+#dev.off()  
+
+#-------   QQ-PLOT --> Sirve para evaluar si los residuos o valores transformados siguen una distribución normal.
 #png("QQ_money_supply.png", width=800, height=600)
 qqnorm(money_supply_ts_trimestral_sin_outliers_estacionaria, main="QQ-plot - Money Supply (log, diff2)")
 qqline(money_supply_ts_trimestral_sin_outliers_estacionaria, col="red")
 #dev.off()
-
+#La linea roja representa como se verian los datos si sigugieran una distribucion normal
 
 ########### ---------- Unemployment Rate (TRIMESTRAL)  #####################
 #######################################################################
@@ -601,15 +717,23 @@ unemployment_ts_trimestral_sin_outliers_estacionaria<- unemployment_diff1
 #Graficamos
 #-----------------------------------------------------------------
 #-------    SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparacion)
+#png("Unemployment_Original_vs_Diferenciada.png", width = 900, height = 700)
 par(mfrow=c(2,1))  # dos gráficos en una ventana
 plot(unemployment_ts_trimestral_sin_outliers, type="l", main="Unemployment Rate (log) - Serie original", ylab="Nivel (log)")
 plot(unemployment_ts_trimestral_sin_outliers_estacionaria, type="l", main="Unemployment Rate (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
 par(mfrow=c(1,1))  
+#dev.off()
 
 #-------    ACF Y PACF
-p1 <- ggAcf(unemployment_ts_trimestral_sin_outliers_estacionaria) + ggtitle("ACF - Unemployment Rate (log, diff1)")
-p2 <- ggPacf(unemployment_ts_trimestral_sin_outliers_estacionaria) + ggtitle("PACF - Unemployment Rate (log, diff1)")
-grid.arrange(p1, p2, ncol=1)   
+#png("ACF_Unemployment_Primera_Diferencia.png", width=800, height=600)
+acf(money_supply_ts_trimestral_sin_outliers_estacionaria)
+title(main = "ACF de Unemployment (Primera Diferencia)")
+#dev.off() 
+
+#png("PACF_Unemployment_Primera_Diferencia.png", width=800, height=600)
+pacf(money_supply_ts_trimestral_sin_outliers_estacionaria)
+title(main = "PACF de Money Supply (Primera Diferencia)")
+#dev.off() 
 
 #-------   QQ-PLOT 
 #png("QQ_unemployment.png", width=800, height=600)
@@ -713,15 +837,23 @@ gdp_ts_trimestral_sin_outliers_log_estacionaria <- gdp_diff1
 # Graficamos
 #-----------------------------------------------------------------
 #-------    SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparación)
+#png("GDP_Original_vs_Diferenciada.png, width = 900, height = 700)
 par(mfrow=c(2,1))
 plot(gdp_ts_trimestral_sin_outliers_log, type="l", main="GDP (log) - Serie original", ylab="Nivel (log)")
 plot(gdp_ts_trimestral_sin_outliers_log_estacionaria, type="l", main="GDP (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
-par(mfrow=c(1,1))  
+par(mfrow=c(1,1)) 
+#dev.off()
 
 #-------    ACF Y PACF
-p1 <- ggAcf(gdp_ts_trimestral_sin_outliers_log_estacionaria) + ggtitle("ACF - GDP (log, diff1)")
-p2 <- ggPacf(gdp_ts_trimestral_sin_outliers_log_estacionaria) + ggtitle("PACF - GDP (log, diff1)")
-grid.arrange(p1, p2, ncol=1)   
+#png("ACF_GDP_Primera_Diferencia.png", width=800, height=600)
+acf(gdp_ts_trimestral_sin_outliers_log_estacionaria)
+title(main = "ACF de GDP (Primera Diferencia)")
+#dev.off() 
+
+#png("PACF_GDP_Primera_Diferencia.png", width=800, height=600)
+pacf(gdp_ts_trimestral_sin_outliers_log_estacionaria)
+title(main = "PACF de GDP (Primera Diferencia)")
+#dev.off() 
 
 #-------   QQ-PLOT
 #png("QQ_gdp.png", width=800, height=600)
@@ -733,8 +865,6 @@ qqline(gdp_ts_trimestral_sin_outliers_log_estacionaria, col="red")
 
 ###########            CPI (Consumer Price Index) (TRIMESTRAL)  #####################
 #####################################################################################
-
-###### AQUIII ME QUEDO !!!!!!!!!! LO DE ABAJO ESTA MAL
 
 #----                 SIN DIFERENCIA
 tsdisplay(cpi_ts_trimestral_sin_outliers)             
@@ -851,33 +981,29 @@ cpi_ts_trimestral_sin_outliers_estacionaria <- cpi_diff1
 # Graficamos
 #-----------------------------------------------------------------
 #-------    SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparación)
+#png("CPI_Original_vs_Diferenciada.png", width = 900, height = 700)
 par(mfrow=c(2,1))
 plot(cpi_ts_trimestral_sin_outliers, type="l", main="CPI (log) - Serie original", ylab="Nivel (log)")
 plot(cpi_ts_trimestral_sin_outliers_estacionaria, type="l", main="CPI (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
 par(mfrow=c(1,1))  
+#dev.off()
 
 #-------    ACF Y PACF
-p1 <- ggAcf(cpi_ts_trimestral_sin_outliers_estacionaria) + ggtitle("ACF - CPI (log, diff1)")
-p2 <- ggPacf(cpi_ts_trimestral_sin_outliers_estacionaria) + ggtitle("PACF - CPI (log, diff1)")
-grid.arrange(p1, p2, ncol=1)   
+#png("ACF_CPI_Primera_Diferencia.png", width=800, height=600)
+acf(cpi_ts_trimestral_sin_outliers_estacionaria)
+title(main = "ACF de CPI (Primera Diferencia)")
+#dev.off() 
+
+#png("PACF_CPI_Primera_Diferencia.png", width=800, height=600)
+pacf(cpi_ts_trimestral_sin_outliers_estacionaria)
+title(main = "PACF de CPI (Primera Diferencia)")
+#dev.off()   
 
 #-------   QQ-PLOT 
 #png("QQ_cpi.png", width=800, height=600)
 qqnorm(cpi_ts_trimestral_sin_outliers_estacionaria, main="QQ-plot - CPI (log, diff1)")
 qqline(cpi_ts_trimestral_sin_outliers_estacionaria, col="red")
 #dev.off()
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -969,15 +1095,23 @@ stock_market_ts_trimestral_sin_outliers_log_estacionaria <- stock_market_diff1
 # Graficamos
 #-----------------------------------------------------------------
 #------- SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparación)
+#png("Stock_Market_Original_vs_Diferenciada.png", width = 900, height = 700)
 par(mfrow=c(2,1))
 plot(stock_market_ts_trimestral_sin_outliers_log, type="l", main="Stock Market Index (log) - Serie original", ylab="Nivel (log)")
 plot(stock_market_ts_trimestral_sin_outliers_log_estacionaria, type="l", main="Stock Market Index (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
-par(mfrow=c(1,1))  
+par(mfrow=c(1,1)) 
+#dev.off()
 
 #------- ACF Y PACF
-p1 <- ggAcf(stock_market_ts_trimestral_sin_outliers_log_estacionaria) + ggtitle("ACF - Stock Market (log, diff1)")
-p2 <- ggPacf(stock_market_ts_trimestral_sin_outliers_log_estacionaria) + ggtitle("PACF - Stock Market (log, diff1)")
-grid.arrange(p1, p2, ncol=1)   
+#png("ACF_Stock_Market_Primera_Diferencia.png", width=800, height=600)
+acf(stock_market_ts_trimestral_sin_outliers_log_estacionaria)
+title(main = "ACF de Stock Market (Primera Diferencia)")
+#dev.off() 
+
+#png("PACF_Stock_Market_Primera_Diferencia.png", width=800, height=600)
+pacf(stock_market_ts_trimestral_sin_outliers_log_estacionaria)
+title(main = "PACF de Stock Market (Primera Diferencia)")
+#dev.off()   
 
 #------- QQ-PLOT 
 #png("QQ_stock_market.png", width=800, height=600)
@@ -986,15 +1120,6 @@ qqline(stock_market_ts_trimestral_sin_outliers_log_estacionaria, col="red")
 #dev.off()
 
 
-#Descargar graficos
-#-- ACF- PACF
-# ggsave("ACF_PACF_money_supply.png", grid.arrange(p1, p2, ncol=1), width=8, height=6)
-# ggsave("ACF_PACF_unemployment.png", grid.arrange(p1, p2, ncol=1), width=8, height=6)
-# ggsave("ACF_PACF_gdp.png", grid.arrange(p1, p2, ncol=1), width=8, height=6)
-# ggsave("ACF_PACF_cpi.png", grid.arrange(p1, p2, ncol=1), width=8, height=6)
-# ggsave("ACF_PACF_stock_market.png", grid.arrange(p1, p2, ncol=1), width=8, height=6)
-
-#-- QQ PLOTS
 
 
 #==================
@@ -1091,7 +1216,7 @@ agregar_resultado("SARIMA", forecast_sarima_pib, test_pib)
 # Ordenar la tabla de resultados por la métrica
 resultados_pib <- resultados_pib[order(resultados_pib$MAPE), ]
 resultados_pib
-head(resultados_pib) 
+head(resultados_pib) #SARIMA (El Mejor), SNaive, AutoArima
 
 ######
 
@@ -1127,7 +1252,7 @@ agregar_resultado("SARIMA", forecast_sarima_ipc, test_ipc)
 # Ordenar la tabla de resultados por la métrica
 resultados_ipc <- resultados_ipc[order(resultados_ipc$MAPE), ]
 resultados_ipc
-head(resultados_ipc) 
+head(resultados_ipc)  #MA,ARMA,AR
 
 
 
@@ -1135,36 +1260,6 @@ head(resultados_ipc)
 
 
 
-
-
-
-#=======================
-# 11. MODELOS ARIMA
-#=======================
-
-
-# Aplicamos auto.arima sobre la serie original (sin diferencias aplicadas manualmente)
-
-########### ---------- Money Supply (TRIMESTRAL)  #####################
-#######################################################################
-
-# Porque el parámetro d = 2 indica que queremos que auto.arima aplique 2 diferencias
-# automáticamente para volver la serie estacionaria, según lo que vimos en los tests.
-
-modelo_money_supply <- auto.arima(
-  money_supply_ts_trimestral_sin_outliers,
-  d = 2,               # Número fijo de diferencias a aplicar (segunda diferencia)
-  seasonal = FALSE,    # Indicamos que no queremos modelo estacional (no buscamos SARIMA)
-  stepwise = FALSE,    # Desactivamos el paso a paso rápido para que explore todos los posibles modelos
-  approximation = FALSE # Desactivamos aproximaciones para que el ajuste sea exacto (más lento pero más preciso)
-)
-
-# Mostrar resumen del modelo seleccionado
-summary(modelo_money_supply)
-
-#--> ARIMA (0,2,1)  #-AR (autoregresivo) = 0: no hay términos autoregresivos.
-#d = 2: aplicó dos diferencias para lograr estacionariedad (como esperábamos).
-#MA (media móvil) = 1: tiene un término de media móvil de orden 1.
 
 
 
