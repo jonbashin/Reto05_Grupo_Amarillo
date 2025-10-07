@@ -21,7 +21,6 @@ library(astsa)
 #=========================
 datos_limpios_AUS<- read.csv("DATOS/limpios/Datos_Limpios_Australia.csv")
 
-xx<- readRDS("Series Temporales/Trimestrales/cpi_ts_trimestral.rds")
 #Analizar los datos
 str(datos_limpios_AUS)
 summary(datos_limpios_AUS)
@@ -324,7 +323,7 @@ descomposicion_money_supply$trend #tendencia
 random_money_supply<-descomposicion_money_supply$random #residuo
 
 # Descomposición de la serie de indice bursatil
-descomposicion_stock_markey <- decompose(stock_market_ts_trimestral_sin_outliers_log)
+descomposicion_stock_market <- decompose(stock_market_ts_trimestral_sin_outliers_log)
 plot(descomposicion_stock_markey, col= "#93044e")
 descomposicion_stock_markey$seasonal #estacionalidad
 descomposicion_stock_markey$trend #tendencia
@@ -423,44 +422,12 @@ title(main = "PACF del Unemployment Rate (Sin Diferencia)")
 #----                 SIN DIFERENCIA
 
 tsdisplay(money_supply_ts_trimestral_sin_outliers)             
-#.......................................................
-# 1. Serie temporal:
-#   - Se observa una tendencia creciente clara.
-#   - La media no es constante en el tiempo.
-
-# 2. ACF:
-#   - Muestra autocorrelaciones muy altas y positivas.
-#   - Decae lentamente → típico de procesos no estacionarios.
-
-# 3. PACF:
-#   - Pico fuerte en el rezago 1.
-#   - Indica posible raíz unitaria.
-
-#--> La serie NO ES ESTACIONARIA → requiere al menos una diferenciación.
-#.......................................................
-
 
 #----               PRIMERA DIFERENCIA
 
 #Aplicar diferencia
 money_supply_diff1 <- diff(money_supply_ts_trimestral_sin_outliers, differences = 1)
 tsdisplay(money_supply_diff1)
-#.......................................................
-# 1. Serie temporal:
-#   - La tendencia desaparece y oscila alrededor de una media estable.
-#   - Sin embargo, hay picos y cambios de volatilidad en ciertos periodos.
-
-# 2. ACF:
-#   - Autocorrelaciones más bajas que en la serie original.
-#   - Todavía algunos rezagos significativos → cierta dependencia.
-
-# 3. PACF:
-#   - Picos en los primeros rezagos (1-2), luego decae.
-#   - Indica posible estructura AR de bajo orden.
-
-# La 1ª diferencia mejora mucho la serie, pero aún no está claramente estacionaria.
-# Se deben aplicar los tests (ADF, KPSS) y, si es necesario, probar con una 2ª diferencia.
-#.......................................................
 
 #Aplicaremos los teses para asegurarnos de que no es estacionaria al 100%
 #TEST ADF
@@ -491,35 +458,19 @@ if (LBtest_money_supply_1$p.value < 0.05) {
 
 #EXISTE CORRELACION
 
+#Se analiza si la serie tiene estacionalidad.
+decomposed <- decompose(money_supply_ts_trimestral_sin_outliers, type="multiplicative")
+plot(decomposed)
+decomposed$seasonal
+#Si tiene porque los mismos valores se repiten cada 4 trimestres. Es por ello que haremos la primera diferncia con lag= 4
 
 #---            PRIMERA DIFERRENCIA Y LAG                -----
 
 acf(money_supply_ts_trimestral_sin_outliers)
-money_supply_diff1_lag <- diff(money_supply_ts_trimestral_sin_outliers, differences = 1, lag=1)
-tsdisplay(money_supply_diff1_lag) #--> Se eligió lag = 1 porque la serie no presenta un patrón estacional trimestral pronunciado (picos cada 4 periodos en la ACF), y la primera diferencia con lag = 1 es suficiente para eliminar la tendencia y acercar la serie a la estacionariedad.
+#COn lag dos quitamos la estacionalidad de la serie
+money_supply_diff1_lag <- diff(money_supply_ts_trimestral_sin_outliers, lag=4)
+tsdisplay(money_supply_diff1_lag) 
 
-#.........................................................................
-# 1. Serie temporal:
-#   - La tendencia general desaparece tras la primera diferencia.
-#   - La serie ahora oscila alrededor de una media aproximadamente constante.
-#   - Sin embargo, aún se observan algunos picos notables (especialmente después de 2020),
-#     lo que indica cambios de volatilidad en ciertos periodos.
-
-# 2. ACF:
-#   - Las autocorrelaciones son menores respecto a la serie original.
-#   - Aun así, algunos rezagos iniciales permanecen por encima del límite de significancia,
-#     lo que muestra algo de dependencia temporal.
-
-# 3. PACF:
-#   - Presenta picos en los primeros rezagos (1–2) y luego cae rápidamente.
-#   - Esto sugiere una posible estructura AR(1) o AR(2).
-
-# Conclusión:
-#   - La primera diferencia ha mejorado claramente la estacionariedad.
-#   - Sin embargo, no parece totalmente estacionaria, ya que persisten leves autocorrelaciones
-#     y variaciones de varianza.
-#   - Se recomienda aplicar pruebas formales (ADF, KPSS) y, si aún no pasa, considerar una segunda diferencia.
-#...................................................................
 
 #Aplicaremos los teses para asegurarnos de que no es estacionaria al 100%
 #TEST ADF
@@ -529,7 +480,7 @@ if(adf_test_money_supply_1_lag$p.value < 0.05){
 } else{
   print("Money Supply - ADF (diff1, lag): NO estacionaria")
 }
-#NO ESTACIONARIA diff=1, lag=1
+# No ESTACIONARIA diff=1, lag=4 
 
 #TEST KPSS
 kpss_test_money_supply_1_lag <- kpss.test(money_supply_diff1_lag, null="Level")
@@ -538,10 +489,10 @@ if(kpss_test_money_supply_1_lag$p.value < 0.05){
 } else{
   print("Money Supply - KPSS (diff1, lag): estacionaria")
 }
-#NO ESTACIONARIA diff=1, lag=1
+# NO ESTACIONARIA diff=1, lag=4 
 
 #TEST LJUNG-BOX
-LBtest_money_supply_1_lag <- Box.test(money_supply_diff1_lag, lag = 20, type="Ljung")
+LBtest_money_supply_1_lag <- Box.test(money_supply_diff1_lag1, lag = 20, type="Ljung")
 if (LBtest_money_supply_1_lag$p.value < 0.05) {
   print("Money Supply - Ljung-Box (diff1, lag): Existe correlación")
 } else {
@@ -555,26 +506,6 @@ if (LBtest_money_supply_1_lag$p.value < 0.05) {
 
 money_supply_diff2 <- diff(money_supply_ts_trimestral_sin_outliers, differences = 2)
 tsdisplay(money_supply_diff2)
-
-#......................................................
-# 1. Serie temporal:
-#   - La tendencia desaparece por completo.
-#   - La serie oscila alrededor de cero de forma estable.
-#   - Aunque hay picos puntuales (volatilidad), no hay tendencia persistente.
-
-# 2. ACF:
-#   - Las autocorrelaciones están dentro de las bandas en la mayoría de rezagos.
-#   - No hay un decaimiento lento → señal de estacionariedad.
-
-# 3. PACF:
-#   - No se observan picos grandes persistentes.
-#   - Solo valores aislados en algunos rezagos → compatible con estacionariedad.
-
-# Con la 2ª diferencia, la serie puede considerarse estacionaria.
-# Falta confirmarlo con los tests ADF y KPSS, pero visualmente ya cumple
-# con los criterios de estacionariedad.
-# ESTACIONARIA diff=2
-#......................................................
 
 #Aplicar los teses
 #TEST ADF
@@ -643,46 +574,13 @@ qqline(money_supply_ts_trimestral_sin_outliers_estacionaria, col="red")
 #----                 SIN DIFERENCIA
 
 tsdisplay(unemployment_ts_trimestral_sin_outliers)             
-#.......................................................
-# 1. Serie temporal:
-#   - Presenta una tendencia decreciente → no es estacionaria.
-#   - No oscila alrededor de una media constante.
-#   - Caída abrupta reciente refuerza la no estacionariedad.
 
-# 2. ACF:
-#   - Esperamos un decaimiento lento → típica de series no estacionarias.
 
-# 3. PACF:
-#   - Picos significativos iniciales pueden indicar persistencia temporal.
-
-# NO ESTACIONARIA diff=0
-#.......................................................
-
-#??? el lag cuando se repite muchas veces una cosa, por ejmplo cada mes entonces lag=12
-#para egstioanr estacionalidad
 #----               PRIMERA DIFERENCIA
 
 #Aplicar diferencia
 unemployment_diff1 <- diff(unemployment_ts_trimestral_sin_outliers, differences = 1)
 tsdisplay(unemployment_diff1)
-#......................................................
-# 1. Serie temporal:
-#   - No hay tendencia visible → la serie fluctúa en torno a una media constante (~cero).
-#   - La varianza es relativamente constante, aunque con cierta volatilidad puntual (picos).
-#   - No se observa estacionalidad clara ni patrones sistemáticos.
-
-# 2. ACF (Autocorrelation Function):
-#   - La mayoría de los rezagos están dentro de las bandas de confianza.
-#   - No hay decaimiento lento → lo que refuerza la hipótesis de estacionariedad.
-
-# 3. PACF (Partial ACF):
-#   - Pocos rezagos significativos → no hay estructura de dependencia persistente.
-#   - Compatible con un proceso ARIMA estacionario de bajo orden.
-
-#   → La serie parece estacionaria después de la primera diferenciación.
-#   → Es recomendable complementar con pruebas formales (ADF, KPSS, etc.) para confirmarlo.
-#SI ES ESTACIONARIA diff= 1
-#......................................................
 
 #Aplicaremos los tests para comprobra
 #TEST ADF
@@ -728,13 +626,13 @@ par(mfrow=c(1,1))
 
 #-------    ACF Y PACF
 #png("ACF_Unemployment_Primera_Diferencia.png", width=800, height=600)
-acf(money_supply_ts_trimestral_sin_outliers_estacionaria)
+acf(unemployment_ts_trimestral_sin_outliers_estacionaria)
 title(main = "ACF de Unemployment (Primera Diferencia)")
 #dev.off() 
 
 #png("PACF_Unemployment_Primera_Diferencia.png", width=800, height=600)
-pacf(money_supply_ts_trimestral_sin_outliers_estacionaria)
-title(main = "PACF de Money Supply (Primera Diferencia)")
+pacf(unemployment_ts_trimestral_sin_outliers_estacionaria)
+title(main = "PACF de Unemployment (Primera Diferencia)")
 #dev.off() 
 
 #-------   QQ-PLOT 
@@ -750,54 +648,12 @@ qqline(unemployment_ts_trimestral_sin_outliers_estacionaria, col="red")
 
 #----                 SIN DIFERENCIA
 tsdisplay(gdp_ts_trimestral_sin_outliers_log)             
-#......................................................
-# Evaluación de estacionariedad: gdp_ts_trimestral_sin_outliers_log (sin diferenciar)
-
-# 1. Serie temporal:
-#   - Presenta una clara tendencia creciente → no fluctúa alrededor de una media constante.
-#   - No hay estabilidad en el nivel de la serie.
-#   - Aunque la varianza parece estable, la presencia de tendencia invalida la estacionariedad.
-
-# 2. ACF (Autocorrelation Function):
-#   - Las autocorrelaciones decaen lentamente → señal típica de no estacionariedad.
-#   - Las barras no caen rápidamente dentro de las bandas de confianza.
-
-# 3. PACF (Partial ACF):
-#   - Picos significativos en los primeros rezagos → también típico de series con tendencia.
-#   - La estructura refleja persistencia temporal.
-
-# Conclusión:
-#   → La serie **NO es estacionaria en nivel** (diff = 0).
-#   → Se recomienda aplicar **una primera diferencia** y re-evaluar.
-#......................................................
-
 
 #----               PRIMERA DIFERENCIA
 
 # Aplicar diferencia
 gdp_diff1 <- diff(gdp_ts_trimestral_sin_outliers_log, differences = 1)
 tsdisplay(gdp_diff1)
-#......................................................
-# 1. Serie temporal:
-#   - No hay tendencia visible → la serie fluctúa en torno a una media constante (~cero).
-#   - La varianza es relativamente constante en el tiempo.
-#   - Se observan oscilaciones regulares, pero sin patrón estacional evidente → comportamiento estable.
-
-# 2. ACF (Autocorrelation Function):
-#   - La mayoría de los rezagos están dentro de las bandas de confianza.
-#   - No hay un decaimiento lento como en la serie original → se elimina la dependencia de largo plazo.
-#   - Se observan picos aislados en algunos rezagos, pero no en bloque.
-
-# 3. PACF (Partial ACF):
-#   - Solo algunos rezagos son significativos (por encima de las bandas).
-#   - No se observa estructura de autocorrelación persistente.
-#   - Comportamiento compatible con un proceso ARIMA estacionario de bajo orden.
-
-# Conclusión:
-#   → La serie parece estacionaria después de la primera diferencia.
-#   → Es recomendable complementar con pruebas estadísticas como ADF y KPSS para confirmarlo formalmente.
-#SI ES ETSACIONARIA diff=1
-#......................................................
 
 # Aplicamos los tests para comprobar
 
@@ -870,28 +726,6 @@ qqline(gdp_ts_trimestral_sin_outliers_log_estacionaria, col="red")
 
 #----                 SIN DIFERENCIA
 tsdisplay(cpi_ts_trimestral_sin_outliers)             
-#......................................................
-# Evaluación de estacionariedad: cpi_ts_trimestral_sin_outliers (sin diferenciar)
-
-# 1. Serie temporal:
-#   - Se observa una tendencia creciente sostenida a lo largo de los años.
-#   - La serie no fluctúa alrededor de una media constante, lo que indica falta de estacionariedad.
-#   - Aunque la varianza se mantiene relativamente estable, la tendencia clara rompe la estacionariedad.
-
-# 2. ACF (Autocorrelation Function):
-#   - Las autocorrelaciones son muy altas en los primeros rezagos y decrecen lentamente.
-#   - Este patrón es típico de series no estacionarias.
-#   - Las barras no caen rápidamente dentro de las bandas de confianza.
-
-# 3. PACF (Partial ACF):
-#   - El primer rezago es muy significativo.
-#   - A partir de ahí los valores caen, lo que confirma la presencia de una tendencia.
-#   - Este comportamiento es característico de una serie no estacionaria.
-
-# Conclusión:
-#   → La serie NO es estacionaria en nivel (diff = 0).
-#   → Se recomienda aplicar una primera diferencia (diff = 1) y re-evaluar la estacionariedad.
-#......................................................
 
 
 
@@ -900,58 +734,22 @@ tsdisplay(cpi_ts_trimestral_sin_outliers)
 # Aplicar diferencia
 cpi_diff1 <- diff(cpi_ts_trimestral_sin_outliers, differences = 1)
 tsdisplay(cpi_diff1)
-#......................................................
-# Evaluación de estacionariedad: cpi_diff1 (primera diferencia)
-
-# 1. Serie temporal:
-#   - Después de aplicar la primera diferencia, la serie ya no muestra una tendencia clara.
-#   - Ahora fluctúa alrededor de una media aproximadamente constante.
-#   - La varianza parece estable a lo largo del tiempo.
-#   → Esto sugiere que la serie puede considerarse estacionaria.
-
-# 2. ACF (Autocorrelation Function):
-#   - Solo el primer rezago es significativo.
-#   - A partir de ahí, las autocorrelaciones caen rápidamente dentro de las bandas de confianza.
-#   - Este patrón es consistente con una serie estacionaria.
-
-# 3. PACF (Partial ACF):
-#   - El primer rezago es significativo, pero los siguientes no muestran picos relevantes.
-#   - Esto también respalda la hipótesis de estacionariedad.
-
-# Conclusión:
-#   → Tras aplicar una primera diferencia, la serie se comporta como ESTACIONARIA.
-#ESTACIONARIA--> diff=1
-#......................................................
 
 #Nos aseguraremos uqe si lo es con los teses
 
 #----               TESTS DE ESTACIONARIEDAD
 
 #TEST ADF
-# El test ADF sin parámetro k puede fallar al detectar estacionariedad.
-# El test ADF, aplicado sin definir el parámetro k, indica que la serie no es estacionaria,
-# aunque visualmente con tsdisplay parece serlo.
-# Por ello buscamos el valor de k que haga la serie estacionaria.
-# Si no indicamos k, adf.test lo elige automáticamente, pero en este caso no da estacionariedad.
-
-# k = número de rezagos para corregir autocorrelación en los residuos.
-# Probamos varios valores pequeños (0 a 3) para identificar cuál hace estacionaria la serie.
-for(k in 0:3){
-  if(adf.test(cpi_diff1, k = k)$p.value < 0.05){
-    print(paste("El k óptimo que vamos a usar en el test ADF será", k, "para conseguir que sea estacionaria."))
-    break  # Tomamos el primer k que cumple la condición
-  }
-}
 
 # Aplicamos el test ADF usando k óptimo.
 # Esto asegura que usamos un k que dé un resultado más robusto y reproducible.
-adf_test_cpi_1 <- adf.test(cpi_diff1, k = k)
+adf_test_cpi_1 <- adf.test(cpi_diff1)
 if(adf_test_cpi_1$p.value < 0.05){
   print("CPI - ADF (diff1): estacionaria")
 } else{
   print("CPI - ADF (diff1): NO estacionaria")
 }
-#ESTACIONARIA diff=1 con valor de k=0.
+# NO ESTACIONARIA diff=1 
 
 # TEST KPSS
 kpss_test_cpi_1 <- kpss.test(cpi_diff1, null="Level")
@@ -972,11 +770,52 @@ if (LBtest_cpi_1$p.value < 0.05) {
 }
 #AUSENCIA DE CORRELACION
 
+##----               PRIMERA DIFERENCIA y lag
+#Se analiza si la serie tiene estacionalidad.
+decomposed_cpi <- decompose(cpi_ts_trimestral_sin_outliers, type="multiplicative")
+plot(decomposed_cpi)
+decomposed_cpi$seasonal 
+
+#APlicar diferencia 1 y lag=4
+cpi_diff1_lag<- diff(cpi_ts_trimestral_sin_outliers, lag=4)
+tsdisplay(cpi_diff1_lag)
+
+#TEST ADF
+
+# Aplicamos el test ADF usando k óptimo.
+# Esto asegura que usamos un k que dé un resultado más robusto y reproducible.
+adf_test_cpi_1 <- adf.test(cpi_diff1_lag)
+if(adf_test_cpi_1$p.value < 0.05){
+  print("CPI - ADF (diff1): estacionaria")
+} else{
+  print("CPI - ADF (diff1): NO estacionaria")
+}
+# NO ESTACIONARIA diff=1 
+
+# TEST KPSS
+kpss_test_cpi_1 <- kpss.test(cpi_diff1_lag, null="Level")
+if(kpss_test_cpi_1$p.value < 0.05){
+  print("CPI - KPSS (diff1): NO estacionaria")
+} else{
+  print("CPI - KPSS (diff1): estacionaria")
+}
+#ESTACIONARIA diff=1
+
+
+# TEST LJUNG-BOX
+LBtest_cpi_1 <- Box.test(cpi_diff1_lag, lag = 20, type="Ljung")
+if (LBtest_cpi_1$p.value < 0.05) {
+  print("CPI - Ljung-Box (diff1): Existe correlación")
+} else {
+  print("CPI - Ljung-Box (diff1): Ausencia de correlación")
+}
+#EXISTE CORRELACION
+
 #......................................................
-# Los tests indican que CPI es estacionaria con la primera diferencia.
+# Los tests menos adf indican que CPI es estacionaria con la primera diferencia.
 # CPI --> Estacionaria con la primera diferencia!
 # Cambiamos el nombre para facilitar su uso.
-cpi_ts_trimestral_sin_outliers_estacionaria <- cpi_diff1
+cpi_ts_trimestral_sin_outliers_estacionaria <- cpi_diff1_lag
 
 
 #-----------------------------------------------------------------
@@ -1015,51 +854,12 @@ qqline(cpi_ts_trimestral_sin_outliers_estacionaria, col="red")
 #---- SIN DIFERENCIA
 tsdisplay(stock_market_ts_trimestral_sin_outliers_log)             
 
-#......................................................
-# 1. Serie temporal:
-#   - Se observa una tendencia ascendente prolongada.
-# - No fluctúa alrededor de una media constante.
-# - Varianza relativamente estable, pero la presencia de tendencia invalida la estacionariedad.
-
-# 2. ACF:
-#   - Las autocorrelaciones decaen muy lentamente.
-# - Muchas barras permanecen fuera de las bandas de confianza incluso para rezagos altos.
-# - Este patrón indica dependencia de largo plazo.
-
-# 3. PACF:
-#   - Picos significativos en varios rezagos iniciales.
-# - Patrón típico de series no estacionarias con tendencia.
-# Conclusión:
-#   → La serie NO es estacionaria en nivel (diff = 0).
-# → Se recomienda aplicar una primera diferencia para estabilizar la media.
-
-#......................................................
 
 #---- PRIMERA DIFERENCIA
 
 # Aplicar diferencia
 stock_market_diff1 <- diff(stock_market_ts_trimestral_sin_outliers_log, differences = 1)
 tsdisplay(stock_market_diff1)
-
-#......................................................
-# 1. Serie temporal (diferenciada en 1ra orden):
-#   - Fluctúa alrededor de una media constante (sin tendencia evidente).
-#   - No se observa un crecimiento o caída prolongada en el tiempo.
-#   - La varianza parece estable a lo largo del tiempo.
-#   → Esto sugiere que la media y la varianza son constantes, lo cual es consistente con la estacionariedad.
-
-# 2. ACF:
-#   - Las autocorrelaciones caen rápidamente dentro de las bandas de confianza.
-#   - No se observa un patrón de decaimiento lento.
-#   → Este comportamiento indica que no hay dependencia de largo plazo → Consistente con estacionariedad.
-
-# 3. PACF:
-#   - Solo unos pocos rezagos iniciales muestran picos significativos.
-#   - La mayoría de las barras están dentro de las bandas de confianza.
-#   → Esto es característico de una serie estacionaria, donde la dependencia se corta después de pocos rezagos.
-
-# SI ES ESTACIONARIA → diff=1
-#......................................................
 
 #---- TESTS DE ESTACIONARIEDAD
 
@@ -1123,7 +923,6 @@ qqline(stock_market_ts_trimestral_sin_outliers_log_estacionaria, col="red")
 
 
 
-
 #==================
 #TRAIN - TEST
 #==================
@@ -1136,19 +935,204 @@ test_ipc<-window(cpi_ts_trimestral_sin_outliers_estacionaria,start=c(2016,1), en
 train_pib<-window(gdp_ts_trimestral_sin_outliers_log_estacionaria,start= c(1998,1),end=c(2016,1))
 test_pib<-window(gdp_ts_trimestral_sin_outliers_log_estacionaria,start=c(2016,1), end= c(2022,2))
 
-#Ajustar modelos de prediccion
 #auto.arima, sarima, , cuando le metes la variables exogenas es arimax.
 
-#AUTO.ARIMA
-modelo_sarima_ipc <- auto.arima(train_ipc, seasonal = FALSE)
-summary(modelo_sarima_ipc)
-checkresiduals(modelo_sarima_ipc)
-forecast_sarima_ipc <- forecast(modelo_sarima_ipc, h = length(test_ipc))
 
-modelo_sarima_pib <- auto.arima(train_pib, seasonal = FALSE)
-summary(modelo_sarima_pib)
-checkresiduals(modelo_sarima_pib)
-forecast_sarima_pib <- forecast(modelo_sarima_pib, h = length(test_pib))
+#----------------------      AUTO.ARIMA
+#---------------IPC
+modelo_autoarima_ipc <- auto.arima(train_ipc, seasonal = FALSE)
+summary(modelo_autoarima_ipc)
+#Revisar residuales
+checkresiduals(modelo_autoarima_ipc)
+ljung_box <- Box.test(residuals(modelo_autoarima_ipc), lag = 20, type = "Ljung-Box")
+cat("Ljung-Box test p-value:", ljung_box$p.value, "\n")
+if(ljung_box$p.value > 0.05){
+  cat("Residuos parecen ruido blanco\n")
+} else {
+  cat("Residuos muestran autocorrelación\n")
+}
+#RUIDO BLANCO
+#Pronostico
+forecast_autoarima_ipc <- forecast(modelo_autoarima_ipc, h = length(test_ipc))
+plot(forecast_autoarima_ipc)
+accuracy(forecast_autoarima_ipc, test_ipc)  # RMSE, MAE, etc.
+
+#---------------- GDP
+# Ajustar modelo Auto ARIMA
+modelo_autoarima_pib <- auto.arima(train_pib, seasonal = TRUE)  # seasonal=TRUE si quieres incluir estacionalidad trimestral
+summary(modelo_autoarima_pib)
+# Revisar residuales
+checkresiduals(modelo_autoarima_pib)
+ljung_box <- Box.test(residuals(modelo_autoarima_pib), lag = 20, type = "Ljung-Box")
+cat("Ljung-Box test p-value:", ljung_box$p.value, "\n")
+if(ljung_box$p.value > 0.05){
+  cat("Residuos parecen ruido blanco\n")
+} else {
+  cat("Residuos muestran autocorrelación\n")
+}
+#RUIDO BLANCO
+# Pronóstico
+forecast_autoarima_pib <- forecast(modelo_autoarima_pib, h = length(test_pib))
+plot(forecast_autoarima_pib)
+accuracy(modelo_autoarima_pib, test_pib)  # RMSE, MAE, etc.
+
+
+
+
+#----------------------     ??????????????? SARIMA
+
+
+
+
+#----------------------      NAIVE
+
+#--------------- CPI
+modelo_naive_ipc <- naive(train_ipc, h = length(test_ipc))
+residuos_naive_ipc <- residuals(modelo_naive_ipc)
+ljung_box <- Box.test(residuos_naive_ipc, lag = 20, type = "Ljung-Box")
+cat("Naive CPI - Ljung-Box p-value:", ljung_box$p.value, "\n")
+if(ljung_box$p.value > 0.05){
+  cat("Residuos parecen ruido blanco\n")
+} else {
+  cat("Residuos muestran autocorrelación\n")
+}
+#RUIDO BLANCO
+# Pronóstico
+forecast_naive_ipc <- forecast(modelo_naive_ipc, h = length(test_ipc))
+plot(forecast_naive_ipc, main="Pronóstico Naive - CPI")
+accuracy(forecast_naive_ipc, test_ipc)
+
+#--------------- GDP
+modelo_naive_pib <- naive(train_pib, h = length(test_pib))
+residuos_naive_pib <- residuals(modelo_naive_pib)
+ljung_box <- Box.test(residuos_naive_pib, lag = 20, type = "Ljung-Box")
+cat("Naive GDP - Ljung-Box p-value:", ljung_box$p.value, "\n")
+if(ljung_box$p.value > 0.05){
+  cat("Residuos parecen ruido blanco\n")
+} else {
+  cat("Residuos muestran autocorrelación\n")
+}
+#RESIDUOS MUESTRA AUTOCORRELACION
+
+forecast_naive_pib <- forecast(modelo_naive_pib, h = length(test_pib))
+plot(forecast_naive_pib, main="Pronóstico Naive - GDP")
+accuracy(forecast_naive_pib, test_pib)
+
+
+
+
+#----------------------      SNAIVE
+
+#--------------- CPI
+modelo_snaive_ipc <- snaive(train_ipc, h = length(test_ipc))
+residuos_snaive_ipc <- residuals(modelo_snaive_ipc)
+ljung_box <- Box.test(residuos_snaive_ipc, lag = 20, type = "Ljung-Box")
+cat("SNaive CPI - Ljung-Box p-value:", ljung_box$p.value, "\n")
+if(ljung_box$p.value > 0.05){
+  cat("Residuos parecen ruido blanco\n")
+} else {
+  cat("Residuos muestran autocorrelación\n")
+}
+#RUIDO BLANCO
+forecast_snaive_ipc <- forecast(modelo_snaive_ipc, h = length(test_ipc))
+plot(forecast_snaive_ipc, main="Pronóstico SNaive - CPI")
+accuracy(forecast_snaive_ipc, test_ipc)
+
+#--------------- GDP
+modelo_snaive_pib <- snaive(train_pib, h = length(test_pib))
+residuos_snaive_pib <- residuals(modelo_snaive_pib)
+ljung_box <- Box.test(residuos_snaive_pib, lag = 20, type = "Ljung-Box")
+cat("SNaive GDP - Ljung-Box p-value:", ljung_box$p.value, "\n")
+if(ljung_box$p.value > 0.05){
+  cat("Residuos parecen ruido blanco\n")
+} else {
+  cat("Residuos muestran autocorrelación\n")
+}
+#Residuos muestran autocorrelación
+
+forecast_snaive_pib <- forecast(modelo_snaive_pib, h = length(test_pib))
+plot(forecast_snaive_pib, main="Pronóstico SNaive - GDP")
+accuracy(forecast_snaive_pib, test_pib)
+
+
+
+###################33    RESULTADOS     ##########################
+#--- CPI
+resultados_ipc <- data.frame(
+  Modelo = character(),
+  MAE = numeric(),
+  RMSE = numeric(),
+  MAPE = numeric(),
+  stringsAsFactors = FALSE
+)
+
+agregar_resultado <- function(tabla, nombre, prediccion, real) {
+  metrica <- accuracy(prediccion, real)
+  
+  fila <- 1
+  tabla <- rbind(tabla, data.frame(
+    Modelo = nombre,
+    MAE = metrica[fila,"MAE"],
+    RMSE = metrica[fila,"RMSE"],
+    MAPE = metrica[fila,"MAPE"]
+  ))
+  return(tabla)
+}
+resultados_ipc <- agregar_resultado(resultados_ipc, "AutoARIMA", forecast_autoarima_ipc, test_ipc)
+resultados_ipc <- agregar_resultado(resultados_ipc, "SARIMA", forecast_sarima_ipc, test_ipc)
+resultados_ipc <- agregar_resultado(resultados_ipc, "Naive", forecast_naive_ipc, test_ipc)
+resultados_ipc <- agregar_resultado(resultados_ipc, "SNaive", forecast_snaive_ipc, test_ipc)
+
+# Ordenar por MAPE
+resultados_ipc <- resultados_ipc[order(resultados_ipc$MAPE), ]
+resultados_ipc
+
+# resultados_ipc
+# Modelo       MAE      RMSE     MAPE
+# 1 AutoARIMA 0.4178123 0.6071492 22.90330
+# 3     Naive 0.4236111 0.6113510 23.22001
+# 4    SNaive 1.0652174 1.3436377 52.73876
+# 2    SARIMA 0.3156315 0.4501162      Inf
+
+#--- PIB
+# Tabla inicial PIB
+resultados_pib <- data.frame(
+  Modelo = character(),
+  MAE = numeric(),
+  RMSE = numeric(),
+  MAPE = numeric(),
+  stringsAsFactors = FALSE
+)
+
+# Función para agregar resultados (misma que CPI)
+agregar_resultado_pib <- function(tabla, nombre, prediccion, real) {
+  metrica <- accuracy(prediccion, real)
+  fila <- 1  # Tomamos la primera fila que corresponde al test set
+  tabla <- rbind(tabla, data.frame(
+    Modelo = nombre,
+    MAE = metrica[fila,"MAE"],
+    RMSE = metrica[fila,"RMSE"],
+    MAPE = metrica[fila,"MAPE"]
+  ))
+  return(tabla)
+}
+resultados_pib <- agregar_resultado_pib(resultados_pib, "AutoARIMA", forecast_autoarima_pib, test_pib)
+resultados_pib <- agregar_resultado_pib(resultados_pib, "SARIMA", forecast_sarima_pib, test_pib)
+resultados_pib <- agregar_resultado_pib(resultados_pib, "Naive", forecast_naive_pib, test_pib)
+resultados_pib <- agregar_resultado_pib(resultados_pib, "SNaive", forecast_snaive_pib, test_pib)
+# Ordenar por MAPE (de menor a mayor)
+resultados_pib <- resultados_pib[order(resultados_pib$MAPE), ]
+resultados_pib
+
+# Modelo         MAE       RMSE      MAPE
+# 1 AutoARIMA 0.008040222 0.01092443  35.00176
+# 4    SNaive 0.009620171 0.01290185  40.91982
+# 2    SARIMA 0.027216638 0.03374071 110.81658
+# 3     Naive 0.080695456 0.09284873 234.38226
+
+
+
+
 
 #Aplicar el Box.Test paraa cada modelo( Tiene que dar que es ruido blanco)
 
