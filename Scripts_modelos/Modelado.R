@@ -21,6 +21,7 @@ library(astsa)
 #=========================
 datos_limpios_AUS<- read.csv("DATOS/limpios/Datos_Limpios_Australia.csv")
 
+xx<- readRDS("Series Temporales/Trimestrales/cpi_ts_trimestral.rds")
 #Analizar los datos
 str(datos_limpios_AUS)
 summary(datos_limpios_AUS)
@@ -657,7 +658,8 @@ tsdisplay(unemployment_ts_trimestral_sin_outliers)
 # NO ESTACIONARIA diff=0
 #.......................................................
 
-
+#??? el lag cuando se repite muchas veces una cosa, por ejmplo cada mes entonces lag=12
+#para egstioanr estacionalidad
 #----               PRIMERA DIFERENCIA
 
 #Aplicar diferencia
@@ -1128,16 +1130,35 @@ qqline(stock_market_ts_trimestral_sin_outliers_log_estacionaria, col="red")
 #Queremos predecir datos que ya tenemos para evaluar los modelos
 #Separar datos en train y test
 
-train_ipc<-window(cpi_ts_trimestral_sin_outliers_estacionaria,start= c(1997,1),end=c(2016,1))
+train_ipc<-window(cpi_ts_trimestral_sin_outliers_estacionaria,start= c(1998,1),end=c(2016,1))
 test_ipc<-window(cpi_ts_trimestral_sin_outliers_estacionaria,start=c(2016,1), end= c(2022,2))
 
-train_pib<-window(gdp_ts_trimestral_sin_outliers_log_estacionaria,start= c(1997,1),end=c(2016,1))
+train_pib<-window(gdp_ts_trimestral_sin_outliers_log_estacionaria,start= c(1998,1),end=c(2016,1))
 test_pib<-window(gdp_ts_trimestral_sin_outliers_log_estacionaria,start=c(2016,1), end= c(2022,2))
 
 #Ajustar modelos de prediccion
+#auto.arima, sarima, , cuando le metes la variables exogenas es arimax.
+
+#AUTO.ARIMA
+modelo_sarima_ipc <- auto.arima(train_ipc, seasonal = FALSE)
+summary(modelo_sarima_ipc)
+checkresiduals(modelo_sarima_ipc)
+forecast_sarima_ipc <- forecast(modelo_sarima_ipc, h = length(test_ipc))
+
+modelo_sarima_pib <- auto.arima(train_pib, seasonal = FALSE)
+summary(modelo_sarima_pib)
+checkresiduals(modelo_sarima_pib)
+forecast_sarima_pib <- forecast(modelo_sarima_pib, h = length(test_pib))
+
+#Aplicar el Box.Test paraa cada modelo( Tiene que dar que es ruido blanco)
+
+
+
+
 #-- NAIVE
 naive_ipc<-naive(train_ipc,h=length(test_ipc))
 naive_pib<-naive(train_pib,h=length(test_pib))
+
 
 #-- SNAIVE
 snaive_ipc<-snaive(train_ipc,h=length(test_ipc))
@@ -1176,14 +1197,10 @@ arima_forecast_ipc<-forecast(modelo_arima_ipc,h=length(test_ipc))
 
 modelo_arima_pib <- auto.arima(train_pib,seasonal = FALSE)
 summary(modelo_arima_pib)
-arima_forecast_pib<-forecast(modelo_arima_pib,h=length(test_pib))
+arima_forecast_pib<-forecast(modelo_arima_pib,h=length(test_pib)) #RUIDO BLANCO = BIEN
+Box.test(arima_forecast_ipc)
+checkresiduals(arima_forecast_pib)
 
-#SARIMA
-modelo_sarima_ipc <- auto.arima(train_ipc, seasonal = TRUE)
-forecast_sarima_ipc <- forecast(modelo_sarima_ipc, h = length(test_ipc))
-
-modelo_sarima_pib <- auto.arima(train_pib, seasonal = TRUE)
-forecast_sarima_pib <- forecast(modelo_sarima_pib, h = length(test_pib))
 
 
 #Analizamos los resultados para ver que modelo es el más preciso
@@ -1202,7 +1219,7 @@ agregar_resultado <- function(nombre, prediccion, real) {
   ))
 }
 
-
+#!!!!!!!!accuracy hacerlo una vvez retornada es decir depsues de hacer las predccions con sus unidades orignales
 # Evaluar cada modelo y almacenar sus resultados
 agregar_resultado("AutoARIMA", arima_forecast_pib, test_pib)
 agregar_resultado("Mean Forecast", meanf_pib, test_pib)
@@ -1297,7 +1314,7 @@ head(resultados_ipc)  #MA,ARMA,AR
 #HACER LA TRAMPA DE MIRAR EN LOS TESES CUANTAS DIFERENCIAS TE DICE Y EN BASE A ESO HACER EL TS.DISPKAY LAS VECES QUE DIGAN CUNATAS DIFERENCIAS APLICAR. PERO EL TS.DISPLAY HAY QUE HACERLO ANTES DE APLCIAR LOS TESES PORQUE SE SUPONE QUE HAY QUE DECIDIR SI ES ESTACIONARIA MIRNADO LOS GRAFICOS DE TS.DISPLAY. 
 #ENTONCES HAREMOS LOS TESES PRIMERO PARA VER CUANTAS DIFERENCIAS Y LEUGO  HACER LOS TS.DISPLAYS PERO LEUGO CMABAIREMOS EL ORDEN PARA DAR A ENTENDER QUE PRIMERO HEMOS ECHO EL TS.DISPLAY Y LUEGO HEMOS COMPROBADO CON LOS TESES.
 
-
+#MODELOS:
 
 
 
