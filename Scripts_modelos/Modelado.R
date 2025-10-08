@@ -926,397 +926,277 @@ qqline(stock_market_ts_trimestral_sin_outliers_log_estacionaria, col="red")
 #==================
 #TRAIN - TEST
 #==================
+library(forecast)
+library(TSA)       # Para AR, ARMA
+library(Metrics)
+library(ggplot2)
+library(dplyr)
+
 #Queremos predecir datos que ya tenemos para evaluar los modelos
 #Separar datos en train y test
 
 train_ipc<-window(cpi_ts_trimestral_sin_outliers_estacionaria,start= c(1998,1),end=c(2016,1))
-test_ipc<-window(cpi_ts_trimestral_sin_outliers_estacionaria,start=c(2016,1), end= c(2022,2))
+test_ipc<-window(cpi_ts_trimestral_sin_outliers_estacionaria,start=c(2016,2), end= c(2022,2))
 
 train_pib<-window(gdp_ts_trimestral_sin_outliers_log_estacionaria,start= c(1998,1),end=c(2016,1))
-test_pib<-window(gdp_ts_trimestral_sin_outliers_log_estacionaria,start=c(2016,1), end= c(2022,2))
+test_pib<-window(gdp_ts_trimestral_sin_outliers_log_estacionaria,start=c(2016,2), end= c(2022,2))
 
 #auto.arima, sarima, , cuando le metes la variables exogenas es arimax.
 
 
-#----------------------      AUTO.ARIMA
-#---------------IPC
-modelo_autoarima_ipc <- auto.arima(train_ipc, seasonal = FALSE)
+
+############################################################
+# 2. AJUSTE DE MODELOS
+############################################################
+
+#---  Auto ARIMA
+### IPC
+modelo_autoarima_ipc <- auto.arima(train_ipc, seasonal=FALSE, d=0, D=0) #D=0 para que no vuelva a diferenciar
 summary(modelo_autoarima_ipc)
-#Revisar residuales
 checkresiduals(modelo_autoarima_ipc)
-ljung_box <- Box.test(residuals(modelo_autoarima_ipc), lag = 20, type = "Ljung-Box")
-cat("Ljung-Box test p-value:", ljung_box$p.value, "\n")
-if(ljung_box$p.value > 0.05){
+#Validacion grafica de residaules:
+hist(residuals(modelo_autoarima_ipc), main="Histograma de residuales", xlab="Residual", col="lightblue")
+# QUE LAG PONER??????????????????????????????????????????
+boxtest_autoarima_ipc <- Box.test(residuals(modelo_autoarima_ipc), lag = round(log(length(train_ipc))), type = "Ljung-Box")
+if (boxtest_autoarima_ipc$p.value > 0.05) {
   cat("Residuos parecen ruido blanco\n")
 } else {
   cat("Residuos muestran autocorrelación\n")
 }
-#RUIDO BLANCO
-#Pronostico
-forecast_autoarima_ipc <- forecast(modelo_autoarima_ipc, h = length(test_ipc))
-plot(forecast_autoarima_ipc)
-accuracy(forecast_autoarima_ipc, test_ipc)  # RMSE, MAE, etc.
 
-#---------------- GDP
-# Ajustar modelo Auto ARIMA
-modelo_autoarima_pib <- auto.arima(train_pib, seasonal = TRUE)  # seasonal=TRUE si quieres incluir estacionalidad trimestral
+
+### PIB
+modelo_autoarima_pib <- auto.arima(train_pib, seasonal = FALSE, d=0, D=0)
 summary(modelo_autoarima_pib)
-# Revisar residuales
 checkresiduals(modelo_autoarima_pib)
-ljung_box <- Box.test(residuals(modelo_autoarima_pib), lag = 20, type = "Ljung-Box")
-cat("Ljung-Box test p-value:", ljung_box$p.value, "\n")
-if(ljung_box$p.value > 0.05){
+# Validacion garfica de residuales
+hist(residuals(modelo_autoarima_pib), 
+     main = "Histograma de residuales del PIB", 
+     xlab = "Residual", 
+     col = "lightblue")
+
+boxtest_autoarima_pib <- Box.test(residuals(modelo_autoarima_pib), lag = round(log(length(train_pib))), type = "Ljung-Box")
+if (boxtest_autoarima_pib$p.value > 0.05) {
   cat("Residuos parecen ruido blanco\n")
 } else {
   cat("Residuos muestran autocorrelación\n")
 }
-#RUIDO BLANCO
-# Pronóstico
-forecast_autoarima_pib <- forecast(modelo_autoarima_pib, h = length(test_pib))
-plot(forecast_autoarima_pib)
-accuracy(modelo_autoarima_pib, test_pib)  # RMSE, MAE, etc.
 
 
-
-
-#----------------------     ??????????????? SARIMA
-
-
-
-
-#----------------------      NAIVE
-
-#--------------- CPI
-modelo_naive_ipc <- naive(train_ipc, h = length(test_ipc))
-residuos_naive_ipc <- residuals(modelo_naive_ipc)
-ljung_box <- Box.test(residuos_naive_ipc, lag = 20, type = "Ljung-Box")
-cat("Naive CPI - Ljung-Box p-value:", ljung_box$p.value, "\n")
-if(ljung_box$p.value > 0.05){
-  cat("Residuos parecen ruido blanco\n")
+#--- Modelo Naive 
+### IPC
+modelo_naive_ipc <- naive(train_ipc, h=length(test_ipc))
+summary(modelo_naive_ipc)
+checkresiduals(modelo_naive_ipc)
+# Validación gráfica de residuales
+hist(residuals(modelo_naive_ipc), main="Histograma de residuales Naive IPC", xlab="Residual", col="lightgreen")
+# Test Ljung-Box
+boxtest_naive_ipc <- Box.test(residuals(modelo_naive_ipc), lag = round(log(length(train_ipc))), type = "Ljung-Box")
+if (boxtest_naive_ipc$p.value > 0.05) {
+  cat("Residuos Naive IPC parecen ruido blanco\n")
 } else {
-  cat("Residuos muestran autocorrelación\n")
+  cat("Residuos Naive IPC muestran autocorrelación\n")
 }
-#RUIDO BLANCO
-# Pronóstico
-forecast_naive_ipc <- forecast(modelo_naive_ipc, h = length(test_ipc))
-plot(forecast_naive_ipc, main="Pronóstico Naive - CPI")
-accuracy(forecast_naive_ipc, test_ipc)
 
-#--------------- GDP
-modelo_naive_pib <- naive(train_pib, h = length(test_pib))
-residuos_naive_pib <- residuals(modelo_naive_pib)
-ljung_box <- Box.test(residuos_naive_pib, lag = 20, type = "Ljung-Box")
-cat("Naive GDP - Ljung-Box p-value:", ljung_box$p.value, "\n")
-if(ljung_box$p.value > 0.05){
-  cat("Residuos parecen ruido blanco\n")
+
+### PIB
+modelo_naive_pib <- naive(train_pib, h=length(test_pib))
+summary(modelo_naive_pib)
+checkresiduals(modelo_naive_pib)
+# Validación gráfica de residuales
+hist(residuals(modelo_naive_pib), main="Histograma de residuales Naive PIB", xlab="Residual", col="lightgreen")
+# Test Ljung-Box
+boxtest_naive_pib <- Box.test(residuals(modelo_naive_pib), lag = round(log(length(train_pib))), type = "Ljung-Box")
+if (boxtest_naive_pib$p.value > 0.05) {
+  cat("Residuos Naive PIB parecen ruido blanco\n")
 } else {
-  cat("Residuos muestran autocorrelación\n")
+  cat("Residuos Naive PIB muestran autocorrelación\n")
 }
-#RESIDUOS MUESTRA AUTOCORRELACION
-
-forecast_naive_pib <- forecast(modelo_naive_pib, h = length(test_pib))
-plot(forecast_naive_pib, main="Pronóstico Naive - GDP")
-accuracy(forecast_naive_pib, test_pib)
 
 
 
-
-#----------------------      SNAIVE
-
-#--------------- CPI
-modelo_snaive_ipc <- snaive(train_ipc, h = length(test_ipc))
-residuos_snaive_ipc <- residuals(modelo_snaive_ipc)
-ljung_box <- Box.test(residuos_snaive_ipc, lag = 20, type = "Ljung-Box")
-cat("SNaive CPI - Ljung-Box p-value:", ljung_box$p.value, "\n")
-if(ljung_box$p.value > 0.05){
-  cat("Residuos parecen ruido blanco\n")
+#--- Modelos SNaive
+### IPC
+modelo_snaive_ipc <- snaive(train_ipc, h=length(test_ipc))
+summary(modelo_snaive_ipc)
+checkresiduals(modelo_snaive_ipc)
+# Validación gráfica de residuales
+hist(residuals(modelo_snaive_ipc), main="Histograma de residuales SNaive IPC", xlab="Residual", col="lightcoral")
+# Test Ljung-Box
+boxtest_snaive_ipc <- Box.test(residuals(modelo_snaive_ipc), lag = round(log(length(train_ipc))), type = "Ljung-Box")
+if (boxtest_snaive_ipc$p.value > 0.05) {
+  cat("Residuos SNaive IPC parecen ruido blanco\n")
 } else {
-  cat("Residuos muestran autocorrelación\n")
+  cat("Residuos SNaive IPC muestran autocorrelación\n")
 }
-#RUIDO BLANCO
-forecast_snaive_ipc <- forecast(modelo_snaive_ipc, h = length(test_ipc))
-plot(forecast_snaive_ipc, main="Pronóstico SNaive - CPI")
-accuracy(forecast_snaive_ipc, test_ipc)
 
-#--------------- GDP
-modelo_snaive_pib <- snaive(train_pib, h = length(test_pib))
-residuos_snaive_pib <- residuals(modelo_snaive_pib)
-ljung_box <- Box.test(residuos_snaive_pib, lag = 20, type = "Ljung-Box")
-cat("SNaive GDP - Ljung-Box p-value:", ljung_box$p.value, "\n")
-if(ljung_box$p.value > 0.05){
-  cat("Residuos parecen ruido blanco\n")
+
+### PIB
+modelo_snaive_pib <- snaive(train_pib, h=length(test_pib))
+summary(modelo_snaive_pib)
+checkresiduals(modelo_snaive_pib)
+# Validación gráfica de residuales
+hist(residuals(modelo_snaive_pib), main="Histograma de residuales SNaive PIB", xlab="Residual", col="lightcoral")
+# Test Ljung-Box
+boxtest_snaive_pib <- Box.test(residuals(modelo_snaive_pib), lag = round(log(length(train_pib))), type = "Ljung-Box")
+if (boxtest_snaive_pib$p.value > 0.05) {
+  cat("Residuos SNaive PIB parecen ruido blanco\n")
 } else {
-  cat("Residuos muestran autocorrelación\n")
+  cat("Residuos SNaive PIB muestran autocorrelación\n")
 }
-#Residuos muestran autocorrelación
-
-forecast_snaive_pib <- forecast(modelo_snaive_pib, h = length(test_pib))
-plot(forecast_snaive_pib, main="Pronóstico SNaive - GDP")
-accuracy(forecast_snaive_pib, test_pib)
 
 
 
-###################33    RESULTADOS     ##########################
-#--- CPI
-resultados_ipc <- data.frame(
-  Modelo = character(),
-  MAE = numeric(),
-  RMSE = numeric(),
-  MAPE = numeric(),
-  stringsAsFactors = FALSE
-)
 
-agregar_resultado <- function(tabla, nombre, prediccion, real) {
-  metrica <- accuracy(prediccion, real)
-  
-  fila <- 1
-  tabla <- rbind(tabla, data.frame(
-    Modelo = nombre,
-    MAE = metrica[fila,"MAE"],
-    RMSE = metrica[fila,"RMSE"],
-    MAPE = metrica[fila,"MAPE"]
-  ))
-  return(tabla)
-}
-resultados_ipc <- agregar_resultado(resultados_ipc, "AutoARIMA", forecast_autoarima_ipc, test_ipc)
-resultados_ipc <- agregar_resultado(resultados_ipc, "SARIMA", forecast_sarima_ipc, test_ipc)
-resultados_ipc <- agregar_resultado(resultados_ipc, "Naive", forecast_naive_ipc, test_ipc)
-resultados_ipc <- agregar_resultado(resultados_ipc, "SNaive", forecast_snaive_ipc, test_ipc)
+#--- Modelo Sarima (Como el autoarima pero seasonal=T)
 
-# Ordenar por MAPE
-resultados_ipc <- resultados_ipc[order(resultados_ipc$MAPE), ]
-resultados_ipc
 
-# resultados_ipc
-# Modelo       MAE      RMSE     MAPE
-# 1 AutoARIMA 0.4178123 0.6071492 22.90330
-# 3     Naive 0.4236111 0.6113510 23.22001
-# 4    SNaive 1.0652174 1.3436377 52.73876
-# 2    SARIMA 0.3156315 0.4501162      Inf
+
+
+
+
+
+
+
+############################################################
+# 3. PREDICCIONES PARA TEST
+############################################################
+
+# IPC
+library(forecast)
+#--- IPC
+pred_autoarima_ipc <- forecast(modelo_autoarima_ipc, h=length(test_ipc), level=90)
+autoplot(pred_autoarima_ipc) + ggtitle("Predicción IPC con AutoARIMA") + ylab("IPC") + xlab("Trimestre") + theme_minimal()
+
+pred_naive_ipc    <- forecast(modelo_naive_ipc, h=length(test_ipc))
+
+pred_snaive_ipc   <- forecast(modelo_snaive_ipc, h=length(test_ipc))
+
+pred_mean_ipc     <- forecast(modelo_mean_forecast_ipc, h=length(test_ipc))
+
 
 #--- PIB
-# Tabla inicial PIB
-resultados_pib <- data.frame(
-  Modelo = character(),
-  MAE = numeric(),
-  RMSE = numeric(),
-  MAPE = numeric(),
-  stringsAsFactors = FALSE
-)
+pred_autoarima_pib <- forecast(modelo_autoarima_pib, h=length(test_pib), level=90)
+autoplot(pred_autoarima_pib) +  ggtitle("Predicción PIB con AutoARIMA") + ylab("PIB") +  xlab("Trimestre") +  theme_minimal()
 
-# Función para agregar resultados (misma que CPI)
-agregar_resultado_pib <- function(tabla, nombre, prediccion, real) {
-  metrica <- accuracy(prediccion, real)
-  fila <- 1  # Tomamos la primera fila que corresponde al test set
-  tabla <- rbind(tabla, data.frame(
-    Modelo = nombre,
-    MAE = metrica[fila,"MAE"],
-    RMSE = metrica[fila,"RMSE"],
-    MAPE = metrica[fila,"MAPE"]
-  ))
-  return(tabla)
-}
-resultados_pib <- agregar_resultado_pib(resultados_pib, "AutoARIMA", forecast_autoarima_pib, test_pib)
-resultados_pib <- agregar_resultado_pib(resultados_pib, "SARIMA", forecast_sarima_pib, test_pib)
-resultados_pib <- agregar_resultado_pib(resultados_pib, "Naive", forecast_naive_pib, test_pib)
-resultados_pib <- agregar_resultado_pib(resultados_pib, "SNaive", forecast_snaive_pib, test_pib)
-# Ordenar por MAPE (de menor a mayor)
-resultados_pib <- resultados_pib[order(resultados_pib$MAPE), ]
-resultados_pib
+pred_naive_pib    <- forecast(modelo_naive_pib, h=length(test_pib))
 
-# Modelo         MAE       RMSE      MAPE
-# 1 AutoARIMA 0.008040222 0.01092443  35.00176
-# 4    SNaive 0.009620171 0.01290185  40.91982
-# 2    SARIMA 0.027216638 0.03374071 110.81658
-# 3     Naive 0.080695456 0.09284873 234.38226
+pred_snaive_pib   <- forecast(modelo_snaive_pib, h=length(test_pib))
+
+pred_mean_pib     <- forecast(modelo_mean_forecast_pib, h=length(test_pib))
 
 
+############################################################
+# 4. CALCULO DE METRICAS
+############################################################
 
+library(Metrics)  # para rmse, mae, mape
 
-########################## REVERTIR DIFERENCIACION
-
-############# GDP --> Diferenciada y log
-#Revertir la diferenciacion:
-gdg_log_revertida<- diffinv(
-  gdp_ts_trimestral_sin_outliers_log_estacionaria,
-  xi = head(gdp_ts_trimestral_sin_outliers_log, 1))
-
-#Revertir log:
-gdp_revertida <- exp(gdg_log_revertida)
-
-#Crear serie temporal limpia:
-gdp_revertida_serie_temporal <- ts(gdp_revertida,
-                                   start = start(gdp_ts_trimestral_sin_outliers_log_estacionaria),
-                                   frequency = frequency(gdp_ts_trimestral_sin_outliers_log_estacionaria))
-
-
-#Visualizar la serie revertida:
-plot(gdp_revertida_serie_temporal,
-     main = "Serie PIB Revertida",
-     ylab = "PIB Real",
-     xlab = "Tiempo",
-     col = "blue")
-
-#Convertir a data frame
-
-library(tidyr)
-library(knitr)
-
-# Suponiendo que gdp_revertida_serie_temporal tiene 106 valores (33 años × 4 trimestres)
-gdp_vect <- as.numeric(gdp_revertida_serie_temporal)  # vector con los valores de PIB
-
-# Datos de años y trimestres
-anio_inicio <- 1996
-freq <- 4
-n_periodos <- length(gdp_vect)
-n_anios <- ceiling(n_periodos / freq)
-
-anios <- rep(seq(anio_inicio, anio_inicio + n_anios - 1), each = freq)[1:n_periodos]
-trimestres <- rep(c("Qtr1", "Qtr2", "Qtr3", "Qtr4"), times = n_anios)[1:n_periodos]
-
-# Crear data frame
-df_gdp_revertida <- data.frame(
-  Año = anios,
-  Trimestre = trimestres,
-  PIB_Real = round(gdp_vect, 2)
-)
-
-print(df_gdp_revertida)
-
-#Aplicamos ARIMAX
-
-
-
-
-
-
-
-
-
-#Aplicar el Box.Test paraa cada modelo( Tiene que dar que es ruido blanco)
-
-
-
-
-#-- NAIVE
-naive_ipc<-naive(train_ipc,h=length(test_ipc))
-naive_pib<-naive(train_pib,h=length(test_pib))
-
-
-#-- SNAIVE
-snaive_ipc<-snaive(train_ipc,h=length(test_ipc))
-snaive_pib<-snaive(train_pib,h=length(test_pib))
-
-
-#MEAN FORECAST
-meanf_pib<-meanf(train_pib,h=length(test_pib))
-meanf_ipc<-meanf(train_ipc,h=length(test_ipc))
-
-#PROMEDIO MOVIL (MA)
-ma_pib <- Arima(train_pib, order = c(0,0,1))
-prediccion_ma_pib <- forecast(ma_pib, h = length(test_pib))
-
-ma_ipc <- Arima(train_ipc, order = c(0,0,1))
-prediccion_ma_ipc <- forecast(ma_ipc, h = length(test_ipc))
-
-#MODELO AUTOREGRESIVO (AR)
-ar_ipc<-Arima(train_ipc,order = c(2,0,0))
-ar_ipc_forecast<-forecast(ar_ipc,h=length(test_ipc))
-
-ar_pib<-Arima(train_pib,order = c(2,0,0))
-ar_pib_forecast<-forecast(ar_pib,h=length(test_pib))
-
-#ARMA
-arma_ipc<-Arima(train_ipc,order = c(1,0,1))
-arma_ipc_forecast<-forecast(arma_ipc,h=length(test_ipc))
-
-arma_pib<-Arima(train_pib,order = c(1,0,1))
-arma_pib_forecast<-forecast(arma_pib,h=length(test_pib))
-
-#ARIMA
-modelo_arima_ipc <- auto.arima(train_ipc,seasonal = FALSE)
-summary(modelo_arima_ipc)
-arima_forecast_ipc<-forecast(modelo_arima_ipc,h=length(test_ipc))
-
-modelo_arima_pib <- auto.arima(train_pib,seasonal = FALSE)
-summary(modelo_arima_pib)
-arima_forecast_pib<-forecast(modelo_arima_pib,h=length(test_pib)) #RUIDO BLANCO = BIEN
-Box.test(arima_forecast_ipc)
-checkresiduals(arima_forecast_pib)
-
-
-
-#Analizamos los resultados para ver que modelo es el más preciso
-resultados_pib <- data.frame(Modelo = character(),
-                             MAE = numeric(),
-                             RMSE = numeric(),
-                             MAPE = numeric(),stringsAsFactors = FALSE)
-
-agregar_resultado <- function(nombre, prediccion, real) {
-  metrica <- accuracy(prediccion, real)
-  resultados_pib <<- rbind(resultados_pib, data.frame(
-    Modelo = nombre,
-    MAE = metrica["Test set", "MAE"],
-    RMSE = metrica["Test set", "RMSE"],
-    MAPE = metrica["Test set", "MAPE"]
-  ))
+calcular_metricas <- function(test, pred, modelo){
+  # si es objeto forecast, tomar $mean, si no, usar directamente
+  if("forecast" %in% class(pred)) {
+    pred_vals <- as.numeric(pred$mean)
+  } else {
+    pred_vals <- as.numeric(pred)
+  }
+  
+  data.frame(
+    Modelo = modelo,
+    RMSE = rmse(test, pred_vals),
+    MAE  = mae(test, pred_vals),
+    MAPE = mape(test, pred_vals)
+  )
 }
 
-#!!!!!!!!accuracy hacerlo una vvez retornada es decir depsues de hacer las predccions con sus unidades orignales
-# Evaluar cada modelo y almacenar sus resultados
-agregar_resultado("AutoARIMA", arima_forecast_pib, test_pib)
-agregar_resultado("Mean Forecast", meanf_pib, test_pib)
-agregar_resultado("SNaive", snaive_pib, test_pib)
-agregar_resultado("Naive", naive_pib, test_pib)
-agregar_resultado("AR", ar_pib_forecast, test_pib)
-agregar_resultado("MA", prediccion_ma_pib, test_pib)
-agregar_resultado("ARMA", arma_pib_forecast, test_pib)
-agregar_resultado("SARIMA", forecast_sarima_pib, test_pib)
+#============================
+# IPC
+tabla_ipc <- rbind(
+  calcular_metricas(test_ipc, pred_autoarima_ipc, "AutoARIMA"),
+  calcular_metricas(test_ipc, pred_naive_ipc, "Naive"),
+  calcular_metricas(test_ipc, pred_snaive_ipc, "SNaive"),
+  calcular_metricas(test_ipc, pred_mean_ipc, "Mean"),
+  calcular_metricas(test_ipc, pred_ma_ipc, "MA"),
+  calcular_metricas(test_ipc, pred_ar_ipc, "AR"))
 
-# Ordenar la tabla de resultados por la métrica
-resultados_pib <- resultados_pib[order(resultados_pib$MAPE), ]
-resultados_pib
-head(resultados_pib) #SARIMA (El Mejor), SNaive, AutoArima
+#============================
+# PIB
+tabla_pib <- rbind(
+  calcular_metricas(test_pib, pred_autoarima_pib, "AutoARIMA"),
+  calcular_metricas(test_pib, pred_naive_pib, "Naive"),
+  calcular_metricas(test_pib, pred_snaive_pib, "SNaive"),
+  calcular_metricas(test_pib, pred_mean_pib, "Mean"),
+  calcular_metricas(test_pib, pred_ma_pib, "MA"),
+  calcular_metricas(test_pib, pred_ar_pib, "AR"))
 
-######
+# Mostrar tablas
+tabla_ipc
+tabla_pib
 
-resultados_ipc <- data.frame(
-  Modelo = character(),
-  MAE = numeric(),
-  RMSE = numeric(),
-  MAPE = numeric(),
-  stringsAsFactors = FALSE
-)
 
-agregar_resultado <- function(nombre, prediccion, real) {
-  metrica <- accuracy(prediccion, real)
-  resultados_ipc <<- rbind(resultados_ipc, data.frame(
-    Modelo = nombre,
-    MAE = metrica["Test set", "MAE"],
-    RMSE = metrica["Test set", "RMSE"],
-    MAPE = metrica["Test set", "MAPE"]
-  ))
+
+#Elegir el mejor modelo
+library(dplyr)
+mejor_modelo_ipc <- tabla_ipc %>% arrange(RMSE) %>% slice(1)
+mejor_modelo_pib <- tabla_pib %>% arrange(RMSE) %>% slice(1)
+mejor_modelo_ipc #SNAIVE, AR
+mejor_modelo_pib #AUTOARIMA, AR
+
+
+############################################################
+# 5. GRAFICOS DE PREDICCIONES vs OBSERVADO
+############################################################
+
+extraer_valores <- function(pred){
+  if("forecast" %in% class(pred)){
+    return(as.numeric(pred$mean))
+  } else {
+    return(as.numeric(pred))  # ya es vector numérico
+  }
+}
+
+graficar_predicciones <- function(test, pred_list, nombres, titulo){
+  df <- data.frame(Tiempo = time(test), Observado = as.numeric(test))
+  
+  for(i in 1:length(pred_list)){
+    df[[nombres[i]]] <- extraer_valores(pred_list[[i]])
+  }
+  
+  library(tidyr)
+  df_long <- pivot_longer(df, cols = -Tiempo, names_to = "Modelo", values_to = "Valor")
+  
+  ggplot(df_long, aes(x = Tiempo, y = Valor, color = Modelo)) +
+    geom_line(size=1) +
+    scale_color_manual(values = c("Observado"="black",
+                                  "AutoARIMA"="blue",
+                                  "Naive"="green",
+                                  "SNaive"="red",
+                                  "Mean"="purple",
+                                  "MA"="orange",
+                                  "AR"="brown",
+                                  "ARMA"="pink")) +
+    ggtitle(titulo) +
+    ylab("Valor") +
+    xlab("Trimestre") +
+    theme_minimal()
 }
 
 
-# Evaluar cada modelo y almacenar sus resultados
-agregar_resultado("AutoARIMA", arima_forecast_ipc, test_ipc)
-agregar_resultado("Mean Forecast", meanf_ipc, test_ipc)
-agregar_resultado("SNaive", snaive_ipc, test_ipc)
-agregar_resultado("Naive", naive_ipc, test_ipc)
-agregar_resultado("AR", ar_ipc_forecast, test_ipc)
-agregar_resultado("MA", prediccion_ma_ipc, test_ipc)
-agregar_resultado("ARMA", arma_ipc_forecast, test_ipc)
-agregar_resultado("SARIMA", forecast_sarima_ipc, test_ipc)
+#=========================
+# Ejemplo IPC
+graphics.off()  # cierra todos los dispositivos gráficos
 
-# Ordenar la tabla de resultados por la métrica
-resultados_ipc <- resultados_ipc[order(resultados_ipc$MAPE), ]
-resultados_ipc
-head(resultados_ipc)  #MA,ARMA,AR
+graficar_predicciones(test_ipc, 
+                      list(pred_autoarima_ipc, pred_naive_ipc, pred_snaive_ipc, 
+                           pred_mean_ipc, pred_ma_ipc, pred_ar_ipc),
+                      c("AutoARIMA", "Naive", "SNaive", "Mean", "MA", "AR"),
+                      "Predicciones vs Observado - IPC")
 
-
-
-
+# Ejemplo PIB
+graficar_predicciones(test_pib, 
+                      list(pred_autoarima_pib, pred_naive_pib, pred_snaive_pib, 
+                           pred_mean_pib, pred_ma_pib, pred_ar_pib),
+                      c("AutoARIMA", "Naive", "SNaive", "Mean", "MA", "AR"),
+                      "Predicciones vs Observado - PIB")
 
 
 
@@ -1329,9 +1209,71 @@ head(resultados_ipc)  #MA,ARMA,AR
 
 
 
+############################################################
+# 6. REVERTIR TRANSFORMACIONES PARA INTERPRETAR EN ESCALA ORIGINAL
+############################################################
+############################################################
+# 6. REVERTIR TRANSFORMACIONES PARA INTERPRETAR EN ESCALA ORIGINAL
+############################################################
+
+##############################
+# CPI: diferencia simple + estacional
+##############################
+
+# Tomar el último valor antes de la primera diferencia
+ultimo_valor_diff_cpi <- tail(cpi_ts_trimestral_sin_outliers, 1)  
+
+# Tomar los últimos 4 valores antes de la diferencia estacional (lag=4, trimestral)
+ultimos_4_valores_cpi <- tail(cpi_ts_trimestral_sin_outliers, 4) 
+
+# Revertir la diferencia estacional de las predicciones del modelo
+pred_cpi_diff_est <- diffinv(pred_autoarima_ipc$mean, lag = 4, xi = ultimos_4_valores_cpi)
+
+# Revertir la primera diferencia simple (lag=1)
+pred_cpi_original <- diffinv(pred_cpi_diff_est, lag = 1, xi = ultimo_valor_diff_cpi)
+
+# Ajustar la longitud final para que coincida con la serie de test
+pred_cpi_original <- tail(pred_cpi_original, length(test_ipc))
+
+# Extraer la serie original de test del CPI en la misma ventana temporal
+CPI_test_ori <- window(cpi_ts_trimestral_sin_outliers, start=start(test_ipc), end=end(test_ipc))
+
+# Calcular métricas de error (RMSE, MAE, MAPE, etc.) entre la predicción y los valores reales
+accuracy_CPI <- accuracy(pred_cpi_original, CPI_test_ori)
+
+# Mostrar resultados de accuracy
+print(accuracy_CPI)
 
 
+##############################
+# PIB: log + primera diferencia
+##############################
 
+# Tomar el último valor de la serie log-transformada antes de diferenciar
+ultimo_valor_diff_pib <- tail(gdp_ts_trimestral_sin_outliers_log,1)
+
+# Revertir la primera diferencia de las predicciones sobre la serie log-transformada
+pred_pib_diff <- diffinv(pred_autoarima_pib$mean, lag=1, xi = ultimo_valor_diff_pib)
+
+# Revertir la transformación logarítmica para volver a la escala original
+pred_pib_original <- exp(pred_pib_diff)
+
+# Ajustar longitud final para que coincida con la serie de test
+pred_pib_original <- tail(pred_pib_original, length(test_pib))
+
+# Extraer la serie original de test del PIB en la misma ventana temporal
+PIB_test_ori <- window(gdp_ts_trimestral_sin_outliers, start=start(test_pib), end=end(test_pib))
+
+# Calcular métricas de error entre la predicción revertida y los valores reales
+accuracy_PIB <- accuracy(pred_pib_original, PIB_test_ori)
+
+# Mostrar resultados de accuracy
+print(accuracy_PIB)
+
+############################################################
+# Ahora 'pred_cpi_original' y 'pred_pib_original' están en la
+# escala original, listos para graficar y evaluar
+############################################################
 
 
 
