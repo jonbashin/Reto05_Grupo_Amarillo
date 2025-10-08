@@ -1201,13 +1201,32 @@ graficar_predicciones(test_pib,
 
 
 
+# Después de evaluar qué modelo funciona mejor:
+#   
+#   Reviertes las diferencias y transformaciones (log, diferencias estacionales) para que las predicciones estén en la escala original.
+# 
+# Esto no es para encontrar otro modelo, sino para interpretar los resultados y calcular accuracy en la escala real:
+#   
+#   Ejemplo: predicción de PIB en miles de millones, CPI en índice real.
+# 
+# Ahora puedes comparar con los valores reales de test y graficar predicciones vs observados.Después de evaluar qué modelo funciona mejor:
+#   
+#   Reviertes las diferencias y transformaciones (log, diferencias estacionales) para que las predicciones estén en la escala original.
+# 
+# Esto no es para encontrar otro modelo, sino para interpretar los resultados y calcular accuracy en la escala real:
+#   
+#   Ejemplo: predicción de PIB en miles de millones, CPI en índice real.
+# 
+# Ahora puedes comparar con los valores reales de test y graficar predicciones vs observados.
 
 
 
 
-
-
-
+# Series estacionarias → elegir mejor modelo → predecir test estacionario.
+# 
+# Revertir predicciones a escala original → evaluar error y graficar.
+# 
+# Usar modelo elegido para predecir futuros valores en la escala original.
 
 ############################################################
 # 6. REVERTIR TRANSFORMACIONES PARA INTERPRETAR EN ESCALA ORIGINAL
