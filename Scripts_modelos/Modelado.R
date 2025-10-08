@@ -252,14 +252,14 @@ test_pib<-window(gdp_ts_trimestral_sin_outliers,start=c(2021,2), end= c(2022,2))
 
 # GDP
 #png("gdp_Serie_Sin_Outliers.png", width=800, height=600)
-tsplot(gdp_ts_trimestral_sin_outliers, col="steelblue", lwd=2,
+tsplot(train_pib, col="steelblue", lwd=2,
        main="GDP (Sin outliers)  ", ylab="Valor", xlab="Tiempo")
 #dev.off()
 # Varianza creciente (ligera), con estacionalidad
 
 # CPI
 #png("cpi_Serie_Sin_Outliers.png", width=800, height=600)
-tsplot(cpi_ts_trimestral_sin_outliers, col="steelblue", lwd=2,
+tsplot(train_ipc, col="steelblue", lwd=2,
        main="CPI (Sin Outliers)", ylab="Valor", xlab="Tiempo")
 abline(h=mean(cpi_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
 #dev.off()
@@ -296,7 +296,7 @@ abline(h=mean(unemployment_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", l
 
 # Transformación log para estabilizar la varianza
 stock_market_ts_trimestral_sin_outliers_log <- log(stock_market_ts_trimestral_sin_outliers)
-gdp_ts_trimestral_sin_outliers_log <- log(gdp_ts_trimestral_sin_outliers)
+train_pib_log <- log(train_pib)
 
 # Graficar después de log-transform
 #png("stock_market_Serie_Estabilizada_log.png", width=800, height=600)
@@ -305,7 +305,7 @@ tsplot(stock_market_ts_trimestral_sin_outliers_log, col="darkgreen", lwd=2,
 #dev.off()
 
 #png("gdp_Serie_Estabilizada_log.png", width=800, height=600)
-tsplot(gdp_ts_trimestral_sin_outliers_log, col="darkgreen", lwd=2,
+tsplot(train_pib_log, col="darkgreen", lwd=2,
        main="GDP - Serie log-transformada", ylab="Log-Valor", xlab="Tiempo")
 #dev.off()
 
@@ -315,7 +315,7 @@ tsplot(gdp_ts_trimestral_sin_outliers_log, col="darkgreen", lwd=2,
 #=======================
 #?? No puedo poner el titulo que yo quiero
 # Descomposición de la serie de IPC
-descomposicion_ipc <- decompose(cpi_ts_trimestral_sin_outliers)
+descomposicion_ipc <- decompose(train_ipc)
 plot(descomposicion_ipc, col="#93044e")     # genera el gráfico con el título por defecto
 mtext("Descomposición del IPC - Serie limpia", side = 3, line = 0.5, cex = 1.2, font = 2)
 descomposicion_ipc$seasonal #estacionalidad
@@ -323,7 +323,7 @@ descomposicion_ipc$trend #tendencia
 random_ipc<-descomposicion_ipc$random #residuo
 
 # Descomposición de la serie de PIB
-descomposicion_pib <- decompose(gdp_ts_trimestral_sin_outliers_log)
+descomposicion_pib <- decompose(train_pib_log)
 plot(descomposicion_pib, col= "#93044e")
 descomposicion_pib$seasonal #estacionalidad
 descomposicion_pib$trend #tendencia
@@ -356,20 +356,20 @@ random_unemployment<-descomposicion_unemployment$random #residuo
 #ANALISIS DE AUTOCORRELACION
 #=======================
 # ACF y PACF
-cpi_ts_trimestral_sin_outliers <- na.omit(cpi_ts_trimestral_sin_outliers)
-gdp_ts_trimestral_sin_outliers_log <- na.omit(gdp_ts_trimestral_sin_outliers_log)
+train_ipc <- na.omit(train_ipc)
+train_pib_log <- na.omit(train_pib_log)
 stock_market_ts_trimestral_sin_outliers_log <- na.omit(stock_market_ts_trimestral_sin_outliers_log)
 money_supply_ts_trimestral_sin_outliers <- na.omit(money_supply_ts_trimestral_sin_outliers)
 unemployment_ts_trimestral_sin_outliers <- na.omit(unemployment_ts_trimestral_sin_outliers)
 
 # ---- IPC ----
 #png("ACF_IPC_Sin_Diferencia.png", width=800, height=600)
-acf(cpi_ts_trimestral_sin_outliers)
+acf(train_ipc)
 title(main = "ACF del IPC (Sin Diferencia)")
 #dev.off()
 
 #png("PACF_IPC_Sin_Diferencia.png", width=800, height=600)
-pacf(cpi_ts_trimestral_sin_outliers)
+pacf(train_ipc)
 title(main = "PACF del IPC (Sin Diferencia)")
 #dev.off()
 
@@ -386,12 +386,12 @@ title(main = "PACF de Money Supply (Sin Diferencia)")
 
 # ---- GDP ----
 #png("ACF_GDP_Sin_Diferencia.png", width=800, height=600)
-acf(gdp_ts_trimestral_sin_outliers_log)
+acf(train_pib_log)
 title(main = "ACF del GDP (Log, Sin Diferencia)")
 #dev.off()
 
 #png("PACF_GDP_Sin_Diferencia.png", width=800, height=600)
-pacf(gdp_ts_trimestral_sin_outliers_log)
+pacf(train_pib_log)
 title(main = "PACF del GDP (Log, Sin Diferencia)")
 #dev.off()
 
@@ -584,6 +584,9 @@ qqline(money_supply_ts_trimestral_sin_outliers_estacionaria, col="red")
 #dev.off()
 #La linea roja representa como se verian los datos si sigugieran una distribucion normal
 
+
+
+
 ########### ---------- Unemployment Rate (TRIMESTRAL)  #####################
 #######################################################################
 
@@ -663,7 +666,8 @@ qqline(unemployment_ts_trimestral_sin_outliers_estacionaria, col="red")
 #######################################################################
 
 #----                 SIN DIFERENCIA
-tsdisplay(train_pib)             
+tsdisplay(train_pib_log)  
+tsdisplay(gdp_ts_trimestral_sin_outliers_log)
 
 #----               PRIMERA DIFERENCIA
 
