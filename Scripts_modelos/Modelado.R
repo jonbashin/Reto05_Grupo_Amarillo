@@ -233,6 +233,20 @@ plot_outliers(gdp_ts_trimestral, gdp_ts_trimestral_sin_outliers, "GDP (Trimestra
 
 
 #======================
+# SEPARAR TRAIN / TEST
+#======================
+#Queremos predecir datos que ya tenemos para evaluar los modelos
+#Separar datos en train y test
+
+train_ipc<-window(cpi_ts_trimestral_sin_outliers,start= c(1998,1),end=c(2021,2))
+test_ipc<-window(cpi_ts_trimestral_sin_outliers,start=c(2021,3), end= c(2022,2))
+
+train_pib<-window(gdp_ts_trimestral_sin_outliers,start= c(1998,1),end=c(2021,2))
+test_pib<-window(gdp_ts_trimestral_sin_outliers,start=c(2021,2), end= c(2022,2))
+
+
+
+#======================
 #11. TIENEN VARIANZA?
 #======================
 
@@ -324,10 +338,10 @@ random_money_supply<-descomposicion_money_supply$random #residuo
 
 # Descomposición de la serie de indice bursatil
 descomposicion_stock_market <- decompose(stock_market_ts_trimestral_sin_outliers_log)
-plot(descomposicion_stock_markey, col= "#93044e")
-descomposicion_stock_markey$seasonal #estacionalidad
-descomposicion_stock_markey$trend #tendencia
-random_stock_market<-descomposicion_stock_markey$random #residuo
+plot(descomposicion_stock_market, col= "#93044e")
+descomposicion_stock_market$seasonal #estacionalidad
+descomposicion_stock_market$trend #tendencia
+random_stock_market<-descomposicion_stock_market$random #residuo
 
 # Descomposición de la serie del paro
 descomposicion_unemployment <- decompose(unemployment_ts_trimestral_sin_outliers)
@@ -405,6 +419,8 @@ title(main = "PACF del Unemployment Rate (Sin Diferencia)")
 
 
 
+
+
 #=======================
 # 10. SON SERIES ESTACIONARIAS?
 #=======================
@@ -449,7 +465,7 @@ if(kpss_test_money_supply_1$p.value < 0.05){
 #NO ESTACIONARIA diff=1
 
 #TEST LJUNG-BOX
-LBtest_money_supply_1 <- Box.test(money_supply_diff1, lag = 20, type="Ljung")
+LBtest_money_supply_1 <- Box.test(money_supply_diff1, lag = 10, type="Ljung")
 if (LBtest_money_supply_1$p.value < 0.05) {
   print("Money Supply - Ljung-Box (diff1): Existe correlación")
 } else {
@@ -492,7 +508,7 @@ if(kpss_test_money_supply_1_lag$p.value < 0.05){
 # NO ESTACIONARIA diff=1, lag=4 
 
 #TEST LJUNG-BOX
-LBtest_money_supply_1_lag <- Box.test(money_supply_diff1_lag1, lag = 20, type="Ljung")
+LBtest_money_supply_1_lag <- Box.test(money_supply_diff1_lag1, lag = 10, type="Ljung")
 if (LBtest_money_supply_1_lag$p.value < 0.05) {
   print("Money Supply - Ljung-Box (diff1, lag): Existe correlación")
 } else {
@@ -527,7 +543,7 @@ if(kpss_test_money_supply_2$p.value < 0.05){
 #ESTACIONARIA diff=2
 
 #TEST LJUNG-BOX
-LBtest_money_supply_2 <- Box.test(money_supply_diff2, lag = 20, type="Ljung")
+LBtest_money_supply_2 <- Box.test(money_supply_diff2, lag = 10, type="Ljung")
 if (LBtest_money_supply_2$p.value < 0.05) {
   print("Money Supply - Ljung-Box (diff2): Existe correlación")
 } else {
@@ -600,7 +616,7 @@ if(kpss_test_unemployment_1$p.value < 0.05){
 }
 
 #TEST LJUNG-BOX
-LBtest_unemployment_1 <- Box.test(unemployment_diff1, lag = 20, type="Ljung")
+LBtest_unemployment_1 <- Box.test(unemployment_diff1, lag = 10, type="Ljung")
 if (LBtest_unemployment_1$p.value < 0.05) {
   print("Unemployment Rate - Ljung-Box (diff1): Existe correlación")
 } else {
@@ -647,7 +663,7 @@ qqline(unemployment_ts_trimestral_sin_outliers_estacionaria, col="red")
 #######################################################################
 
 #----                 SIN DIFERENCIA
-tsdisplay(gdp_ts_trimestral_sin_outliers_log)             
+tsdisplay(train_pib)             
 
 #----               PRIMERA DIFERENCIA
 
@@ -677,7 +693,7 @@ if(kpss_test_gdp_1$p.value < 0.05){
 
 
 # TEST LJUNG-BOX
-LBtest_gdp_1 <- Box.test(gdp_diff1, lag = 20, type="Ljung")
+LBtest_gdp_1 <- Box.test(gdp_diff1, lag = 10, type="Ljung")
 if (LBtest_gdp_1$p.value < 0.05) {
   print("GDP - Ljung-Box (diff1): Existe correlación")
 } else {
@@ -762,7 +778,7 @@ if(kpss_test_cpi_1$p.value < 0.05){
 
 
 # TEST LJUNG-BOX
-LBtest_cpi_1 <- Box.test(cpi_diff1, lag = 20, type="Ljung")
+LBtest_cpi_1 <- Box.test(cpi_diff1, lag = 10, type="Ljung")
 if (LBtest_cpi_1$p.value < 0.05) {
   print("CPI - Ljung-Box (diff1): Existe correlación")
 } else {
@@ -803,7 +819,7 @@ if(kpss_test_cpi_1$p.value < 0.05){
 
 
 # TEST LJUNG-BOX
-LBtest_cpi_1 <- Box.test(cpi_diff1_lag, lag = 20, type="Ljung")
+LBtest_cpi_1 <- Box.test(cpi_diff1_lag, lag = 10, type="Ljung")
 if (LBtest_cpi_1$p.value < 0.05) {
   print("CPI - Ljung-Box (diff1): Existe correlación")
 } else {
@@ -882,7 +898,7 @@ if(kpss_test_stock_market_1$p.value < 0.05){
 #ESTACIONARIA diff=1
 
 # TEST LJUNG-BOX
-LBtest_stock_market_1 <- Box.test(stock_market_diff1, lag = 20, type="Ljung")
+LBtest_stock_market_1 <- Box.test(stock_market_diff1, lag = 10, type="Ljung")
 if (LBtest_stock_market_1$p.value < 0.05) {
   print("Stock Market - Ljung-Box (diff1): Existe correlación")
 } else {
@@ -931,15 +947,6 @@ library(TSA)       # Para AR, ARMA
 library(Metrics)
 library(ggplot2)
 library(dplyr)
-
-#Queremos predecir datos que ya tenemos para evaluar los modelos
-#Separar datos en train y test
-
-train_ipc<-window(cpi_ts_trimestral_sin_outliers_estacionaria,start= c(1998,1),end=c(2016,1))
-test_ipc<-window(cpi_ts_trimestral_sin_outliers_estacionaria,start=c(2016,2), end= c(2022,2))
-
-train_pib<-window(gdp_ts_trimestral_sin_outliers_log_estacionaria,start= c(1998,1),end=c(2016,1))
-test_pib<-window(gdp_ts_trimestral_sin_outliers_log_estacionaria,start=c(2016,2), end= c(2022,2))
 
 #auto.arima, sarima, , cuando le metes la variables exogenas es arimax.
 
@@ -1065,14 +1072,18 @@ if (boxtest_snaive_pib$p.value > 0.05) {
 # IPC
 library(forecast)
 #--- IPC
+dev.off()
+graphics.off()
+
 pred_autoarima_ipc <- forecast(modelo_autoarima_ipc, h=length(test_ipc), level=90)
 autoplot(pred_autoarima_ipc) + ggtitle("Predicción IPC con AutoARIMA") + ylab("IPC") + xlab("Trimestre") + theme_minimal()
 
 pred_naive_ipc    <- forecast(modelo_naive_ipc, h=length(test_ipc))
+autoplot(pred_naive_ipc) + ggtitle("Predicción IPC con Naive") + ylab("IPC") + xlab("Trimestre") + theme_minimal()
 
 pred_snaive_ipc   <- forecast(modelo_snaive_ipc, h=length(test_ipc))
+autoplot(pred_snaive_ipc) + ggtitle("Predicción IPC con Snaive") + ylab("IPC") + xlab("Trimestre") + theme_minimal()
 
-pred_mean_ipc     <- forecast(modelo_mean_forecast_ipc, h=length(test_ipc))
 
 
 #--- PIB
@@ -1080,10 +1091,11 @@ pred_autoarima_pib <- forecast(modelo_autoarima_pib, h=length(test_pib), level=9
 autoplot(pred_autoarima_pib) +  ggtitle("Predicción PIB con AutoARIMA") + ylab("PIB") +  xlab("Trimestre") +  theme_minimal()
 
 pred_naive_pib    <- forecast(modelo_naive_pib, h=length(test_pib))
+autoplot(pred_naive_pib) +  ggtitle("Predicción PIB con Naive") + ylab("PIB") +  xlab("Trimestre") +  theme_minimal()
 
 pred_snaive_pib   <- forecast(modelo_snaive_pib, h=length(test_pib))
+autoplot(pred_snaive_pib) +  ggtitle("Predicción PIB con Snaive") + ylab("PIB") +  xlab("Trimestre") +  theme_minimal()
 
-pred_mean_pib     <- forecast(modelo_mean_forecast_pib, h=length(test_pib))
 
 
 ############################################################
@@ -1113,20 +1125,14 @@ calcular_metricas <- function(test, pred, modelo){
 tabla_ipc <- rbind(
   calcular_metricas(test_ipc, pred_autoarima_ipc, "AutoARIMA"),
   calcular_metricas(test_ipc, pred_naive_ipc, "Naive"),
-  calcular_metricas(test_ipc, pred_snaive_ipc, "SNaive"),
-  calcular_metricas(test_ipc, pred_mean_ipc, "Mean"),
-  calcular_metricas(test_ipc, pred_ma_ipc, "MA"),
-  calcular_metricas(test_ipc, pred_ar_ipc, "AR"))
+  calcular_metricas(test_ipc, pred_snaive_ipc, "SNaive"))
 
 #============================
 # PIB
 tabla_pib <- rbind(
   calcular_metricas(test_pib, pred_autoarima_pib, "AutoARIMA"),
   calcular_metricas(test_pib, pred_naive_pib, "Naive"),
-  calcular_metricas(test_pib, pred_snaive_pib, "SNaive"),
-  calcular_metricas(test_pib, pred_mean_pib, "Mean"),
-  calcular_metricas(test_pib, pred_ma_pib, "MA"),
-  calcular_metricas(test_pib, pred_ar_pib, "AR"))
+  calcular_metricas(test_pib, pred_snaive_pib, "SNaive"))
 
 # Mostrar tablas
 tabla_ipc
@@ -1295,9 +1301,12 @@ print(accuracy_PIB)
 ############################################################
 
 
-
-
-
+#Train / Test
+#Convertir a estarcionaria solo el train
+#Hacer modelos y forecast para cada variable.
+#Revertir el forecast (Tendria que coincidir con test) (Diapo 81-82). Tene ne cuenta el si es primer valor o tener en cuenta el ultimo valor--> #para reveritr hay que darle el valor orginal no el de la difernecia.
+#Outoplot serie original y las prediciones.
+#Accuracy (Decidir el mejor)
 
 
 
