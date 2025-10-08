@@ -1133,6 +1133,65 @@ resultados_pib
 
 
 
+########################## REVERTIR DIFERENCIACION
+
+############# GDP --> Diferenciada y log
+#Revertir la diferenciacion:
+gdg_log_revertida<- diffinv(
+  gdp_ts_trimestral_sin_outliers_log_estacionaria,
+  xi = head(gdp_ts_trimestral_sin_outliers_log, 1))
+
+#Revertir log:
+gdp_revertida <- exp(gdg_log_revertida)
+
+#Crear serie temporal limpia:
+gdp_revertida_serie_temporal <- ts(gdp_revertida,
+                                   start = start(gdp_ts_trimestral_sin_outliers_log_estacionaria),
+                                   frequency = frequency(gdp_ts_trimestral_sin_outliers_log_estacionaria))
+
+
+#Visualizar la serie revertida:
+plot(gdp_revertida_serie_temporal,
+     main = "Serie PIB Revertida",
+     ylab = "PIB Real",
+     xlab = "Tiempo",
+     col = "blue")
+
+#Convertir a data frame
+
+library(tidyr)
+library(knitr)
+
+# Suponiendo que gdp_revertida_serie_temporal tiene 106 valores (33 años × 4 trimestres)
+gdp_vect <- as.numeric(gdp_revertida_serie_temporal)  # vector con los valores de PIB
+
+# Datos de años y trimestres
+anio_inicio <- 1996
+freq <- 4
+n_periodos <- length(gdp_vect)
+n_anios <- ceiling(n_periodos / freq)
+
+anios <- rep(seq(anio_inicio, anio_inicio + n_anios - 1), each = freq)[1:n_periodos]
+trimestres <- rep(c("Qtr1", "Qtr2", "Qtr3", "Qtr4"), times = n_anios)[1:n_periodos]
+
+# Crear data frame
+df_gdp_revertida <- data.frame(
+  Año = anios,
+  Trimestre = trimestres,
+  PIB_Real = round(gdp_vect, 2)
+)
+
+print(df_gdp_revertida)
+
+#Aplicamos ARIMAX
+
+
+
+
+
+
+
+
 
 #Aplicar el Box.Test paraa cada modelo( Tiene que dar que es ruido blanco)
 
