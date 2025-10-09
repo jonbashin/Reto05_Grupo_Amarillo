@@ -15,6 +15,7 @@ library(VIM)
 library(tseries)
 library(gridExtra)
 library(astsa)
+library(Metrics)  
 
 #=========================
 #Cargar datos:
@@ -704,7 +705,7 @@ if (LBtest_gdp_1$p.value < 0.05) {
 # Los tests indican que la variable GDP es estacionaria con la primera diferencia.
 # GDP --> Estacionaria con la primera diferencia!
 # Cambiamos el nombre para facilitar su uso.
-gdp_ts_trimestral_sin_outliers_log_estacionaria <- gdp_diff1
+train_gdp_estacionaria <- gdp_diff1
 
 
 #-----------------------------------------------------------------
@@ -713,26 +714,26 @@ gdp_ts_trimestral_sin_outliers_log_estacionaria <- gdp_diff1
 #-------    SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparación)
 #png("GDP_Original_vs_Diferenciada.png, width = 900, height = 700)
 par(mfrow=c(2,1))
-plot(gdp_ts_trimestral_sin_outliers_log, type="l", main="GDP (log) - Serie original", ylab="Nivel (log)")
-plot(gdp_ts_trimestral_sin_outliers_log_estacionaria, type="l", main="GDP (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
+plot(train_pib_log, type="l", main="GDP (log) - Serie original", ylab="Nivel (log)")
+plot(train_gdp_estacionaria, type="l", main="GDP (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
 par(mfrow=c(1,1)) 
 #dev.off()
 
 #-------    ACF Y PACF
 #png("ACF_GDP_Primera_Diferencia.png", width=800, height=600)
-acf(gdp_ts_trimestral_sin_outliers_log_estacionaria)
+acf(train_gdp_estacionaria)
 title(main = "ACF de GDP (Primera Diferencia)")
 #dev.off() 
 
 #png("PACF_GDP_Primera_Diferencia.png", width=800, height=600)
-pacf(gdp_ts_trimestral_sin_outliers_log_estacionaria)
+pacf(train_gdp_estacionaria)
 title(main = "PACF de GDP (Primera Diferencia)")
 #dev.off() 
 
 #-------   QQ-PLOT
 #png("QQ_gdp.png", width=800, height=600)
-qqnorm(gdp_ts_trimestral_sin_outliers_log_estacionaria, main="QQ-plot - GDP (log, diff1)")
-qqline(gdp_ts_trimestral_sin_outliers_log_estacionaria, col="red")
+qqnorm(train_gdp_estacionaria, main="QQ-plot - GDP (log, diff1)")
+qqline(train_gdp_estacionaria, col="red")
 #dev.off()
 
 
@@ -741,14 +742,14 @@ qqline(gdp_ts_trimestral_sin_outliers_log_estacionaria, col="red")
 #####################################################################################
 
 #----                 SIN DIFERENCIA
-tsdisplay(cpi_ts_trimestral_sin_outliers)             
+tsdisplay(train_ipc)             
 
 
 
 #----               PRIMERA DIFERENCIA
 
 # Aplicar diferencia
-cpi_diff1 <- diff(cpi_ts_trimestral_sin_outliers, differences = 1)
+cpi_diff1 <- diff(train_ipc, differences = 1)
 tsdisplay(cpi_diff1)
 
 #Nos aseguraremos uqe si lo es con los teses
@@ -765,7 +766,7 @@ if(adf_test_cpi_1$p.value < 0.05){
 } else{
   print("CPI - ADF (diff1): NO estacionaria")
 }
-# NO ESTACIONARIA diff=1 
+# ESTACIONARIA diff=1 
 
 # TEST KPSS
 kpss_test_cpi_1 <- kpss.test(cpi_diff1, null="Level")
@@ -786,52 +787,8 @@ if (LBtest_cpi_1$p.value < 0.05) {
 }
 #AUSENCIA DE CORRELACION
 
-##----               PRIMERA DIFERENCIA y lag
-#Se analiza si la serie tiene estacionalidad.
-decomposed_cpi <- decompose(cpi_ts_trimestral_sin_outliers, type="multiplicative")
-plot(decomposed_cpi)
-decomposed_cpi$seasonal 
 
-#APlicar diferencia 1 y lag=4
-cpi_diff1_lag<- diff(cpi_ts_trimestral_sin_outliers, lag=4)
-tsdisplay(cpi_diff1_lag)
-
-#TEST ADF
-
-# Aplicamos el test ADF usando k óptimo.
-# Esto asegura que usamos un k que dé un resultado más robusto y reproducible.
-adf_test_cpi_1 <- adf.test(cpi_diff1_lag)
-if(adf_test_cpi_1$p.value < 0.05){
-  print("CPI - ADF (diff1): estacionaria")
-} else{
-  print("CPI - ADF (diff1): NO estacionaria")
-}
-# NO ESTACIONARIA diff=1 
-
-# TEST KPSS
-kpss_test_cpi_1 <- kpss.test(cpi_diff1_lag, null="Level")
-if(kpss_test_cpi_1$p.value < 0.05){
-  print("CPI - KPSS (diff1): NO estacionaria")
-} else{
-  print("CPI - KPSS (diff1): estacionaria")
-}
-#ESTACIONARIA diff=1
-
-
-# TEST LJUNG-BOX
-LBtest_cpi_1 <- Box.test(cpi_diff1_lag, lag = 10, type="Ljung")
-if (LBtest_cpi_1$p.value < 0.05) {
-  print("CPI - Ljung-Box (diff1): Existe correlación")
-} else {
-  print("CPI - Ljung-Box (diff1): Ausencia de correlación")
-}
-#EXISTE CORRELACION
-
-#......................................................
-# Los tests menos adf indican que CPI es estacionaria con la primera diferencia.
-# CPI --> Estacionaria con la primera diferencia!
-# Cambiamos el nombre para facilitar su uso.
-cpi_ts_trimestral_sin_outliers_estacionaria <- cpi_diff1_lag
+train_cpi_estacionaria <- cpi_diff1
 
 
 #-----------------------------------------------------------------
@@ -840,26 +797,26 @@ cpi_ts_trimestral_sin_outliers_estacionaria <- cpi_diff1_lag
 #-------    SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparación)
 #png("CPI_Original_vs_Diferenciada.png", width = 900, height = 700)
 par(mfrow=c(2,1))
-plot(cpi_ts_trimestral_sin_outliers, type="l", main="CPI (log) - Serie original", ylab="Nivel (log)")
-plot(cpi_ts_trimestral_sin_outliers_estacionaria, type="l", main="CPI (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
+plot(train_ipc, type="l", main="CPI (log) - Serie original", ylab="Nivel (log)")
+plot(train_cpi_estacionaria, type="l", main="CPI (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
 par(mfrow=c(1,1))  
 #dev.off()
 
 #-------    ACF Y PACF
 #png("ACF_CPI_Primera_Diferencia.png", width=800, height=600)
-acf(cpi_ts_trimestral_sin_outliers_estacionaria)
+acf(train_cpi_estacionaria)
 title(main = "ACF de CPI (Primera Diferencia)")
 #dev.off() 
 
 #png("PACF_CPI_Primera_Diferencia.png", width=800, height=600)
-pacf(cpi_ts_trimestral_sin_outliers_estacionaria)
+pacf(train_cpi_estacionaria)
 title(main = "PACF de CPI (Primera Diferencia)")
 #dev.off()   
 
 #-------   QQ-PLOT 
 #png("QQ_cpi.png", width=800, height=600)
-qqnorm(cpi_ts_trimestral_sin_outliers_estacionaria, main="QQ-plot - CPI (log, diff1)")
-qqline(cpi_ts_trimestral_sin_outliers_estacionaria, col="red")
+qqnorm(train_cpi_estacionaria, main="QQ-plot - CPI (log, diff1)")
+qqline(train_cpi_estacionaria, col="red")
 #dev.off()
 
 
@@ -958,6 +915,8 @@ library(dplyr)
 
 #---  Auto ARIMA
 ### IPC
+modelo_autoarima_ipc <- auto.arima(train_ipc, seasonal=FALSE, d=0) #D=0 para que no vuelva a diferenciar
+
 modelo_autoarima_ipc <- auto.arima(train_ipc, seasonal=FALSE, d=0, D=0) #D=0 para que no vuelva a diferenciar
 summary(modelo_autoarima_ipc)
 checkresiduals(modelo_autoarima_ipc)
@@ -970,6 +929,7 @@ if (boxtest_autoarima_ipc$p.value > 0.05) {
 } else {
   cat("Residuos muestran autocorrelación\n")
 }
+#--> Residuos muestran autocorrelación
 
 
 ### PIB
@@ -988,6 +948,8 @@ if (boxtest_autoarima_pib$p.value > 0.05) {
 } else {
   cat("Residuos muestran autocorrelación\n")
 }
+#--> Residuos muestran autocorrelación
+
 
 
 #--- Modelo Naive 
@@ -1004,6 +966,7 @@ if (boxtest_naive_ipc$p.value > 0.05) {
 } else {
   cat("Residuos Naive IPC muestran autocorrelación\n")
 }
+#--> Residuos Naive IPC parecen ruido blanco
 
 
 ### PIB
@@ -1019,6 +982,8 @@ if (boxtest_naive_pib$p.value > 0.05) {
 } else {
   cat("Residuos Naive PIB muestran autocorrelación\n")
 }
+#--> Residuos Naive PIB muestran autocorrelación
+
 
 
 
@@ -1036,6 +1001,7 @@ if (boxtest_snaive_ipc$p.value > 0.05) {
 } else {
   cat("Residuos SNaive IPC muestran autocorrelación\n")
 }
+#--> Residuos SNaive IPC muestran autocorrelación
 
 
 ### PIB
@@ -1051,6 +1017,7 @@ if (boxtest_snaive_pib$p.value > 0.05) {
 } else {
   cat("Residuos SNaive PIB muestran autocorrelación\n")
 }
+#--> Residuos SNaive PIB muestran autocorrelación
 
 
 
@@ -1069,32 +1036,28 @@ if (boxtest_snaive_pib$p.value > 0.05) {
 # 3. PREDICCIONES PARA TEST
 ############################################################
 
-# IPC
-library(forecast)
 #--- IPC
-dev.off()
-graphics.off()
 
-pred_autoarima_ipc <- forecast(modelo_autoarima_ipc, h=length(test_ipc), level=90)
-autoplot(pred_autoarima_ipc) + ggtitle("Predicción IPC con AutoARIMA") + ylab("IPC") + xlab("Trimestre") + theme_minimal()
+prediccion_autoarima_ipc <- forecast(modelo_autoarima_ipc, h=length(test_ipc), level=90)
+autoplot(prediccion_autoarima_ipc) + ggtitle("Predicción IPC con AutoARIMA") + ylab("IPC") + xlab("Trimestre") + theme_minimal()
 
-pred_naive_ipc    <- forecast(modelo_naive_ipc, h=length(test_ipc))
-autoplot(pred_naive_ipc) + ggtitle("Predicción IPC con Naive") + ylab("IPC") + xlab("Trimestre") + theme_minimal()
+prediccion_naive_ipc    <- forecast(modelo_naive_ipc, h=length(test_ipc))
+autoplot(prediccion_naive_ipc) + ggtitle("Predicción IPC con Naive") + ylab("IPC") + xlab("Trimestre") + theme_minimal()
 
-pred_snaive_ipc   <- forecast(modelo_snaive_ipc, h=length(test_ipc))
-autoplot(pred_snaive_ipc) + ggtitle("Predicción IPC con Snaive") + ylab("IPC") + xlab("Trimestre") + theme_minimal()
+prediccion_snaive_ipc   <- forecast(modelo_snaive_ipc, h=length(test_ipc))
+autoplot(prediccion_snaive_ipc) + ggtitle("Predicción IPC con Snaive") + ylab("IPC") + xlab("Trimestre") + theme_minimal()
 
 
 
 #--- PIB
-pred_autoarima_pib <- forecast(modelo_autoarima_pib, h=length(test_pib), level=90)
-autoplot(pred_autoarima_pib) +  ggtitle("Predicción PIB con AutoARIMA") + ylab("PIB") +  xlab("Trimestre") +  theme_minimal()
+prediccion_autoarima_pib <- forecast(modelo_autoarima_pib, h=length(test_pib), level=90)
+autoplot(prediccion_autoarima_pib) +  ggtitle("Predicción PIB con AutoARIMA") + ylab("PIB") +  xlab("Trimestre") +  theme_minimal()
 
-pred_naive_pib    <- forecast(modelo_naive_pib, h=length(test_pib))
-autoplot(pred_naive_pib) +  ggtitle("Predicción PIB con Naive") + ylab("PIB") +  xlab("Trimestre") +  theme_minimal()
+prediccion_naive_pib    <- forecast(modelo_naive_pib, h=length(test_pib))
+autoplot(prediccion_naive_pib) +  ggtitle("Predicción PIB con Naive") + ylab("PIB") +  xlab("Trimestre") +  theme_minimal()
 
-pred_snaive_pib   <- forecast(modelo_snaive_pib, h=length(test_pib))
-autoplot(pred_snaive_pib) +  ggtitle("Predicción PIB con Snaive") + ylab("PIB") +  xlab("Trimestre") +  theme_minimal()
+prediccion_snaive_pib   <- forecast(modelo_snaive_pib, h=length(test_pib))
+autoplot(prediccion_snaive_pib) +  ggtitle("Predicción PIB con Snaive") + ylab("PIB") +  xlab("Trimestre") +  theme_minimal()
 
 
 
@@ -1102,7 +1065,6 @@ autoplot(pred_snaive_pib) +  ggtitle("Predicción PIB con Snaive") + ylab("PIB")
 # 4. CALCULO DE METRICAS
 ############################################################
 
-library(Metrics)  # para rmse, mae, mape
 
 calcular_metricas <- function(test, pred, modelo){
   # si es objeto forecast, tomar $mean, si no, usar directamente
@@ -1123,16 +1085,16 @@ calcular_metricas <- function(test, pred, modelo){
 #============================
 # IPC
 tabla_ipc <- rbind(
-  calcular_metricas(test_ipc, pred_autoarima_ipc, "AutoARIMA"),
-  calcular_metricas(test_ipc, pred_naive_ipc, "Naive"),
-  calcular_metricas(test_ipc, pred_snaive_ipc, "SNaive"))
+  calcular_metricas(test_ipc, prediccion_autoarima_ipc, "AutoARIMA"),
+  calcular_metricas(test_ipc, prediccion_naive_ipc, "Naive"),
+  calcular_metricas(test_ipc, prediccion_snaive_ipc, "SNaive"))
 
 #============================
 # PIB
 tabla_pib <- rbind(
-  calcular_metricas(test_pib, pred_autoarima_pib, "AutoARIMA"),
-  calcular_metricas(test_pib, pred_naive_pib, "Naive"),
-  calcular_metricas(test_pib, pred_snaive_pib, "SNaive"))
+  calcular_metricas(test_pib, prediccion_autoarima_pib, "AutoARIMA"),
+  calcular_metricas(test_pib, prediccion_naive_pib, "Naive"),
+  calcular_metricas(test_pib, prediccion_snaive_pib, "SNaive"))
 
 # Mostrar tablas
 tabla_ipc
@@ -1144,8 +1106,8 @@ tabla_pib
 library(dplyr)
 mejor_modelo_ipc <- tabla_ipc %>% arrange(RMSE) %>% slice(1)
 mejor_modelo_pib <- tabla_pib %>% arrange(RMSE) %>% slice(1)
-mejor_modelo_ipc #SNAIVE, AR
-mejor_modelo_pib #AUTOARIMA, AR
+mejor_modelo_ipc #NAIVE
+mejor_modelo_pib #NAIVE
 
 
 ############################################################
@@ -1192,17 +1154,52 @@ graficar_predicciones <- function(test, pred_list, nombres, titulo){
 graphics.off()  # cierra todos los dispositivos gráficos
 
 graficar_predicciones(test_ipc, 
-                      list(pred_autoarima_ipc, pred_naive_ipc, pred_snaive_ipc, 
-                           pred_mean_ipc, pred_ma_ipc, pred_ar_ipc),
-                      c("AutoARIMA", "Naive", "SNaive", "Mean", "MA", "AR"),
+                      list(prediccion_autoarima_ipc, prediccion_naive_ipc, prediccion_snaive_ipc),
+                      c("AutoARIMA", "Naive", "SNaive"),
                       "Predicciones vs Observado - IPC")
 
 # Ejemplo PIB
 graficar_predicciones(test_pib, 
-                      list(pred_autoarima_pib, pred_naive_pib, pred_snaive_pib, 
-                           pred_mean_pib, pred_ma_pib, pred_ar_pib),
-                      c("AutoARIMA", "Naive", "SNaive", "Mean", "MA", "AR"),
+                      list(prediccion_autoarima_pib, prediccion_naive_pib, prediccion_snaive_pib),
+                      c("AutoARIMA", "Naive", "SNaive"),
                       "Predicciones vs Observado - PIB")
+
+
+#===============================
+#REVERTIR SERIES
+#==============================
+
+#REVERSION --> GDP (APlicado: Primera diferencia.)
+#..........................................................................
+#REVERSION AUTOARIMA
+last_ipc <- tail(train_ipc, 1)
+pred_diff <- prediccion_autoarima_ipc$method
+prediccion_autoarima_ipc$mean
+
+
+
+
+# Reconstruir log(PIB)
+train_pib_log_reconstruido <- c(train_pib_log[1], cumsum(train_gdp_estacionaria) + train_pib_log[1])
+
+# Volver a la escala original
+train_gdp_revertida <- exp(train_pib_log_reconstruido)
+train_gdp_revertida <- ts(train_gdp_revertida, start = start(train_pib), frequency = frequency(train_pib))
+
+# Paso 4: graficar ambas
+plot(train_pib, type = "l", col = "black", lwd = 2, main = "PIB original vs reconstruido")
+lines(train_gdp_revertida, col = "blue", lty = 2)
+legend("topleft", legend = c("Original", "Reconstruida"), col = c("black", "blue"), lty = c(1,2))
+
+
+
+
+
+
+
+
+
+#REVERSION --> IPC (Aplicado: Primera Diferencia)
 
 
 
