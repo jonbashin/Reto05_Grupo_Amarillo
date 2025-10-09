@@ -261,7 +261,6 @@ tsplot(train_pib, col="steelblue", lwd=2,
 #png("cpi_Serie_Sin_Outliers.png", width=800, height=600)
 tsplot(train_ipc, col="steelblue", lwd=2,
        main="CPI (Sin Outliers)", ylab="Valor", xlab="Tiempo")
-abline(h=mean(cpi_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
 #dev.off()
 #Varianza Constante
 
@@ -269,7 +268,6 @@ abline(h=mean(cpi_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
 #png("stock_market_Serie_Sin_Outliers.png", width=800, height=600)
 tsplot(stock_market_ts_trimestral_sin_outliers, col="steelblue", lwd=2,
        main="Stock Market (Sin Outliers)", ylab="Valor", xlab="Tiempo")
-abline(h=mean(stock_market_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
 #dev.off()
 #Varianza Creciente
 
@@ -277,7 +275,6 @@ abline(h=mean(stock_market_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", l
 #png("money_supply_Serie_Sin_Outliers.png", width=800, height=600)
 tsplot(money_supply_ts_trimestral_sin_outliers, col="steelblue", lwd=2,
        main="Money Supply (Sin Outliers)", ylab="Valor", xlab="Tiempo")
-abline(h=mean(money_supply_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
 #dev.off()
 #Varianza constante
 
@@ -285,7 +282,6 @@ abline(h=mean(money_supply_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", l
 #png("unemployment_Serie_Sin_Outliers.png", width=800, height=600)
 tsplot(unemployment_ts_trimestral_sin_outliers, col="steelblue", lwd=2,
        main="Unemployment (Sin Outliers)", ylab="Valor", xlab="Tiempo")
-abline(h=mean(unemployment_ts_trimestral_sin_outliers, na.rm=TRUE), col="red", lty=2)
 #dev.off()
 #Varianza Constante
 
