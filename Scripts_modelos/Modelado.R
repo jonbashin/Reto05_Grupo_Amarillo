@@ -15,7 +15,8 @@ library(VIM)
 library(tseries)
 library(gridExtra)
 library(astsa)
-library(Metrics)  
+library(Metrics)
+
 
 #=========================
 #Cargar datos:
@@ -31,6 +32,12 @@ colnames(datos_limpios_AUS)
 #Las variables PCI y GDP las tenemos en trimestrales ya en los datos Originales, en cmabio Unemployment, money supply y Stock Market estan en mensuales.
 #Por lo que las pasaremos a series trimestrals las tres que estan en mensual, ya que trabajaremos con datos trimestrales para hacer la prediccion.
 
+paleta_colores <- paleta_colores <- c(
+  "#84BD00",  # Verde pistacho
+  "#D1006F",  # Magenta
+  "#6A2C8A",  # Berenjena
+  "#D1D3D4"   # Gris neutro
+  )
 
 # =========================
 # 1. PASAR A SERIES TEMPORALES TRIMESTRALES
