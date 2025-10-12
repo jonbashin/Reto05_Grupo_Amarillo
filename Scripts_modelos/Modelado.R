@@ -318,7 +318,7 @@ tsplot(train_pib_log, col="darkgreen", lwd=2,
 # Descomposición de la serie de IPC
 descomposicion_ipc <- decompose(train_ipc)
 plot(descomposicion_ipc, col="#93044e")     # genera el gráfico con el título por defecto
-mtext("Descomposición del IPC - Serie limpia", side = 3, line = 0.5, cex = 1.2, font = 2)
+mtext("Descomposición del IPC", side = 3, line = 0.5, cex = 1.2, font = 2)
 descomposicion_ipc$seasonal #estacionalidad
 descomposicion_ipc$trend #tendencia
 random_ipc<-descomposicion_ipc$random #residuo
