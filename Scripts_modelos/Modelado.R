@@ -1252,7 +1252,7 @@ legend("topleft",
 
 
 #================
-#COMPARACION IPC MODELOS
+#COMPARACION IPC MODELOS (AUTOARIMA, SARIMA, ARIMA)
 #================
 
 #TABLA MODELOS IPC
