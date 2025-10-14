@@ -1189,15 +1189,12 @@ legend("topleft",
        lwd = c(2, 2, 3))
 
 
-library(forecast)
-library(tseries)
-library(ggplot2)
 
 #-----------------      ARIMA MANUAL ---- IPC        ----------------------
 ###########################################################################
 # train_ipc_estacionaria es la serie ya diferenciada (d=1)
 
-# 1. Ver ACF y PACF para decidir p y q
+# Ver ACF y PACF para decidir p y q
 #Elegiriremos p y q fijandolnos en la autoccorelacion:
 #p=orden autoregresivo → se decide con la PACF.--> p ≈ 1 (PACF corta rápido después de lag 1)
 #q= orden de media móvil → se decide con la ACF. -_> q ≈ 0 (ACF corta rápido después de lag 0)
@@ -1206,7 +1203,7 @@ pacf(train_ipc_estacionaria, main="PACF IPC diferenciada")
 
 
 #----------   MODELOS
-modelo_arima_ipc <- arima(train_ipc_estacionaria, order=c(1,1,0))  # d=1 porque ya diferenciamos
+modelo_arima_ipc <- arima(train_ipc_estacionaria, order=c(1,0,0))  # d=0 porque ya diferenciamos anteriormente. y no necesitamos diferenciarlo otra vez
 summary(modelo_arima_ipc)
 
 # Validación de residuales
@@ -1248,6 +1245,49 @@ legend("topleft",
        lty=c(1,1,2),
        lwd=c(2,2,3))
 
+#-----------------      SARIMA MANUAL ---- PIB       ----------------------
+###########################################################################
+
+#-----------------      MODELO SARIMA IPC
+modelo_sarima_ipc <- arima(train_ipc_estacionaria,
+                           order = c(1, 0, 0),
+                           seasonal = list(order = c(0, 0, 0), period = 4),
+                           method = "ML")
+summary(modelo_sarima_ipc)
+checkresiduals(modelo_sarima_ipc)
+
+#-----------------      PREDICCIONES
+prediccion_sarima_ipc <- forecast(modelo_sarima_ipc, h=length(test_ipc), level=90)
+autoplot(prediccion_sarima_ipc) + 
+  ggtitle("Predicción IPC con SARIMA") + 
+  ylab("IPC") + xlab("Trimestre") + 
+  theme_minimal()
+
+#-----------------      REVERTIR
+# La serie original fue diferenciada 1 vez, usamos diffinv
+forecast_sarima_ipc_revertida <- diffinv(prediccion_sarima_ipc$mean, differences = 1, xi=tail(train_ipc, 1))
+forecast_sarima_ipc_revertida <- forecast_sarima_ipc_revertida[-1]
+
+#-----------------      ACCURACY
+acc_sarima_ipc <- forecast::accuracy(as.numeric(forecast_sarima_ipc_revertida), 
+                                     as.numeric(test_ipc))
+acc_sarima_ipc
+
+#-----------------      GRAFICO FINAL
+forecast_sarima_ipc_revertida_ts <- ts(forecast_sarima_ipc_revertida, 
+                                       start=c(2021,1), frequency=4)
+
+ts.plot(train_ipc, test_ipc, forecast_sarima_ipc_revertida_ts,
+        col=c("black","blue","red"),
+        lty=c(1,1,2),
+        lwd=c(2,2,3),
+        main="Predicción IPC SARIMA vs Observado",
+        ylab="IPC")
+legend("topleft",
+       legend=c("Entrenamiento","Observado (Test)","Predicción"),
+       col=c("black","blue","red"),
+       lty=c(1,1,2),
+       lwd=c(2,2,3))
 
 
 
@@ -1256,24 +1296,44 @@ legend("topleft",
 #================
 
 #TABLA MODELOS IPC
-accuracy_table <- data.frame(Modelo = c("AutoARIMA", "Naive", "SNaive"),
-                             ME   = c(acc_autoarima["Test set","ME"],
-                                      acc_naive["Test set","ME"],
-                                      acc_snaive["Test set","ME"]),
-                                     RMSE = c(acc_autoarima["Test set","RMSE"],
-                                     acc_naive["Test set","RMSE"],
-                                     acc_snaive["Test set","RMSE"]),
-                            MAE  = c(acc_autoarima["Test set","MAE"],
-                                     acc_naive["Test set","MAE"],
-                                     acc_snaive["Test set","MAE"]),
-                            MAPE = c(acc_autoarima["Test set","MAPE"],
-                                     acc_naive["Test set","MAPE"],
-                                     acc_snaive["Test set","MAPE"]))
-accuracy_table
+accuracy_tabla_IPC <- data.frame(
+  Modelo = c("AutoARIMA", "Naive", "SNaive", "Arima", "SARIMA"),
+  ME   = c(acc_autoarima["Test set","ME"],
+           acc_naive["Test set","ME"],
+           acc_snaive["Test set","ME"],
+           acc_arima["Test set", "ME"],
+           acc_sarima_ipc["Test set", "ME"]),
+  RMSE = c(acc_autoarima["Test set","RMSE"],
+           acc_naive["Test set","RMSE"],
+           acc_snaive["Test set","RMSE"],
+           acc_arima["Test set", "RMSE"],
+           acc_sarima_ipc["Test set", "RMSE"]),
+  MAE  = c(acc_autoarima["Test set","MAE"],
+           acc_naive["Test set","MAE"],
+           acc_snaive["Test set","MAE"],
+           acc_arima["Test set", "MAE"],
+           acc_sarima_ipc["Test set", "MAE"]),
+  MAPE = c(acc_autoarima["Test set","MAPE"],
+           acc_naive["Test set","MAPE"],
+           acc_snaive["Test set","MAPE"],          
+           acc_arima["Test set", "MAPE"],
+           acc_sarima_ipc["Test set", "MAPE"])
+)
+
+accuracy_tabla_IPC
+
+accuracy_tabla_IPC_ordenada <- accuracy_tabla_IPC[order(accuracy_tabla_IPC$RMSE), ]
+accuracy_tabla_IPC_ordenada 
+# Imprimir el mejor modelo
+cat("El mejor modelo según RMSE es:", accuracy_tabla_IPC_ordenada$Modelo[1], "\n")
+cat("Con RMSE =", accuracy_tabla_IPC_ordenada$RMSE[1], "\n")
+#AUTOARIMA
+
+
 
 #GRAFICO MODELOS IPC
 # Convertir la tabla a formato largo para ggplot
-accuracy_long <- accuracy_table %>%pivot_longer(cols = c(ME, RMSE, MAE, MAPE), names_to = "Métrica", values_to = "Valor")
+accuracy_long <- accuracy_tabla_IPC %>%pivot_longer(cols = c(ME, RMSE, MAE, MAPE), names_to = "Métrica", values_to = "Valor")
 
 # Gráfico
 ggplot(accuracy_long, aes(x = Modelo, y = Valor, fill = Modelo)) + geom_bar(stat = "identity", position = "dodge") +
@@ -1283,7 +1343,6 @@ ggplot(accuracy_long, aes(x = Modelo, y = Valor, fill = Modelo)) + geom_bar(stat
   ggtitle("Comparación de Accuracy: Modelos de IPC") +
   theme(legend.position = "none") +
   geom_text(aes(label=round(Valor,2)), vjust=-0.3, size=3)
-
 
 
 
@@ -1313,14 +1372,23 @@ if (boxtest_autoarima_pib$p.value > 0.05) {
 prediccion_autoarima_pib <- forecast(modelo_autoarima_pib, h = length(test_pib), level = 90)
 autoplot(prediccion_autoarima_pib) + ggtitle("Predicción PIB con AutoARIMA") + ylab("PIB") + xlab("Trimestre") + theme_minimal()
 
-#------- REVERTIR
-# Primer revertido de la segunda diferencia
-forecast_autoarima_pib_revertida <- diffinv(prediccion_autoarima_pib$mean, 
-                                            differences = 2, 
-                                            xi = tail(train_gdp_log, 2))
-forecast_autoarima_pib_revertida <- forecast_autoarima_pib_revertida[-c(1,2)]
 
-# Quitamos el log de la varianza
+#-----------------      REVERTIR
+# Revertir la segunda diferencia (la no estacional)
+forecast_tmp_autoarima<- diffinv(prediccion_autoarima_pib$mean, 
+                              differences = 1, 
+                              xi = tail(diff(train_gdp_log, lag = 4), 1))
+
+# Revertir la primera diferencia (la estacional con lag = 4)
+forecast_autoarima_pib_revertida <- diffinv(forecast_tmp_autoarima, 
+                                        lag = 4, 
+                                        differences = 1, 
+                                        xi = tail(train_gdp_log, 4))
+
+# Quitar los valores iniciales usados en la inversión
+forecast_autoarima_pib_revertida <- forecast_autoarima_pib_revertida[-c(1:5)]
+
+# Deshacer el logaritmo
 forecast_autoarima_pib_revertida <- exp(forecast_autoarima_pib_revertida)
 
 
@@ -1366,15 +1434,25 @@ if (boxtest_naive_pib$p.value > 0.05) {
 prediccion_naive_pib <- forecast(modelo_naive_pib, h = length(test_pib))
 autoplot(prediccion_naive_pib) + ggtitle("Predicción PIB con Naive") + ylab("PIB") + xlab("Trimestre") + theme_minimal()
 
-#------- REVERTIR
-# Primer revertido de la segunda diferencia
-forecast_naive_pib_revertida <- diffinv(prediccion_naive_pib$mean, 
-                                            differences = 2, 
-                                            xi = tail(train_gdp_log, 2))
-forecast_naive_pib_revertida <- forecast_naive_pib_revertida[-c(1,2)]
 
-# Quitamos el log de la varianza
+#-----------------      REVERTIR
+# Revertir la segunda diferencia (la no estacional)
+forecast_tmp_naive <- diffinv(prediccion_naive_pib$mean, 
+                               differences = 1, 
+                               xi = tail(diff(train_gdp_log, lag = 4), 1))
+
+# Revertir la primera diferencia (la estacional con lag = 4)
+forecast_naive_pib_revertida <- diffinv(forecast_tmp_naive, 
+                                         lag = 4, 
+                                         differences = 1, 
+                                         xi = tail(train_gdp_log, 4))
+
+# Quitar los valores iniciales usados en la inversión
+forecast_naive_pib_revertida <- forecast_naive_pib_revertida[-c(1:5)]
+
+# Deshacer el logaritmo
 forecast_naive_pib_revertida <- exp(forecast_naive_pib_revertida)
+
 
 
 #------ ACCURACYY
@@ -1421,15 +1499,26 @@ if (boxtest_snaive_pib$p.value > 0.05) {
 prediccion_snaive_pib <- forecast(modelo_snaive_pib, h = length(test_pib))
 autoplot(prediccion_snaive_pib) + ggtitle("Predicción PIB con SNaive") + ylab("PIB") + xlab("Trimestre") + theme_minimal()
 
-#------  REVERTIR
-# Primer revertido de la segunda diferencia
-forecast_snaive_pib_revertida <- diffinv(prediccion_snaive_pib$mean, 
-                                        differences = 2, 
-                                        xi = tail(train_gdp_log, 2))
-forecast_snaive_pib_revertida <- forecast_snaive_pib_revertida[-c(1,2)]
 
-# Quitamos el log de la varianza
+
+#-----------------      REVERTIR
+# Revertir la segunda diferencia (la no estacional)
+forecast_tmp_snaive <- diffinv(prediccion_snaive_pib$mean, 
+                        differences = 1, 
+                        xi = tail(diff(train_gdp_log, lag = 4), 1))
+
+# Revertir la primera diferencia (la estacional con lag = 4)
+forecast_snaive_pib_revertida <- diffinv(forecast_tmp_snaive, 
+                                        lag = 4, 
+                                        differences = 1, 
+                                        xi = tail(train_gdp_log, 4))
+
+# Quitar los valores iniciales usados en la inversión
+forecast_snaive_pib_revertida <- forecast_snaive_pib_revertida[-c(1:5)]
+
+# Deshacer el logaritmo
 forecast_snaive_pib_revertida <- exp(forecast_snaive_pib_revertida)
+
 
 
 #-------  ACCURACY
@@ -1464,12 +1553,13 @@ legend("topleft",
 #Elegiriremos p y q fijandolnos en la autoccorelacion:
 #p=orden autoregresivo → se decide con la PACF.--> p ≈ 1 (PACF corta rápido después de lag 1)
 #q= orden de media móvil → se decide con la ACF. -_> q ≈ 1 (ACF corta rápido después de lag 1)
-acf(train_ipc_estacionaria, main="ACF IPC diferenciada")
-pacf(train_ipc_estacionaria, main="PACF IPC diferenciada")
-
+acf(train_gdp_estacionaria, main="ACF PIB diferenciada")
+pacf(train_gdp_estacionaria, main="PACF PIB diferenciada")
+tsdisplay(train_gdp_estacionaria)
+#ROSA: con el acf y pacf me dice que (1,0,1) pero es que el accuracy me da mejor con (2,0,2)
 
 #----------   MODELOS
-modelo_arima_pib <- arima(train_gdp_estacionaria, order=c(1,2,1))  # d=1 porque ya diferenciamos
+modelo_arima_pib <- arima(train_gdp_estacionaria, order=c(2,0,2))  # d=0 porque ya diferenciamos
 summary(modelo_arima_pib)
 
 # Validación de residuales
@@ -1488,20 +1578,29 @@ prediccion_arima_pib <- forecast(modelo_arima_pib , h=length(test_pib), level=90
 autoplot(prediccion_arima_pib) + ggtitle("Predicción PIB con ARIMA") + ylab("PIB") + xlab("Trimestre") + theme_minimal()
 
 #-----------------      REVERTIR
-# Primer revertido de la segunda diferencia
-forecast_arima_pib_revertida <- diffinv(prediccion_arima_pib$mean, 
-                                         differences = 2, 
-                                         xi = tail(train_gdp_log, 2))
-forecast_arima_pib_revertida <- forecast_arima_pib_revertida[-c(1,2)]
+# Revertir la segunda diferencia (la no estacional)
+forecast_tmp <- diffinv(prediccion_arima_pib$mean, 
+                        differences = 1, 
+                        xi = tail(diff(train_gdp_log, lag = 4), 1))
 
-# Quitamos el log de la varianza
+# Revertir la primera diferencia (la estacional con lag = 4)
+forecast_arima_pib_revertida <- diffinv(forecast_tmp, 
+                                        lag = 4, 
+                                        differences = 1, 
+                                        xi = tail(train_gdp_log, 4))
+
+# Quitar los valores iniciales usados en la inversión
+forecast_arima_pib_revertida <- forecast_arima_pib_revertida[-c(1:5)]
+
+# Deshacer el logaritmo
 forecast_arima_pib_revertida <- exp(forecast_arima_pib_revertida)
 
 
-
 #-----------------      ACCURACY
-acc_arima <- forecast::accuracy(as.numeric(forecast_arima_pib_revertida), as.numeric(test_pib))
-acc_arima
+acc_arima_pib <- forecast::accuracy(as.numeric(forecast_arima_pib_revertida), as.numeric(test_pib))
+acc_arima_pib
+
+
 
 #-----------------      GRAFICO FINAL
 forecast_arima_pib_revertida_ts <- ts(forecast_arima_pib_revertida, start=c(2021,1), frequency=4)
@@ -1520,27 +1619,125 @@ legend("topleft",
 
 
 
+#-----------------      SARIMA MANUAL ---- PIB       ----------------------
+###########################################################################
+
+#q=1 --> En lag 1, hay un pico fuerte negativo
+#Q=0 --> No hay un pico fuerte estacionla (en los lag 4,8...)
+
+#p=1 --> El PACF corta bruscamente despues de lag 1
+#P=0 No hay un pico grande en lag =4
+
+#----------   MODELO
+modelo_sarima_pib<- arima(train_gdp_estacionaria,
+                       order = c(2, 0, 2),
+                       seasonal = list(order = c(0, 0, 0), period = 4),
+                       method = "ML")
+summary(modelo_sarima_pib)
+checkresiduals(modelo_sarima_pib)
+
+#-----------------      VALIDACIÓN DE RESIDUALES
+hist(residuals(modelo_sarima_pib), main="Histograma de residuales SARIMA PIB", 
+     xlab="Residual", col="lightblue")
+checkresiduals(modelo_sarima_pib)
+
+boxtest_sarima_pib <- Box.test(residuals(modelo_sarima_pib), 
+                               lag = round(log(length(train_pib))), 
+                               type="Ljung-Box")
+if (boxtest_sarima_pib$p.value > 0.05) {
+  cat("Residuos SARIMA PIB parecen ruido blanco\n")
+} else {
+  cat("Residuos SARIMA PIB muestran autocorrelación\n")
+}
+
+#-----------------      PREDICCIONES
+prediccion_sarima_pib <- forecast(modelo_sarima_pib, h=length(test_pib), level=90)
+autoplot(prediccion_sarima_pib) + 
+  ggtitle("Predicción PIB con SARIMA") + 
+  ylab("PIB") + xlab("Trimestre") + 
+  theme_minimal()
+
+#-----------------      REVERTIR
+# Revertir la segunda diferencia (no estacional)
+forecast_tmp <- diffinv(prediccion_sarima_pib$mean, 
+                        differences = 1, 
+                        xi = tail(diff(train_gdp_log, lag = 4), 1))
+
+# Revertir la primera diferencia (estacional con lag = 4)
+forecast_sarima_pib_revertida <- diffinv(forecast_tmp, 
+                                         lag = 4, 
+                                         differences = 1, 
+                                         xi = tail(train_gdp_log, 4))
+
+# Quitar los valores iniciales usados en la inversión
+forecast_sarima_pib_revertida <- forecast_sarima_pib_revertida[-c(1:5)]
+
+# Deshacer el logaritmo
+forecast_sarima_pib_revertida <- exp(forecast_sarima_pib_revertida)
+
+#-----------------      ACCURACY
+acc_sarima_pib <- forecast::accuracy(as.numeric(forecast_sarima_pib_revertida), 
+                                     as.numeric(test_pib))
+acc_sarima_pib
+
+#-----------------      GRAFICO FINAL
+forecast_sarima_pib_revertida_ts <- ts(forecast_sarima_pib_revertida, 
+                                       start=c(2021,1), frequency=4)
+
+ts.plot(train_pib, test_pib, forecast_sarima_pib_revertida_ts,
+        col=c("black","blue","red"),
+        lty=c(1,1,2),
+        lwd=c(2,2,3),
+        main="Predicción PIB SARIMA vs Observado",
+        ylab="PIB")
+legend("topleft",
+       legend=c("Entrenamiento","Observado (Test)","Predicción"),
+       col=c("black","blue","red"),
+       lty=c(1,1,2),
+       lwd=c(2,2,3))
+
+# ME     RMSE      MAE      MPE     MAPE
+# Test set 15.895 29.29282 23.80709 2.768286 4.286727
+
 
 #================
 # COMPARACIÓN MODELOS PIB
 #================
 accuracy_table_pib <- data.frame(
-  Modelo = c("AutoARIMA", "Naive", "SNaive"),
+  Modelo = c("AutoARIMA", "Naive", "SNaive", "Arima", "SARIMA"),
   ME   = c(acc_autoarima_pib["Test set","ME"],
            acc_naive_pib["Test set","ME"],
-           acc_snaive_pib["Test set","ME"]),
+           acc_snaive_pib["Test set","ME"],
+           acc_arima_pib["Test set", "ME"],
+           acc_sarima_pib["Test set", "ME"]),
   RMSE = c(acc_autoarima_pib["Test set","RMSE"],
            acc_naive_pib["Test set","RMSE"],
-           acc_snaive_pib["Test set","RMSE"]),
+           acc_snaive_pib["Test set","RMSE"],
+           acc_arima_pib["Test set", "RMSE"],
+           acc_sarima_pib["Test set", "RMSE"]),
   MAE  = c(acc_autoarima_pib["Test set","MAE"],
            acc_naive_pib["Test set","MAE"],
-           acc_snaive_pib["Test set","MAE"]),
+           acc_snaive_pib["Test set","MAE"],
+           acc_arima_pib["Test set", "MAE"],
+           acc_sarima_pib["Test set", "MAE"]),
   MAPE = c(acc_autoarima_pib["Test set","MAPE"],
            acc_naive_pib["Test set","MAPE"],
-           acc_snaive_pib["Test set","MAPE"])
+           acc_snaive_pib["Test set","MAPE"],          
+           acc_arima_pib["Test set", "MAPE"],
+           acc_sarima_pib["Test set", "MAPE"])
 )
 
+
 accuracy_table_pib
+# Ordenar la tabla por RMSE
+accuracy_table_pib_ordenada <- accuracy_table_pib[order(accuracy_table_pib$RMSE), ]
+accuracy_table_pib_ordenada
+
+# Imprimir el mejor modelo
+cat("El mejor modelo para PIB según RMSE es:", accuracy_table_pib_ordenada$Modelo[1], "\n")
+cat("Con RMSE =", accuracy_table_pib_ordenada$RMSE[1], "\n")
+#SARIMA
+
 
 # Gráfico comparativo
 accuracy_long_pib <- accuracy_table_pib %>%
