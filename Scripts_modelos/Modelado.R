@@ -1057,7 +1057,7 @@ forecast_autoarima_ipc_revertida <- diffinv(prediccion_autoarima_ipc$mean,
 forecast_autoarima_ipc_revertida<- forecast_autoarima_ipc_revertida[-1]
 
 #-------  ACCURACY
-acc_autoarima<- forecast::accuracy(as.numeric(forecast_autoarima_ipc_revertida),as.numeric(test_ipc))
+acc_autoarima<- forecast::accuracy(forecast_autoarima_ipc_revertida,test_ipc)
 acc_autoarima
 
 #-------  GRAFICAR (Train vs Test vs Prediccion)
@@ -1072,115 +1072,6 @@ ts.plot(train_ipc,test_ipc,forecast_autoarima_ipc_revertida_ts,
         lty = c(1, 1, 2),
         lwd = c(2, 2, 3),  # ← controla el grosor de cada línea
         main = "Predicción IPC AUTOARIMA vs Observado",
-        ylab = "IPC")
-legend("topleft",
-       legend = c("Entrenamiento", "Observado (Test)", "Predicción"),
-       col = c("black", "blue", "red"),
-       lty = c(1, 1, 2),
-       lwd = c(2, 2, 3))
-
-
-#-----------------      NAIVE ---- IPC        ----------------------
-###########################################################################
-
-#-------  MODELO
-modelo_naive_ipc <- naive(train_ipc_estacionaria, h=length(test_ipc))
-summary(modelo_naive_ipc)
-checkresiduals(modelo_naive_ipc)
-# Validación gráfica de residuales
-hist(residuals(modelo_naive_ipc), main="Histograma de residuales Naive IPC", xlab="Residual", col="lightgreen")
-# Test Ljung-Box
-boxtest_naive_ipc <- Box.test(residuals(modelo_naive_ipc), lag = round(log(length(train_ipc))), type = "Ljung-Box")
-if (boxtest_naive_ipc$p.value > 0.05) {
-  cat("Residuos Naive IPC parecen ruido blanco\n")
-} else {
-  cat("Residuos Naive IPC muestran autocorrelación\n")
-}
-#--> Residuos Naive IPC parecen ruido blanco
-
-
-#-------  PREDICCION
-prediccion_naive_ipc    <- forecast(modelo_naive_ipc, h=length(test_ipc))
-autoplot(prediccion_naive_ipc) + ggtitle("Predicción IPC con Naive") + ylab("IPC") + xlab("Trimestre") + theme_minimal()
-
-
-#-------  REVERTIR 
-forecast_naive_ipc_revertida <- diffinv(prediccion_naive_ipc$mean,
-                                        differences = 1,
-                                        xi = tail(train_ipc, 1))
-forecast_naive_ipc_revertida<- forecast_naive_ipc_revertida[-1]
-
-#-------  ACCURACY
-acc_naive<- forecast::accuracy(as.numeric(forecast_naive_ipc_revertida),as.numeric(test_ipc))
-acc_naive
-
-#-------  GRAFICAR (Train vs Test vs Prediccion)
-# Crear la serie temporal de predicciones con la frecuencia adecuada
-forecast_naive_ipc_revertida_ts <- ts(
-  forecast_naive_ipc_revertida,
-  start = c(2021, 1),   # <-- ajusta al inicio real de tu test
-  frequency = 4)       # trimestral
-
-ts.plot(train_ipc,test_ipc,forecast_naive_ipc_revertida_ts,
-        col = c("black", "blue", "red"),
-        lty = c(1, 1, 2),
-        lwd = c(2, 2, 3),  # ← controla el grosor de cada línea
-        main = "Predicción IPC NAIVE vs Observado",
-        ylab = "IPC")
-legend("topleft",
-       legend = c("Entrenamiento", "Observado (Test)", "Predicción"),
-       col = c("black", "blue", "red"),
-       lty = c(1, 1, 2),
-       lwd = c(2, 2, 3))
-
-
-
-#-----------------      SNAIVE ---- IPC        ----------------------
-###########################################################################
-
-#------ MODELO
-modelo_snaive_ipc <- snaive(train_ipc_estacionaria, h=length(test_ipc))
-summary(modelo_snaive_ipc)
-checkresiduals(modelo_snaive_ipc)
-# Validación gráfica de residuales
-hist(residuals(modelo_snaive_ipc), main="Histograma de residuales SNaive IPC", xlab="Residual", col="lightcoral")
-# Test Ljung-Box
-boxtest_snaive_ipc <- Box.test(residuals(modelo_snaive_ipc), lag = round(log(length(train_ipc))), type = "Ljung-Box")
-if (boxtest_snaive_ipc$p.value > 0.05) {
-  cat("Residuos SNaive IPC parecen ruido blanco\n")
-} else {
-  cat("Residuos SNaive IPC muestran autocorrelación\n")
-}
-#--> Residuos SNaive IPC muestran autocorrelación
-
-
-#-------  PREDICCION
-prediccion_snaive_ipc   <- forecast(modelo_snaive_ipc, h=length(test_ipc))
-autoplot(prediccion_snaive_ipc) + ggtitle("Predicción IPC con Snaive") + ylab("IPC") + xlab("Trimestre") + theme_minimal()
-
-
-#-------  REVERTIR
-forecast_snaive_ipc_revertida <- diffinv(prediccion_snaive_ipc$mean,
-                                         differences = 1,
-                                         xi = tail(train_ipc, 1))
-forecast_snaive_ipc_revertida<- forecast_snaive_ipc_revertida[-1]
-
-#--------  ACCURACY
-acc_snaive<- forecast::accuracy(as.numeric(forecast_snaive_ipc_revertida),as.numeric(test_ipc))
-acc_snaive
-
-#-------  GRAFICAR (Train vs Test vs Prediccion)
-# Crear la serie temporal de predicciones con la frecuencia adecuada
-forecast_snaive_ipc_revertida_ts <- ts(
-  forecast_snaive_ipc_revertida,
-  start = c(2021, 1),   # <-- ajusta al inicio real de tu test
-  frequency = 4)       # trimestral
-
-ts.plot(train_ipc,test_ipc,forecast_snaive_ipc_revertida_ts,
-        col = c("black", "blue", "red"),
-        lty = c(1, 1, 2),
-        lwd = c(2, 2, 3),  # ← controla el grosor de cada línea
-        main = "Predicción IPC SNAIVE vs Observado",
         ylab = "IPC")
 legend("topleft",
        legend = c("Entrenamiento", "Observado (Test)", "Predicción"),
@@ -1227,7 +1118,7 @@ forecast_arima_ipc_revertida <- diffinv(prediccion_arima_ipc$mean, differences =
 forecast_arima_ipc_revertida <- forecast_arima_ipc_revertida[-1]
 
 #-----------------      ACCURACY
-acc_arima <- forecast::accuracy(as.numeric(forecast_arima_ipc_revertida), as.numeric(test_ipc))
+acc_arima <- forecast::accuracy(forecast_arima_ipc_revertida, test_ipc)
 acc_arima
 
 #-----------------      GRAFICO FINAL
@@ -1245,12 +1136,26 @@ legend("topleft",
        lty=c(1,1,2),
        lwd=c(2,2,3))
 
-#-----------------      SARIMA MANUAL ---- PIB       ----------------------
+#-----------------      SARIMA MANUAL ---- IPC----------------------
 ###########################################################################
+
+#p= 0: No hay picos importantes en PACF → sin componente AR
+#q= 1: ACF tiene ligera autocorrelación inicial → componente MA(1) captura el efecto
+#d= 0 (ya esta la serie estacionaria no hace falta diferenciarla mas)
+
+#P= 0: No hay picos en múltiplos de 4 → sin patrón estacional autoregresivo
+#Q= 0: No hay correlaciones estacionales significativas
+#D= 0: Ya eliminaste diferencias estacionales
+
+#Elegir los mejores parametros:
+acf(train_ipc_estacionaria)
+pacf(train_ipc_estacionaria)
+tsdisplay(train_ipc_estacionaria)
+
 
 #-----------------      MODELO SARIMA IPC
 modelo_sarima_ipc <- arima(train_ipc_estacionaria,
-                           order = c(1, 0, 0),
+                           order = c(0, 0, 1),
                            seasonal = list(order = c(0, 0, 0), period = 4),
                            method = "ML")
 summary(modelo_sarima_ipc)
@@ -1269,8 +1174,8 @@ forecast_sarima_ipc_revertida <- diffinv(prediccion_sarima_ipc$mean, differences
 forecast_sarima_ipc_revertida <- forecast_sarima_ipc_revertida[-1]
 
 #-----------------      ACCURACY
-acc_sarima_ipc <- forecast::accuracy(as.numeric(forecast_sarima_ipc_revertida), 
-                                     as.numeric(test_ipc))
+acc_sarima_ipc <- forecast::accuracy(forecast_sarima_ipc_revertida, 
+                                     test_ipc)
 acc_sarima_ipc
 
 #-----------------      GRAFICO FINAL
@@ -1297,25 +1202,17 @@ legend("topleft",
 
 #TABLA MODELOS IPC
 accuracy_tabla_IPC <- data.frame(
-  Modelo = c("AutoARIMA", "Naive", "SNaive", "Arima", "SARIMA"),
+  Modelo = c("AutoARIMA", "Arima", "SARIMA"),
   ME   = c(acc_autoarima["Test set","ME"],
-           acc_naive["Test set","ME"],
-           acc_snaive["Test set","ME"],
            acc_arima["Test set", "ME"],
            acc_sarima_ipc["Test set", "ME"]),
   RMSE = c(acc_autoarima["Test set","RMSE"],
-           acc_naive["Test set","RMSE"],
-           acc_snaive["Test set","RMSE"],
            acc_arima["Test set", "RMSE"],
            acc_sarima_ipc["Test set", "RMSE"]),
   MAE  = c(acc_autoarima["Test set","MAE"],
-           acc_naive["Test set","MAE"],
-           acc_snaive["Test set","MAE"],
            acc_arima["Test set", "MAE"],
            acc_sarima_ipc["Test set", "MAE"]),
   MAPE = c(acc_autoarima["Test set","MAPE"],
-           acc_naive["Test set","MAPE"],
-           acc_snaive["Test set","MAPE"],          
            acc_arima["Test set", "MAPE"],
            acc_sarima_ipc["Test set", "MAPE"])
 )
@@ -1328,6 +1225,8 @@ accuracy_tabla_IPC_ordenada
 cat("El mejor modelo según RMSE es:", accuracy_tabla_IPC_ordenada$Modelo[1], "\n")
 cat("Con RMSE =", accuracy_tabla_IPC_ordenada$RMSE[1], "\n")
 #AUTOARIMA
+
+#tscv--> validacion cruzada (diapo 141) 
 
 
 
@@ -1393,7 +1292,7 @@ forecast_autoarima_pib_revertida <- exp(forecast_autoarima_pib_revertida)
 
 
 #-------  ACCURACY
-acc_autoarima_pib <- forecast::accuracy(as.numeric(forecast_autoarima_pib_revertida), as.numeric(test_pib))
+acc_autoarima_pib <- forecast::accuracy(forecast_autoarima_pib_revertida, test_pib)
 acc_autoarima_pib
 
 #-------  GRAFICAR (Train vs Test vs Prediccion)
@@ -1415,134 +1314,6 @@ legend("topleft",
        lty = c(1, 1, 2),
        lwd = c(2, 2, 3))
 
-#-----------------      NAIVE ---- PIB        ----------------------
-###########################################################################
-#------ MODELO
-modelo_naive_pib <- naive(train_gdp_estacionaria, h = length(test_pib))
-summary(modelo_naive_pib)
-checkresiduals(modelo_naive_pib)
-hist(residuals(modelo_naive_pib), main = "Histograma de residuales Naive PIB", xlab = "Residual", col = "lightgreen")
-
-boxtest_naive_pib <- Box.test(residuals(modelo_naive_pib), lag = round(log(length(train_pib))), type = "Ljung-Box")
-if (boxtest_naive_pib$p.value > 0.05) {
-  cat("Residuos Naive PIB parecen ruido blanco\n")
-} else {
-  cat("Residuos Naive PIB muestran autocorrelación\n")
-}
-
-#-------  PREDICCION 
-prediccion_naive_pib <- forecast(modelo_naive_pib, h = length(test_pib))
-autoplot(prediccion_naive_pib) + ggtitle("Predicción PIB con Naive") + ylab("PIB") + xlab("Trimestre") + theme_minimal()
-
-
-#-----------------      REVERTIR
-# Revertir la segunda diferencia (la no estacional)
-forecast_tmp_naive <- diffinv(prediccion_naive_pib$mean, 
-                               differences = 1, 
-                               xi = tail(diff(train_gdp_log, lag = 4), 1))
-
-# Revertir la primera diferencia (la estacional con lag = 4)
-forecast_naive_pib_revertida <- diffinv(forecast_tmp_naive, 
-                                         lag = 4, 
-                                         differences = 1, 
-                                         xi = tail(train_gdp_log, 4))
-
-# Quitar los valores iniciales usados en la inversión
-forecast_naive_pib_revertida <- forecast_naive_pib_revertida[-c(1:5)]
-
-# Deshacer el logaritmo
-forecast_naive_pib_revertida <- exp(forecast_naive_pib_revertida)
-
-
-
-#------ ACCURACYY
-acc_naive_pib <- forecast::accuracy(as.numeric(forecast_naive_pib_revertida), as.numeric(test_pib))
-acc_naive_pib
-
-#-------  GRAFICAR (Train vs Test vs Prediccion)
-# Crear la serie temporal de predicciones con la frecuencia adecuada
-forecast_naive_pib_revertida_ts <- ts(
-  forecast_naive_pib_revertida,
-  start = c(2021, 1),   # <-- ajusta al inicio real de tu test
-  frequency = 4)       # trimestral
-
-ts.plot(train_pib,test_pib,forecast_naive_pib_revertida_ts,
-        col = c("black", "blue", "red"),
-        lty = c(1, 1, 2),
-        lwd = c(2, 2, 3),  # ← controla el grosor de cada línea
-        main = "Predicción PIB NAIVE vs Observado",
-        ylab = "PIB")
-legend("topleft",
-       legend = c("Entrenamiento", "Observado (Test)", "Predicción"),
-       col = c("black", "blue", "red"),
-       lty = c(1, 1, 2),
-       lwd = c(2, 2, 3))
-
-
-#-----------------      SNAIVE ---- PIB        ----------------------
-###########################################################################
-#------  MODELO
-modelo_snaive_pib <- snaive(train_gdp_estacionaria, h = length(test_pib))
-summary(modelo_snaive_pib)
-checkresiduals(modelo_snaive_pib)
-hist(residuals(modelo_snaive_pib), main = "Histograma de residuales SNaive PIB", xlab = "Residual", col = "lightcoral")
-
-boxtest_snaive_pib <- Box.test(residuals(modelo_snaive_pib), lag = round(log(length(train_pib))), type = "Ljung-Box")
-if (boxtest_snaive_pib$p.value > 0.05) {
-  cat("Residuos SNaive PIB parecen ruido blanco\n")
-} else {
-  cat("Residuos SNaive PIB muestran autocorrelación\n")
-}
-
-
-#-------  PREDICCION
-prediccion_snaive_pib <- forecast(modelo_snaive_pib, h = length(test_pib))
-autoplot(prediccion_snaive_pib) + ggtitle("Predicción PIB con SNaive") + ylab("PIB") + xlab("Trimestre") + theme_minimal()
-
-
-
-#-----------------      REVERTIR
-# Revertir la segunda diferencia (la no estacional)
-forecast_tmp_snaive <- diffinv(prediccion_snaive_pib$mean, 
-                        differences = 1, 
-                        xi = tail(diff(train_gdp_log, lag = 4), 1))
-
-# Revertir la primera diferencia (la estacional con lag = 4)
-forecast_snaive_pib_revertida <- diffinv(forecast_tmp_snaive, 
-                                        lag = 4, 
-                                        differences = 1, 
-                                        xi = tail(train_gdp_log, 4))
-
-# Quitar los valores iniciales usados en la inversión
-forecast_snaive_pib_revertida <- forecast_snaive_pib_revertida[-c(1:5)]
-
-# Deshacer el logaritmo
-forecast_snaive_pib_revertida <- exp(forecast_snaive_pib_revertida)
-
-
-
-#-------  ACCURACY
-acc_snaive_pib <- forecast::accuracy(as.numeric(forecast_snaive_pib_revertida), as.numeric(test_pib))
-acc_snaive_pib
-
-#-------  GRAFICAR (Train vs Test vs Prediccion)
-# Crear la serie temporal de predicciones con la frecuencia adecuada
-forecast_snaive_pib_revertida_ts <- ts(
-  forecast_snaive_pib_revertida,
-  start = c(2021, 1),   # <-- ajusta al inicio real de tu test
-  frequency = 4)       # trimestral
-
-ts.plot(train_pib,test_pib,forecast_snaive_pib_revertida_ts,
-        col = c("black", "blue", "red"),
-        lty = c(1, 1, 2),
-        lwd = c(2, 2, 3),  # ← controla el grosor de cada línea
-        main = "Predicción PIB SNAIVE vs Observado",
-        ylab = "PIB")
-legend("topleft",
-       legend = c("Entrenamiento", "Observado (Test)", "Predicción"),
-       col = c("black", "blue", "red"),
-       lty = c(1, 1, 2),
-       lwd = c(2, 2, 3))
 
 
 #-----------------      ARIMA MANUAL ---- PIB       ----------------------
@@ -1597,9 +1368,8 @@ forecast_arima_pib_revertida <- exp(forecast_arima_pib_revertida)
 
 
 #-----------------      ACCURACY
-acc_arima_pib <- forecast::accuracy(as.numeric(forecast_arima_pib_revertida), as.numeric(test_pib))
+acc_arima_pib <- forecast::accuracy(forecast_arima_pib_revertida, test_pib)
 acc_arima_pib
-
 
 
 #-----------------      GRAFICO FINAL
@@ -1628,6 +1398,7 @@ legend("topleft",
 #p=1 --> El PACF corta bruscamente despues de lag 1
 #P=0 No hay un pico grande en lag =4
 
+tsdisplay(train_gdp_estacionaria)
 #----------   MODELO
 modelo_sarima_pib<- arima(train_gdp_estacionaria,
                        order = c(2, 0, 2),
@@ -1676,8 +1447,8 @@ forecast_sarima_pib_revertida <- forecast_sarima_pib_revertida[-c(1:5)]
 forecast_sarima_pib_revertida <- exp(forecast_sarima_pib_revertida)
 
 #-----------------      ACCURACY
-acc_sarima_pib <- forecast::accuracy(as.numeric(forecast_sarima_pib_revertida), 
-                                     as.numeric(test_pib))
+acc_sarima_pib <- forecast::accuracy(forecast_sarima_pib_revertida, 
+                                     test_pib)
 acc_sarima_pib
 
 #-----------------      GRAFICO FINAL
@@ -1729,6 +1500,8 @@ accuracy_table_pib <- data.frame(
 
 
 accuracy_table_pib
+#Tomar en ceunta el ACF1 tambien, frist order autoccorrleation coefficient error.
+
 # Ordenar la tabla por RMSE
 accuracy_table_pib_ordenada <- accuracy_table_pib[order(accuracy_table_pib$RMSE), ]
 accuracy_table_pib_ordenada
@@ -1756,7 +1529,63 @@ ggplot(accuracy_long_pib, aes(x = Modelo, y = Valor, fill = Modelo)) +
 
 
 
-############   AQUIIIIIIIIIIIIIIIIIIIIIIIIIII
+#======================
+#CROSS VALIDATION 
+#======================
+
+############################     IPC     #############################
+#autoarima
+length(train_ipc_estacionaria)
+funcion_autoarima_ipc <- function(y, h) {
+  # Ajusta ARIMA sin diferenciar de nuevo (d=0)
+  forecast(auto.arima(y, d=0), h = h)
+}
+
+tsCV_IPC_autoarima <- tsCV(
+  y = train_ipc_estacionaria,
+  forecastfunction = funcion_autoarima_ipc,
+  h = 3
+)
+
+#arima
+funcion_arima_ipc <- function(y, h) {
+  # Ajusta ARIMA sin diferenciar de nuevo (d=0)
+  forecast(auto.arima(y, d=0), h = h)
+}
+
+tsCV_IPC_autoarima <- tsCV(
+  y = train_ipc_estacionaria,
+  forecastfunction = funcion_autoarima_ipc,
+  h = 3
+)
+
+#sacar la rpeddcion
+
+
+#accrucay
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
