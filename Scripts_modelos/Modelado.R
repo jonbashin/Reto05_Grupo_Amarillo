@@ -1475,25 +1475,17 @@ legend("topleft",
 # COMPARACIÓN MODELOS PIB
 #================
 accuracy_table_pib <- data.frame(
-  Modelo = c("AutoARIMA", "Naive", "SNaive", "Arima", "SARIMA"),
+  Modelo = c("AutoARIMA", "Arima", "SARIMA"),
   ME   = c(acc_autoarima_pib["Test set","ME"],
-           acc_naive_pib["Test set","ME"],
-           acc_snaive_pib["Test set","ME"],
            acc_arima_pib["Test set", "ME"],
            acc_sarima_pib["Test set", "ME"]),
   RMSE = c(acc_autoarima_pib["Test set","RMSE"],
-           acc_naive_pib["Test set","RMSE"],
-           acc_snaive_pib["Test set","RMSE"],
            acc_arima_pib["Test set", "RMSE"],
            acc_sarima_pib["Test set", "RMSE"]),
   MAE  = c(acc_autoarima_pib["Test set","MAE"],
-           acc_naive_pib["Test set","MAE"],
-           acc_snaive_pib["Test set","MAE"],
            acc_arima_pib["Test set", "MAE"],
            acc_sarima_pib["Test set", "MAE"]),
   MAPE = c(acc_autoarima_pib["Test set","MAPE"],
-           acc_naive_pib["Test set","MAPE"],
-           acc_snaive_pib["Test set","MAPE"],          
            acc_arima_pib["Test set", "MAPE"],
            acc_sarima_pib["Test set", "MAPE"])
 )
@@ -1536,16 +1528,23 @@ ggplot(accuracy_long_pib, aes(x = Modelo, y = Valor, fill = Modelo)) +
 ############################     IPC     #############################
 #autoarima
 length(train_ipc_estacionaria)
+
+#Funcion de forecast para tsCV
 funcion_autoarima_ipc <- function(y, h) {
   # Ajusta ARIMA sin diferenciar de nuevo (d=0)
   forecast(auto.arima(y, d=0), h = h)
 }
 
+#Cross validation temporal
 tsCV_IPC_autoarima <- tsCV(
   y = train_ipc_estacionaria,
   forecastfunction = funcion_autoarima_ipc,
-  h = 3
-)
+  h = 3)
+
+#Calcular RMSE promedio del CV
+rmse_autoarima_cv <- sqrt(mean(tsCV_IPC_autoarima^2, na.rm = TRUE))
+cat("RMSE cross-validation (AutoARIMA - IPC):", rmse_autoarima_cv, "\n")
+
 
 #arima
 funcion_arima_ipc <- function(y, h) {
@@ -1565,6 +1564,58 @@ tsCV_IPC_autoarima <- tsCV(
 #accrucay
 
 
+
+
+
+
+
+
+##########################
+library(forecast)
+
+#-----------------------------
+# 1️⃣ Función segura para tsCV
+#-----------------------------
+funcion_autoarima_ipc <- function(y, h) {
+  # Intentamos ajustar auto.arima y hacer forecast
+  fc <- tryCatch({
+    forecast(auto.arima(y, d = 0, seasonal = FALSE), h = h)$mean
+  }, error = function(e) {
+    rep(NA, h)  # Si falla, devolvemos NA de largo h
+  })
+  return(as.numeric(fc))
+}
+
+#-----------------------------
+# 2️⃣ Cross-validation
+#-----------------------------
+horizonte <- 3
+tsCV_IPC_autoarima <- tsCV(
+  y = train_ipc_estacionaria,
+  forecastfunction = funcion_autoarima_ipc,
+  h = horizonte
+)
+
+#-----------------------------
+# 3️⃣ RMSE global
+#-----------------------------
+rmse_total <- sqrt(mean(tsCV_IPC_autoarima^2, na.rm = TRUE))
+cat("RMSE promedio:", rmse_total, "\n")
+
+#-----------------------------
+# 4️⃣ MSE por horizonte
+#-----------------------------
+mse_horizonte <- colMeans(tsCV_IPC_autoarima^2, na.rm = TRUE)
+mse_horizonte_df <- data.frame(Horizonte = 1:horizonte, MSE = mse_horizonte)
+print(mse_horizonte_df)
+
+#-----------------------------
+# 5️⃣ Gráfico MSE por horizonte
+#-----------------------------
+plot(mse_horizonte_df$Horizonte, mse_horizonte_df$MSE, type="b", pch=16, col="red",
+     xlab="Horizonte de predicción", ylab="MSE",
+     main="MSE de Cross-Validation por horizonte (AutoARIMA - IPC)")
+grid()
 
 
 
