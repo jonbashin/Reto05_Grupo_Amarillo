@@ -17,7 +17,7 @@ library(gridExtra)
 library(astsa)
 library(Metrics)
 
-
+paleta <- c("#c88fb2",  "#8db41c",  "#93044e","#D1006F",  "#F5F0E6",  "#4D4D4D")
 
 
 #=========================
@@ -26,15 +26,11 @@ library(Metrics)
 datos_limpios_AUS<- read.csv("DATOS/limpios/Datos_Limpios_Australia.csv")
 
 #Cargar series temporales ESTACIONARIAS:
-mi_serie <- readRDS("Series_Temporales_ESTACIONARIAS/Money_Supply_ts_ESTACIONARIA.rds")
-mi_serie <- readRDS("Series_Temporales_ESTACIONARIAS/Unemployment_ts_ESTACIONARIA.rds")
-mi_serie <- readRDS("Series_Temporales_ESTACIONARIAS/PIB_Train_ts_ESTACIONARIA.rds")
+money_supply_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Money_Supply_ts_ESTACIONARIA.rds")
+unemployment_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Unemployment_ts_ESTACIONARIA.rds")
+train_gdp_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/PIB_Train_ts_ESTACIONARIA.rds")
 train_ipc_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/IPC_Train_ts_ESTACIONARIA.rds")
-mi_serie <- readRDS("Series_Temporales_ESTACIONARIAS/Stock_Market_ts_ESTACIONARIA.rds")
-
-
-
-
+stock_market_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Stock_Market_ts_ESTACIONARIA.rds")
 
 
 ############################################################
@@ -61,7 +57,7 @@ summary(modelo_autoarima_ipc)
 
 
 #Validacion grafica de residaules:
-hist(residuals(modelo_autoarima_ipc), main="Histograma de residuales", xlab="Residual", col="lightblue")
+hist(residuals(modelo_autoarima_ipc), main="Histograma de residuales", xlab="Residual", col=paleta[2])
 checkresiduals(modelo_autoarima_ipc)
 
 #Test de Ljung–Box 
@@ -128,7 +124,7 @@ modelo_arima_ipc <- arima(train_ipc_estacionaria, order=c(1,0,0))  # d=0 porque 
 summary(modelo_arima_ipc)
 
 # Validación de residuales
-hist(residuals(modelo_arima_ipc), main="Histograma de residuales ARIMA IPC", xlab="Residual", col="lightblue")
+hist(residuals(modelo_arima_ipc), main="Histograma de residuales ARIMA IPC", xlab="Residual", col=paleta[2])
 checkresiduals(modelo_arima_ipc)
 
 boxtest_arima_ipc <- Box.test(residuals(modelo_arima_ipc), lag = round(log(length(train_ipc))), type="Ljung-Box")
@@ -251,6 +247,7 @@ accuracy_tabla_IPC
 
 accuracy_tabla_IPC_ordenada <- accuracy_tabla_IPC[order(accuracy_tabla_IPC$RMSE), ]
 accuracy_tabla_IPC_ordenada 
+
 # Imprimir el mejor modelo
 cat("El mejor modelo según RMSE es:", accuracy_tabla_IPC_ordenada$Modelo[1], "\n")
 cat("Con RMSE =", accuracy_tabla_IPC_ordenada$RMSE[1], "\n")
@@ -265,13 +262,16 @@ cat("Con RMSE =", accuracy_tabla_IPC_ordenada$RMSE[1], "\n")
 accuracy_long <- accuracy_tabla_IPC %>%pivot_longer(cols = c(ME, RMSE, MAE, MAPE), names_to = "Métrica", values_to = "Valor")
 
 # Gráfico
-ggplot(accuracy_long, aes(x = Modelo, y = Valor, fill = Modelo)) + geom_bar(stat = "identity", position = "dodge") +
+ggplot(accuracy_long, aes(x = Modelo, y = Valor, fill = Modelo)) +
+  geom_bar(stat = "identity", position = "dodge") +
   facet_wrap(~Métrica, scales = "free_y") +  # cada métrica en un panel
   theme_minimal() +
   ylab("Valor") +
   ggtitle("Comparación de Accuracy: Modelos de IPC") +
   theme(legend.position = "none") +
-  geom_text(aes(label=round(Valor,2)), vjust=-0.3, size=3)
+  geom_text(aes(label = round(Valor, 2)), vjust = -0.3, size = 3) +
+  scale_fill_manual(values = c(paleta[1], paleta[2], paleta[3]))
+
 
 
 
@@ -286,7 +286,7 @@ modelo_autoarima_pib <- auto.arima(train_gdp_estacionaria, seasonal = FALSE, d =
 summary(modelo_autoarima_pib)
 
 # Validación gráfica de residuales
-hist(residuals(modelo_autoarima_pib), main = "Histograma de residuales AutoARIMA PIB", xlab = "Residual", col = "lightblue")
+hist(residuals(modelo_autoarima_pib), main = "Histograma de residuales AutoARIMA PIB", xlab = "Residual", col = paleta[3])
 checkresiduals(modelo_autoarima_pib)
 
 # Test de Ljung-Box
@@ -364,7 +364,7 @@ modelo_arima_pib <- arima(train_gdp_estacionaria, order=c(2,0,2))  # d=0 porque 
 summary(modelo_arima_pib)
 
 # Validación de residuales
-hist(residuals(modelo_arima_pib), main="Histograma de residuales ARIMA PIB", xlab="Residual", col="lightblue")
+hist(residuals(modelo_arima_pib), main="Histograma de residuales ARIMA PIB", xlab="Residual", col=paleta[3])
 checkresiduals(modelo_arima_pib)
 
 boxtest_arima_pib <- Box.test(residuals(modelo_arima_pib), lag = round(log(length(train_pib))), type="Ljung-Box")
@@ -439,7 +439,7 @@ checkresiduals(modelo_sarima_pib)
 
 #-----------------      VALIDACIÓN DE RESIDUALES
 hist(residuals(modelo_sarima_pib), main="Histograma de residuales SARIMA PIB", 
-     xlab="Residual", col="lightblue")
+     xlab="Residual", col=paleta[3])
 checkresiduals(modelo_sarima_pib)
 
 boxtest_sarima_pib <- Box.test(residuals(modelo_sarima_pib), 
@@ -545,7 +545,103 @@ ggplot(accuracy_long_pib, aes(x = Modelo, y = Valor, fill = Modelo)) +
   ylab("Valor") +
   ggtitle("Comparación de Accuracy: Modelos de PIB") +
   theme(legend.position = "none") +
-  geom_text(aes(label=round(Valor,2)), vjust=-0.3, size=3)
+  geom_text(aes(label = round(Valor, 2)), vjust = -0.3, size = 3) +
+  scale_fill_manual(values = c(paleta[1], paleta[2], paleta[3]))
+
+
+
+# ======================================================
+# VALIDACIÓN CRUZADA (tsCV) PARA IPC Y PIB
+# ======================================================
+
+library(forecast)
+library(ggplot2)
+
+# Paleta de colores
+paleta <- c("#1b9e77", "#d95f02", "#7570b3")
+
+#-------------------------------------------------------
+# Función auxiliar para calcular RMSE desde tsCV
+#-------------------------------------------------------
+calc_rmse_tscv <- function(ts_data, f_model, h = 2, nombre = "Modelo") {
+  errores <- forecast::tsCV(ts_data, f_model, h = h)
+  rmse <- sqrt(colMeans(errores^2, na.rm = TRUE))  # RMSE correcto
+  data.frame(Modelo = nombre,
+             Horizonte = 1:h,
+             RMSE = rmse)
+}
+
+#-------------------------------------------------------
+# 1️⃣ AUTOARIMA (sin estacionalidad)
+#-------------------------------------------------------
+f_autoarima <- function(x, h) {
+  forecast(forecast::auto.arima(x, seasonal = FALSE, d = 0, D = 0), h = h)
+}
+
+#-------------------------------------------------------
+# 2️⃣ ARIMA manual
+#-------------------------------------------------------
+f_arima_ipc <- function(x, h) {
+  forecast(forecast::arima(x, order = c(1, 0, 0)), h = h)
+}
+
+f_arima_pib <- function(x, h) {
+  forecast(forecast::arima(x, order = c(2, 0, 2)), h = h)
+}
+
+#-------------------------------------------------------
+# 3️⃣ SARIMA (estacional automático)
+#-------------------------------------------------------
+f_sarima <- function(x, h) {
+  forecast(forecast::auto.arima(x,
+                                stepwise = FALSE,
+                                approximation = FALSE,
+                                seasonal = TRUE), h = h)
+}
+
+# ======================================================
+# ⚙️ IPC
+# ======================================================
+
+rmse_auto_ipc  <- calc_rmse_tscv(train_ipc_estacionaria, f_autoarima, h = 2, nombre = "AutoARIMA")
+rmse_arima_ipc <- calc_rmse_tscv(train_ipc_estacionaria, f_arima_ipc,  h = 2, nombre = "ARIMA")
+rmse_sarima_ipc <- calc_rmse_tscv(train_ipc_estacionaria, f_sarima,   h = 2, nombre = "SARIMA")
+
+rmse_total_ipc <- rbind(rmse_auto_ipc, rmse_arima_ipc, rmse_sarima_ipc)
+
+ggplot(rmse_total_ipc, aes(x = Horizonte, y = RMSE, color = Modelo)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  scale_color_manual(values = c(paleta[1], paleta[2], paleta[3])) +
+  theme_minimal() +
+  labs(title = "Validación cruzada (RMSE) - Modelos IPC",
+       x = "Horizonte (h)",
+       y = "RMSE")
+
+# ======================================================
+# ⚙️ PIB
+# ======================================================
+
+rmse_auto_pib  <- calc_rmse_tscv(train_gdp_estacionaria, f_autoarima,  h = 2, nombre = "AutoARIMA")
+rmse_arima_pib <- calc_rmse_tscv(train_gdp_estacionaria, f_arima_pib,  h = 2, nombre = "ARIMA")
+rmse_sarima_pib <- calc_rmse_tscv(train_gdp_estacionaria, f_sarima,    h = 2, nombre = "SARIMA")
+
+rmse_total_pib <- rbind(rmse_auto_pib, rmse_arima_pib, rmse_sarima_pib)
+
+ggplot(rmse_total_pib, aes(x = Horizonte, y = RMSE, color = Modelo)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  scale_color_manual(values = c(paleta[1], paleta[2], paleta[3])) +
+  theme_minimal() +
+  labs(title = "Validación cruzada (RMSE) - Modelos PIB",
+       x = "Horizonte (h)",
+       y = "RMSE")
+
+
+
+
+
+
 
 
 
