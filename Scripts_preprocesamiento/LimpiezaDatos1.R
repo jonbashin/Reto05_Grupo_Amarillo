@@ -657,6 +657,8 @@ if (LBtest_money_supply_2$p.value < 0.05) {
 #Cambiamos el nombre para que sea mas faci
 money_supply_ts_trimestral_sin_outliers_estacionaria<- money_supply_diff2
 
+#saveRDS(money_supply_ts_trimestral_sin_outliers_estacionaria, file = "Money_Supply_ts_ESTACIONARIA.rds")
+
 #-----------------------------------------------------------------
 #Graficamos
 #-----------------------------------------------------------------
@@ -763,6 +765,9 @@ if (LBtest_unemployment_1$p.value < 0.05) {
 #Cambiamos el nombre para que sea mas faci
 unemployment_ts_trimestral_sin_outliers_estacionaria<- unemployment_diff2
 
+#saveRDS(unemployment_ts_trimestral_sin_outliers_estacionaria, file = "Unemployment_ts_ESTACIONARIA.rds")
+
+
 #-----------------------------------------------------------------
 #Graficamos
 #-----------------------------------------------------------------
@@ -867,6 +872,9 @@ if (LBtest_gdp_2$p.value < 0.05) {
 # Cambiamos el nombre para facilitar su uso.
 train_gdp_estacionaria <- gdp_diff2
 
+#saveRDS(train_gdp_estacionaria, file = "PIB_Train_ts_ESTACIONARIA.rds")
+
+
 #-----------------------------------------------------------------
 # Graficamos
 #-----------------------------------------------------------------
@@ -938,6 +946,7 @@ if (LBtest_cpi_1$p.value < 0.05) {
 #AUSENCIA DE CORRELACION
 
 train_ipc_estacionaria <- cpi_diff1
+#saveRDS(train_ipc_estacionaria, file = "IPC_Train_ts_ESTACIONARIA.rds")
 
 
 #-----------------------------------------------------------------
@@ -1010,6 +1019,8 @@ if (LBtest_stock_market_1$p.value < 0.05) {
 
 # Los tests indican que la serie es estacionaria con la primera diferencia.
 stock_market_ts_trimestral_sin_outliers_log_estacionaria <- stock_market_diff1
+#saveRDS(stock_market_ts_trimestral_sin_outliers_log_estacionaria, file = "Stock_Market_ts_ESTACIONARIA.rds")
+
 
 #-----------------------------------------------------------------
 # Graficamos
