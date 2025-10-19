@@ -940,7 +940,9 @@ qqline(train_gdp_estacionaria, col="red")
 ###########            CPI (Consumer Price Index) (TRIMESTRAL)  #####################
 #####################################################################################
 #----                 SIN DIFERENCIA
+#png("pci_0_diferencia.png", width = 1800, height = 1400, res= 150)
 tsdisplay(train_ipc)             
+#dev.off()
 
 #----               PRIMERA DIFERENCIA
 # Aplicar diferencia
