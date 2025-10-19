@@ -1,8 +1,5 @@
-#LIMPIEZA
 
-
-#Limpieza de datos
-
+#####---- LIMPIEZA DE DATOS
 
 # LIBRERÍAS NECESARIAS
 # =========================
@@ -14,7 +11,6 @@ library(forecast)
 library(zoo)
 library(ggplot2)
 library(VIM)
-#library(tsoutliers)
 library(tseries)
 library(gridExtra)
 library(astsa)
@@ -186,7 +182,7 @@ stock_market_ts_trimestral <- aggregate(stock_market_ts_mensual, nfrequency = 4,
 
 # ---- SERIES MENSUALES ----
 #--------------------------------------------------------------------------
-#png("graficos_series_mensuales.png", width=800, height=1200)
+#png("graficos_series_mensuales_todos.png", width=800, height=1200)
 
 par(mfrow=c(3,1), mar=c(4,4,2,1))  # 3 filas, 1 columna
 plot(unemployment_ts_mensual, type="l", col= paleta[1], lwd=2,
@@ -208,7 +204,7 @@ par(mfrow=c(1,1))
 
 # ---- SERIES TRIMESTRALES ----
 #--------------------------------------------------------------------------
-#png("graficos_series_trimestrales.png", width=800, height=1200)
+#png("graficos_series_trimestrales_todos.png", width=800, height=1200)
 
 par(mfrow=c(5,1), mar=c(4,4,2,1))  # 5 filas, 1 columna
 
@@ -239,6 +235,23 @@ plot(gdp_ts_trimestral, type="l", col=paleta[3], lwd=2,
 
 par(mfrow=c(1,1))
 #dev.off()
+
+# --- CPI Trimestral ---
+#png("pci_trimestral.png", width=800, height=400)
+plot(cpi_ts_trimestral, type="l", col=paleta[2], lwd=2,
+     main="CPI Trimestral - Australia",
+     ylab="Index", xlab="Año")
+#dev.off()
+
+# --- GDP Trimestral ---
+#png("pib_trimestral.png", width=800, height=400)
+plot(gdp_ts_trimestral, type="l", col=paleta[3], lwd=2,
+     main="GDP Trimestral - Australia",
+     ylab="Billion Currency Units", xlab="Año")
+#dev.off()
+
+
+
 
 
 # 3. DETECCIÓN Y LIMPIEZA DE OUTLIERS
