@@ -940,14 +940,16 @@ qqline(train_gdp_estacionaria, col="red")
 ###########            CPI (Consumer Price Index) (TRIMESTRAL)  #####################
 #####################################################################################
 #----                 SIN DIFERENCIA
-#png("pci_0_diferencia.png", width = 1800, height = 1400, res= 150)
+#png("IPC_0_diferencia.png", width = 1800, height = 1400, res= 150)
 tsdisplay(train_ipc)             
 #dev.off()
 
 #----               PRIMERA DIFERENCIA
 # Aplicar diferencia
+#png("IPC_1_diferencia.png", width = 1800, height = 1400, res= 150)
 cpi_diff1 <- diff(train_ipc, differences = 1)
 tsdisplay(cpi_diff1)
+#dev.off()
 
 #Nos aseguraremos uqe si lo es con los teses
 
@@ -990,28 +992,28 @@ train_ipc_estacionaria <- cpi_diff1
 # Graficamos
 #-----------------------------------------------------------------
 #-------    SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparación)
-#png("CPI_Original_vs_Diferenciada.png", width = 900, height = 700)
+#png("IPC_Original_vs_Diferenciada.png",  width = 1800, height = 1400, res= 150)
 par(mfrow=c(2,1))
-plot(train_ipc, type="l", main="CPI (log) - Serie original", ylab="Nivel (log)")
-plot(train_ipc_estacionaria, type="l", main="CPI (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
+plot(train_ipc, type="l", main="IPC - Serie original", ylab="Nivel")
+plot(train_ipc_estacionaria, type="l", main="IPC - Primera diferencia (Estacionaria)", ylab="Cambio trimestral")
 par(mfrow=c(1,1))  
 #dev.off()
 
 #-------    ACF Y PACF
-#png("ACF_CPI_Primera_Diferencia.png", width=800, height=600)
+#png("ACF_IPC_Primera_Diferencia.png",  width = 1800, height = 1400, res= 150)
 ggAcf(train_ipc_estacionaria) + ggtitle("ACF de IPC (Primera diferencia)") + theme_minimal()
-title(main = "ACF de CPI (Primera Diferencia)")
+title(main = "ACF de IPC (Primera Diferencia)")
 #dev.off() 
 
-#png("PACF_CPI_Primera_Diferencia.png", width=800, height=600)
+#png("PACF_IPC_Primera_Diferencia.png", width = 1800, height = 1400, res= 150)
 ggPacf(train_ipc_estacionaria) + ggtitle("PACF de IPC (Primera diferencia)") + theme_minimal()
 #dev.off()   
 
 #-------   QQ-PLOT 
-#png("QQ_cpi.png", width=800, height=600)
-qqnorm(train_ipc_estacionaria, main="QQ-plot - CPI (log, diff1)")
+png("IPC_QQ.png",  width = 1800, height = 1400, res= 150)
+qqnorm(train_ipc_estacionaria, main="QQ-plot - IPC (diff1)")
 qqline(train_ipc_estacionaria, col="red")
-#dev.off()
+dev.off()
 
 
 
