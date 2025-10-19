@@ -828,13 +828,13 @@ qqline(unemployment_ts_trimestral_sin_outliers_estacionaria, col="red")
 #######################################################################
 
 #----                 SIN DIFERENCIA
-#png("pib_0_diferencias.png", width = 1000, height = 800)  
+#png("pib_0_diferencias.png", width = 1800, height = 1400, res= 150)
 tsdisplay(train_pib_log)
 #dev.off()
 
 #----               PRIMERA DIFERENCIA y lag
 # Aplicar diferencia
-#png("pib_1_diferencia.png", width = 1000, height = 800)  
+#png("pib_1_diferencia.png", width = 1800, height = 1400, res= 150)
 gdp_diff1 <- diff(train_pib_log, differences = 1, lag=4)
 tsdisplay(gdp_diff1)
 #dev.off()
@@ -870,10 +870,10 @@ if (LBtest_gdp_1$p.value < 0.05) {
 
 # -----------------   SEGUNDA DIFERENCIA
 # Aplicar diferencia
-png("pib_2_diferencia.png", width = 1000, height = 800)  
+#png("pib_2_diferencia.png", width = 1800, height = 1400, res= 150)
 gdp_diff2 <- diff(diff(train_pib_log, lag=4))
 tsdisplay(gdp_diff2)
-dev.off()
+#dev.off()
 
 # Aplicamos los tests para comprobar
 # TEST ADF
@@ -914,7 +914,7 @@ train_gdp_estacionaria <- gdp_diff2
 # Graficamos
 #-----------------------------------------------------------------
 #-------    SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparación)
-#png("PIB_Original_vs_Diferenciada.png", width = 900, height = 700)
+#png("PIB_Original_vs_Diferenciada.png", width = 1800, height = 1400, res= 150)
 par(mfrow=c(2,1))
 plot(train_pib_log, type="l", main="GDP (log) - Serie original", ylab="Nivel (log)")
 plot(train_gdp_estacionaria, type="l", main="GDP (log) - Segunda diferencia (Estacionaria)", ylab="Cambio trimestral")
@@ -922,16 +922,16 @@ par(mfrow=c(1,1))
 #dev.off()
 
 #-------    ACF Y PACF
-#png("ACF_PIB_Segunda_Diferencia.png", width=800, height=600)
+#png("ACF_PIB_Segunda_Diferencia.png", width = 1800, height = 1400, res= 150)
 ggAcf(train_gdp_estacionaria) + ggtitle("ACF de PIB (Segunda diferencia)") + theme_minimal()
 #dev.off() 
 
-#png("PACF_PIB_Segunda_Diferencia.png", width=800, height=600)
+#png("PACF_PIB_Segunda_Diferencia.png", width = 1800, height = 1400, res= 150)
 ggPacf(train_gdp_estacionaria) + ggtitle("PACF de PIB (Segunda diferencia)") + theme_minimal()
 #dev.off() 
 
 #-------   QQ-PLOT
-#png("PIB_QQ_gdp.png", width=800, height=600)
+#png("PIB_QQ_gdp.png", width = 1600, height = 1200, res = 150)
 qqnorm(train_gdp_estacionaria, main="QQ-plot - GDP (log, diff1)")
 qqline(train_gdp_estacionaria, col="red")
 #dev.off()
