@@ -277,63 +277,67 @@ gdp_ts_trimestral_sin_outliers    <- tsclean(gdp_ts_trimestral)
 
 # ---- 3. VISUALIZACIÓN COMPARATIVA ----
 # ---- 2. Función auxiliar para graficar ----
-plot_outliers <- function(original_ts, clean_ts, titulo){
+plot_outliers <- function(original_ts, titulo){
   outs <- tsoutliers(original_ts)
-  par(mfrow=c(2,1), mar=c(4,4,2,1))
   
-  # ---- 1. Serie original con outliers ----
-  plot(original_ts, type="l", lwd=2, col=paleta[2],
-       main=paste(titulo, "- Outliers marcados"), 
-       ylab="Valor", xlab="Año",
-       ylim=c(min(original_ts, na.rm=TRUE), max(original_ts, na.rm=TRUE)*1.1))
-  
-  if(length(outs$index) > 0){
-    points(time(original_ts)[outs$index],
-           original_ts[outs$index],
-           col=paleta[1], pch=19, cex=1.2)
+  # Paleta de colores si no está definida
+  if (!exists("paleta")) {
   }
   
-  legend("topright",
-         legend = c("Serie original","Outliers"),
+  # ---- Ajuste de márgenes para dejar espacio a la derecha ----
+  par(mar = c(4, 4, 2, 6))  # espacio a la derecha
+  par(xpd = TRUE)          # permite dibujar fuera del área del plot
+  
+  # ---- Definir rango para el eje Y con margen superior ----
+  ylim_range <- c(min(original_ts, na.rm=TRUE),
+                  max(original_ts, na.rm=TRUE) * 1.1)
+  
+  # ---- Graficar la serie original ----
+  plot(original_ts, type = "l", lwd = 2, col = paleta[2],
+       main = paste(titulo, "- Outliers marcados"),
+       ylab = "Valor", xlab = "Año",
+       ylim = ylim_range)
+  
+  # ---- Marcar outliers si existen ----
+  if (length(outs$index) > 0) {
+    points(time(original_ts)[outs$index],
+           original_ts[outs$index],
+           col = paleta[1], pch = 19, cex = 1.2)
+  }
+  
+  # ---- Leyenda fuera del área del gráfico pero visible ----
+  legend("topright", inset = c(-0.1, 0), xpd = TRUE,
+         legend = c("Serie original", "Outliers"),
          col = c(paleta[2], paleta[1]),
-         lty = c(1, NA),      # línea para la serie original
-         pch = c(NA, 19),     # puntos para los outliers
-         bty = "n")
+         lty = c(1, NA), pch = c(NA, 19),
+         bty = "n", x.intersp = 0.8, text.width = strwidth("Serie original") * 1.2)
   
-  # ---- 2. Diferencia Original vs Limpio ----
-  diff_ts <- original_ts - clean_ts
-  plot(diff_ts, type="h", lwd=2, col=paleta[3],
-       main=paste(titulo, "- Diferencia Original vs Sin Outliers"),
-       ylab="Corrección aplicada", xlab="Año")
-  abline(h=0, col=paleta[4])
-  
-  par(mfrow=c(1,1))
+  # ---- Restaurar parámetros por defecto ----
+  par(xpd = FALSE)
+  par(mar = c(5, 4, 4, 2) + 0.1)
 }
 
 
 
-
-
-
-
 #png("outliers_unemployment.png", width=800, height=800)
-plot_outliers(unemployment_ts_trimestral, unemployment_ts_trimestral_sin_outliers, "Unemployment Rate (Trimestral)")
+plot_outliers(unemployment_ts_trimestral, 
+              "Unemployment Rate (Trimestral)")
 #dev.off()
 
 #png("outliers_money_supply.png", width=800, height=800)
-plot_outliers(money_supply_ts_trimestral, money_supply_ts_trimestral_sin_outliers, "Money Supply (Trimestral)")
+plot_outliers(money_supply_ts_trimestral, "Money Supply (Trimestral)")
 #dev.off()
 
 #png("outliers_stock_market.png", width=800, height=800)
-plot_outliers(stock_market_ts_trimestral, stock_market_ts_trimestral_sin_outliers, "Stock Market Index (Trimestral)")
+plot_outliers(stock_market_ts_trimestral, "Stock Market Index (Trimestral)")
 #dev.off()
 
-#png("outliers_cpi.png", width=800, height=800)
-plot_outliers(cpi_ts_trimestral, cpi_ts_trimestral_sin_outliers, "CPI (Trimestral)")
+#png("outliers_pci.png", width=800, height=800)
+plot_outliers(cpi_ts_trimestral, "PCI (Trimestral)")
 #dev.off()
 
-#png("outliers_gdp.png", width=800, height=800)
-plot_outliers(gdp_ts_trimestral, gdp_ts_trimestral_sin_outliers, "GDP (Trimestral)")
+#png("outliers_PIB.png", width=800, height=800)
+plot_outliers(gdp_ts_trimestral, "PIB (Trimestral)")
 #dev.off()
 
 
@@ -353,21 +357,21 @@ test_pib<-window(gdp_ts_trimestral_sin_outliers,start=c(2021,1), end= c(2022,2))
 #======================
 
 # GDP
-#png("gdp_Serie_Sin_Outliers.png", width=800, height=600)
+#png("varianza_pib_Serie_Sin_Outliers.png", width=800, height=600)
 tsplot(train_pib, col=paleta[3], lwd=2,
-       main="GDP (Sin outliers)  ", ylab="Valor", xlab="Tiempo")
+       main="PIB (Sin outliers)  ", ylab="Valor", xlab="Tiempo")
 #dev.off()
 # Varianza creciente (ligera), con estacionalidad
 
 # CPI
-#png("cpi_Serie_Sin_Outliers.png", width=800, height=600)
+#png("varianza_pci_Serie_Sin_Outliers.png", width=800, height=600)
 tsplot(train_ipc, col=paleta[2], lwd=2,
-       main="CPI (Sin Outliers)", ylab="Valor", xlab="Tiempo")
+       main="PCI (Sin Outliers)", ylab="Valor", xlab="Tiempo")
 #dev.off()
 #Varianza Constante
 
 # Stock Market
-#png("stock_market_Serie_Sin_Outliers.png", width=800, height=600)
+#png("varianza_stock_market_Serie_Sin_Outliers.png", width=800, height=600)
 tsplot(stock_market_ts_trimestral_sin_outliers, col=paleta[1], lwd=2,
        main="Stock Market (Sin Outliers)", ylab="Valor", xlab="Tiempo")
 #dev.off()
@@ -397,12 +401,12 @@ stock_market_ts_trimestral_sin_outliers_log <- log(stock_market_ts_trimestral_si
 train_pib_log <- log(train_pib)
 
 # Graficar después de log-transform
-#png("stock_market_Serie_Estabilizada_log.png", width=800, height=600)
+#png("varianza_estabilizada_stock_market_Serie_log.png", width=800, height=600)
 tsplot(stock_market_ts_trimestral_sin_outliers_log, col=paleta[1], lwd=2,
        main="Stock Market - Serie log-transformada", ylab="Log-Valor", xlab="Tiempo")
 #dev.off()
 
-#png("gdp_Serie_Estabilizada_log.png", width=800, height=600)
+#png("varianza_estabilizada_pib_Serie_log.png", width=800, height=600)
 tsplot(train_pib_log, col=paleta[3], lwd=2,
        main="GDP - Serie log-transformada", ylab="Log-Valor", xlab="Tiempo")
 #dev.off()
@@ -410,43 +414,55 @@ tsplot(train_pib_log, col=paleta[3], lwd=2,
 
 # 6. DESCOPOSICION DE LA SERIE
 #=======================
-#?? No puedo poner el titulo que yo quiero
 # Descomposición de la serie de IPC
 descomposicion_ipc <- decompose(train_ipc)
-plot(descomposicion_ipc, col=paleta[1])     # genera el gráfico con el título por defecto
-mtext("Descomposición del IPC", side = 3, line = 0.5, cex = 1.2, font = 2)
-descomposicion_ipc$seasonal #estacionalidad
-descomposicion_ipc$trend #tendencia
-random_ipc<-descomposicion_ipc$random #residuo
+plot(descomposicion_ipc, col=paleta[1])
+#png("ipc_descomposicion.png", width = 800, height = 600)  # Guardar gráfico
+plot(descomposicion_ipc, col=paleta[1])
+#dev.off()
+descomposicion_ipc$seasonal
+descomposicion_ipc$trend
+random_ipc <- descomposicion_ipc$random
 
 # Descomposición de la serie de PIB
 descomposicion_pib <- decompose(train_pib_log)
 plot(descomposicion_pib, col= paleta[1])
-descomposicion_pib$seasonal #estacionalidad
-descomposicion_pib$trend #tendencia
-random_pib<-descomposicion_pib$random #residuo
+#png("pib_descomposicion.png", width = 800, height = 600)
+plot(descomposicion_pib, col=paleta[1])
+#dev.off()
+descomposicion_pib$seasonal
+descomposicion_pib$trend
+random_pib <- descomposicion_pib$random
 
 # Descomposición de la serie de masa monetaria
 descomposicion_money_supply <- decompose(money_supply_ts_trimestral_sin_outliers)
 plot(descomposicion_money_supply, col= paleta[1])
-descomposicion_money_supply$seasonal #estacionalidad
-descomposicion_money_supply$trend #tendencia
-random_money_supply<-descomposicion_money_supply$random #residuo
+#png("money_supply_descomposicion.png", width = 800, height = 600)
+plot(descomposicion_money_supply, col=paleta[1])
+#dev.off()
+descomposicion_money_supply$seasonal
+descomposicion_money_supply$trend
+random_money_supply <- descomposicion_money_supply$random
 
 # Descomposición de la serie de indice bursatil
 descomposicion_stock_market <- decompose(stock_market_ts_trimestral_sin_outliers_log)
 plot(descomposicion_stock_market, col= paleta[1])
-descomposicion_stock_market$seasonal #estacionalidad
-descomposicion_stock_market$trend #tendencia
-random_stock_market<-descomposicion_stock_market$random #residuo
+#png("stock_market_descomposicion.png", width = 800, height = 600)
+plot(descomposicion_stock_market, col=paleta[1])
+#dev.off()
+descomposicion_stock_market$seasonal
+descomposicion_stock_market$trend
+random_stock_market <- descomposicion_stock_market$random
 
 # Descomposición de la serie del paro
 descomposicion_unemployment <- decompose(unemployment_ts_trimestral_sin_outliers)
 plot(descomposicion_unemployment, col=paleta[1])
-descomposicion_unemployment$seasonal #estacionalidad
-descomposicion_unemployment$trend #tendencia
-random_unemployment<-descomposicion_unemployment$random #residuo
-
+#png("unemployment_descomposicion.png", width = 800, height = 600)
+plot(descomposicion_unemployment, col=paleta[1])
+#dev.off()
+descomposicion_unemployment$seasonal
+descomposicion_unemployment$trend
+random_unemployment <- descomposicion_unemployment$random
 
 # 7. ANALIZAR ESTACIONALIDAD
 #======================
@@ -812,12 +828,16 @@ qqline(unemployment_ts_trimestral_sin_outliers_estacionaria, col="red")
 #######################################################################
 
 #----                 SIN DIFERENCIA
-tsdisplay(train_pib_log)  
+#png("pib_0_diferencias.png", width = 1000, height = 800)  
+tsdisplay(train_pib_log)
+#dev.off()
 
 #----               PRIMERA DIFERENCIA y lag
 # Aplicar diferencia
+#png("pib_1_diferencia.png", width = 1000, height = 800)  
 gdp_diff1 <- diff(train_pib_log, differences = 1, lag=4)
 tsdisplay(gdp_diff1)
+#dev.off()
 
 # Aplicamos los tests para comprobar
 # TEST ADF
@@ -850,8 +870,10 @@ if (LBtest_gdp_1$p.value < 0.05) {
 
 # -----------------   SEGUNDA DIFERENCIA
 # Aplicar diferencia
+png("pib_2_diferencia.png", width = 1000, height = 800)  
 gdp_diff2 <- diff(diff(train_pib_log, lag=4))
 tsdisplay(gdp_diff2)
+dev.off()
 
 # Aplicamos los tests para comprobar
 # TEST ADF
@@ -892,24 +914,24 @@ train_gdp_estacionaria <- gdp_diff2
 # Graficamos
 #-----------------------------------------------------------------
 #-------    SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparación)
-#png("GDP_Original_vs_Diferenciada.png, width = 900, height = 700)
+#png("PIB_Original_vs_Diferenciada.png", width = 900, height = 700)
 par(mfrow=c(2,1))
 plot(train_pib_log, type="l", main="GDP (log) - Serie original", ylab="Nivel (log)")
-plot(train_gdp_estacionaria, type="l", main="GDP (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
+plot(train_gdp_estacionaria, type="l", main="GDP (log) - Segunda diferencia (Estacionaria)", ylab="Cambio trimestral")
 par(mfrow=c(1,1)) 
 #dev.off()
 
 #-------    ACF Y PACF
-#png("ACF_GDP_Segunda_Diferencia.png", width=800, height=600)
+#png("ACF_PIB_Segunda_Diferencia.png", width=800, height=600)
 ggAcf(train_gdp_estacionaria) + ggtitle("ACF de PIB (Segunda diferencia)") + theme_minimal()
 #dev.off() 
 
-#png("PACF_GDP_Segunda_Diferencia.png", width=800, height=600)
+#png("PACF_PIB_Segunda_Diferencia.png", width=800, height=600)
 ggPacf(train_gdp_estacionaria) + ggtitle("PACF de PIB (Segunda diferencia)") + theme_minimal()
 #dev.off() 
 
 #-------   QQ-PLOT
-#png("QQ_gdp.png", width=800, height=600)
+#png("PIB_QQ_gdp.png", width=800, height=600)
 qqnorm(train_gdp_estacionaria, main="QQ-plot - GDP (log, diff1)")
 qqline(train_gdp_estacionaria, col="red")
 #dev.off()
