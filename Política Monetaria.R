@@ -13,7 +13,7 @@ tipo_cambio<-read.csv("DATOS\\Externos\\POLÍTICA MONETARIA\\TIPO DE CAMBIO AUST
 interes_anual<-read.csv("DATOS\\Externos\\POLÍTICA MONETARIA\\TIPO DE INTERÉS ANUAL (FRED).csv")
 interes_trimestral<-read.csv("DATOS\\Externos\\POLÍTICA MONETARIA\\TIPO DE INTERÉS TRIMESTRAL (FRED).csv")
 
-#
+#Añadimos las columnas de Año y Mes
 reservas<-reservas %>%
   mutate(Año = year(observation_date),
          Mes = month(observation_date),
@@ -30,13 +30,14 @@ interes_trimestral<-interes_trimestral %>%
   mutate(Año = year(observation_date),
          Mes = month(observation_date),
          Dia = day(observation_date))
-# Renombrar solo la columna de valor y quedarnos con fecha + valor
-tipo_cambio <- tipo_cambio %>% select(observation_date, DEXUSAL) %>% rename(tipo_cambio = DEXUSAL)
-interes_anual <- interes_anual %>% select(observation_date, IRLTLT01AUM156N) %>% rename(interes_anual = IRLTLT01AUM156N)
-interes_trimestral <- interes_trimestral %>% select(observation_date, IR3TBB01AUM156N) %>% rename(interes_trimestral = IR3TBB01AUM156N)
+
+#Renombrar solo la columna de valor y quedarnos con fecha + valor
+tipo_cambio<-tipo_cambio %>% select(observation_date, DEXUSAL) %>% rename(tipo_cambio = DEXUSAL)
+interes_anual<-interes_anual %>% select(observation_date, IRLTLT01AUM156N) %>% rename(interes_anual = IRLTLT01AUM156N)
+interes_trimestral<-interes_trimestral %>% select(observation_date, IR3TBB01AUM156N) %>% rename(interes_trimestral = IR3TBB01AUM156N)
 reservas<-reservas %>% select(observation_date, AUINTDDL) %>% rename(reservas = AUINTDDL)
 
-#Unir los 4 datasets por fecha
+#Unimos los 4 datasets por fecha
 tipo_interes<-merge(interes_anual, interes_trimestral)
 cambio_interes<-merge(tipo_interes, tipo_cambio)
 cambio_interes$observation_date <- as.Date(cambio_interes$observation_date)
@@ -84,16 +85,30 @@ ggplot(cambio_interes, aes(x = observation_date, y = interes_trimestral)) +
 ggplot(cambio_interes) +
   geom_line(aes(x = observation_date, y = interes_anual, color = "Anual"), size = 1) +
   geom_line(aes(x = observation_date, y = interes_trimestral, color = "Trimestral"), size = 1) +
-  scale_color_manual(values = c("Anual" = pal_laboral["verde"], "Trimestral" = pal_laboral["magenta"])) +
-  labs(title = "Comparación de tasas de interés en Australia",
-       x = "Fecha",
-       y = "Tasa de interés (%)",
-       color = "Tipo de interés") +
+  scale_color_manual(
+    values = c(
+      "Anual" = pal_laboral[["verde"]],
+      "Trimestral" = pal_laboral[["magenta"]]
+    ),
+    name = "Tipo de interés"
+  ) +
+  labs(
+    title = "Comparación de tasas de interés en Australia",
+    x = "Fecha",
+    y = "Tasa de interés (%)"
+  ) +
   theme_minimal(base_size = 14) +
   theme(
-    plot.background = element_rect(fill = pal_laboral["gris_fondo"]),
-    plot.title = element_text(color = pal_laboral["gris_texto"], face = "bold"),
-    legend.background = element_rect(fill = pal_laboral["beige"])
+    plot.background = element_rect(fill = pal_laboral[["gris_fondo"]], color = NA),
+    panel.background = element_rect(fill = pal_laboral[["gris_fondo"]], color = NA),
+    panel.grid.major = element_line(color = "white"),
+    panel.grid.minor = element_line(color = "white"),
+    plot.title = element_text(color = pal_laboral[["gris_texto"]], face = "bold"),
+    axis.text = element_text(color = pal_laboral[["gris_texto"]]),
+    axis.title = element_text(color = pal_laboral[["gris_texto"]]),
+    legend.background = element_rect(fill = pal_laboral[["beige"]], color = NA),
+    legend.title = element_text(color = pal_laboral[["gris_texto"]]),
+    legend.text = element_text(color = pal_laboral[["gris_texto"]])
   )
 
 #Distribución anual de la tasa de interés
