@@ -42,7 +42,7 @@ train_pib_log<- readRDS("Series_Temporales/Train_PIB_log")
 
 #Cargar series originales (Sin diferencias):
 
-
+train_pib_log <- as.numeric(train_pib_log)
 
 
 ############################################################
