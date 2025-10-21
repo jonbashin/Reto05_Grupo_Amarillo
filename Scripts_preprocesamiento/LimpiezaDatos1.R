@@ -589,7 +589,9 @@ ggPacf(train_unemployment) + ggtitle("PACF de Unemployment (Sin diferenciar)") +
 
 
 ########### ---------- Money Supply (TRIMESTRAL)  #####################
-#######################################################################
+####################################################################### 
+
+############  -------------     TRAIN      ------------   ##############
 
 #Aplicaremos ts.display() para ver si graficamente si son estacionarias o no
 #----                 SIN DIFERENCIA
@@ -732,7 +734,117 @@ qqline(train__money_supply_estacionaria, col="red")
 #La linea roja representa como se verian los datos si sigugieran una distribucion normal
 
 
+############  -------------     TEST      ------------   ##############
+#Aplicaremos ts.display() para ver si graficamente si son estacionarias o no
+#----                 SIN DIFERENCIA
+tsdisplay(test_money_supply)             
 
+#----               PRIMERA DIFERENCIA
+#Aplicar diferencia
+money_supply_diff1_test <- diff(test_money_supply, differences = 1)
+tsdisplay(money_supply_diff1_test)
+
+#Aplicaremos los teses para asegurarnos de que no es estacionaria al 100%
+#TEST ADF
+adf_test_money_supply_1 <- adf.test(money_supply_diff1_test)
+if(adf_test_money_supply_1$p.value < 0.05){
+  print("Money Supply - ADF (diff1): estacionaria")
+} else{
+  print("Money Supply - ADF (diff1): NO estacionaria")
+}
+#NO ESTACIONARIA diff=1
+
+#TEST KPSS
+kpss_test_money_supply_1 <- kpss.test(money_supply_diff1, null="Level")
+if(kpss_test_money_supply_1$p.value < 0.05){
+  print("Money Supply - KPSS (diff1): NO estacionaria")
+} else{
+  print("Money Supply - KPSS (diff1): estacionaria")
+}
+#NO ESTACIONARIA diff=1
+
+#TEST LJUNG-BOX
+LBtest_money_supply_1 <- Box.test(money_supply_diff1, lag = 10, type="Ljung")
+if (LBtest_money_supply_1$p.value < 0.05) {
+  print("Money Supply - Ljung-Box (diff1): Existe correlación")
+} else {
+  print("Money Supply - Ljung-Box (diff1): Ausencia de correlación")
+}
+
+#EXISTE CORRELACION
+
+#---            PRIMERA DIFERRENCIA Y LAG                -----
+
+acf(train_money_supply)
+money_supply_diff1_lag <- diff(train_money_supply, lag=4)
+tsdisplay(money_supply_diff1_lag) 
+
+
+#Aplicaremos los teses para asegurarnos de que no es estacionaria al 100%
+#TEST ADF
+adf_test_money_supply_1_lag <- adf.test(money_supply_diff1_lag)
+if(adf_test_money_supply_1_lag$p.value < 0.05){
+  print("Money Supply - ADF (diff1, lag): estacionaria")
+} else{
+  print("Money Supply - ADF (diff1, lag): NO estacionaria")
+}
+# No ESTACIONARIA diff=1, lag=4 
+
+#TEST KPSS
+kpss_test_money_supply_1_lag <- kpss.test(money_supply_diff1_lag, null="Level")
+if(kpss_test_money_supply_1_lag$p.value < 0.05){
+  print("Money Supply - KPSS (diff1, lag): NO estacionaria")
+} else{
+  print("Money Supply - KPSS (diff1, lag): estacionaria")
+}
+# NO ESTACIONARIA diff=1, lag=4 
+
+#TEST LJUNG-BOX
+LBtest_money_supply_1_lag <- Box.test(money_supply_diff1_lag, lag = 10, type="Ljung")
+if (LBtest_money_supply_1_lag$p.value < 0.05) {
+  print("Money Supply - Ljung-Box (diff1, lag): Existe correlación")
+} else {
+  print("Money Supply - Ljung-Box (diff1, lag): Ausencia de correlación")
+}
+#EXISTE CORRELACION
+#SIigue sin dar por lo que aplicaremos la segunda diferencia
+
+#----                 SEGUNDA DIFERENCIA
+
+money_supply_diff2 <- diff(train_money_supply, differences = 2)
+tsdisplay(money_supply_diff2)
+
+#Aplicar los teses
+#TEST ADF
+adf_test_money_supply_2 <- adf.test(money_supply_diff2)
+if(adf_test_money_supply_2$p.value < 0.05){
+  print("Money Supply - ADF (diff2): estacionaria")
+} else{
+  print("Money Supply - ADF (diff2): NO estacionaria")
+}
+# ESTACIONARIA diff=2
+
+#TEST KPSS
+kpss_test_money_supply_2 <- kpss.test(money_supply_diff2, null="Level")
+if(kpss_test_money_supply_2$p.value < 0.05){
+  print("Money Supply - KPSS (diff2): NO estacionaria")
+} else{
+  print("Money Supply - KPSS (diff2): estacionaria")
+}
+#ESTACIONARIA diff=2
+
+#TEST LJUNG-BOX
+LBtest_money_supply_2 <- Box.test(money_supply_diff2, lag = 10, type="Ljung")
+if (LBtest_money_supply_2$p.value < 0.05) {
+  print("Money Supply - Ljung-Box (diff2): Existe correlación")
+} else {
+  print("Money Supply - Ljung-Box (diff2): Ausencia de correlación")
+}
+#EXISTE CORRELACION
+
+#MONEY SUPPLY--> Estacionaria con la segunda diferencia!
+#Cambiamos el nombre para que sea mas faci
+train_money_supply_estacionaria<- money_supply_diff2
 
 ########### ---------- Unemployment Rate (TRIMESTRAL)  #####################
 #######################################################################
