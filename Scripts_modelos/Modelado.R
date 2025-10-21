@@ -26,11 +26,11 @@ paleta <- c("#c88fb2",  "#8db41c",  "#93044e","#D1006F",  "#F5F0E6",  "#4D4D4D")
 datos_limpios_AUS<- read.csv("DATOS/limpios/Datos_Limpios_Australia.csv")
 
 #Cargar series temporales ESTACIONARIAS:
-money_supply_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Money_Supply_ts_ESTACIONARIA.rds")
-unemployment_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Unemployment_ts_ESTACIONARIA.rds")
+train_money_supply_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Train_Money_Supply_ts_ESTACIONARIA.rds")
+train_unemployment_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Train_Unemployment_ts_ESTACIONARIA.rds")
 train_gdp_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/PIB_Train_ts_ESTACIONARIA.rds")
 train_ipc_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/IPC_Train_ts_ESTACIONARIA.rds")
-stock_market_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Stock_Market_ts_ESTACIONARIA.rds")
+train_stock_market_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Train_Stock_Market_ts_ESTACIONARIA.rds")
 
 
 ############################################################
