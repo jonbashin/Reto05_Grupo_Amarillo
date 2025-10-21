@@ -133,6 +133,7 @@ if (boxtest_arima_ipc$p.value > 0.05) {
 } else {
   cat("Residuos ARIMA IPC muestran autocorrelación\n")
 }
+#Residuos ARIMA IPC parecen ruido blanco
 
 #-----------------      PREDICCIONES
 prediccion_arima_ipc <- forecast(modelo_arima_ipc, h=length(test_ipc), level=90)
@@ -174,8 +175,14 @@ legend("topleft",
 #D= 0: Ya eliminaste diferencias estacionales
 
 #Elegir los mejores parametros:
+#png("ACF_IPC_Train_Estacionaria.png", width = 1800, height = 1400, res= 150)
 acf(train_ipc_estacionaria)
+#dev.off()
+
+#png("PACF_IPC_Train_Estacionaria.png", width = 1800, height = 1400, res= 150)
 pacf(train_ipc_estacionaria)
+#dev.off()
+
 tsdisplay(train_ipc_estacionaria)
 
 
@@ -186,6 +193,14 @@ modelo_sarima_ipc <- arima(train_ipc_estacionaria,
                            method = "ML")
 summary(modelo_sarima_ipc)
 checkresiduals(modelo_sarima_ipc)
+
+boxtest_sarima_ipc <- Box.test(residuals(modelo_sarima_ipc), lag = round(log(length(train_ipc))), type="Ljung-Box")
+if (boxtest_sarima_ipc$p.value > 0.05) {
+  cat("Residuos SARIMA IPC parecen ruido blanco\n")
+} else {
+  cat("Residuos SARIMA IPC muestran autocorrelación\n")
+}
+#Residuos ARIMA IPC parecen ruido blanco
 
 #-----------------      PREDICCIONES
 prediccion_sarima_ipc <- forecast(modelo_sarima_ipc, h=length(test_ipc), level=90)
@@ -373,6 +388,7 @@ if (boxtest_arima_pib$p.value > 0.05) {
 } else {
   cat("Residuos ARIMA IPC muestran autocorrelación\n")
 }
+#Residuos ARIMA IPC parecen ruido blanco
 
 #-----------------      PREDICCIONES
 prediccion_arima_pib <- forecast(modelo_arima_pib , h=length(test_pib), level=90)
@@ -450,6 +466,7 @@ if (boxtest_sarima_pib$p.value > 0.05) {
 } else {
   cat("Residuos SARIMA PIB muestran autocorrelación\n")
 }
+#Residuos SARIMA PIB parecen ruido blanco
 
 #-----------------      PREDICCIONES
 prediccion_sarima_pib <- forecast(modelo_sarima_pib, h=length(test_pib), level=90)
@@ -604,10 +621,10 @@ f_sarima <- function(x, h) {
 # ======================================================
 
 rmse_auto_ipc  <- calc_rmse_tscv(train_ipc_estacionaria, f_autoarima, h = 2, nombre = "AutoARIMA")
-rmse_arima_ipc <- calc_rmse_tscv(train_ipc_estacionaria, f_arima_ipc,  h = 2, nombre = "ARIMA")
+#rmse_arima_ipc <- calc_rmse_tscv(train_ipc_estacionaria, f_arima_ipc,  h = 2, nombre = "ARIMA")
 rmse_sarima_ipc <- calc_rmse_tscv(train_ipc_estacionaria, f_sarima,   h = 2, nombre = "SARIMA")
 
-rmse_total_ipc <- rbind(rmse_auto_ipc, rmse_arima_ipc, rmse_sarima_ipc)
+rmse_total_ipc <- rbind(rmse_auto_ipc, rmse_sarima_ipc)
 
 ggplot(rmse_total_ipc, aes(x = Horizonte, y = RMSE, color = Modelo)) +
   geom_line(size = 1) +
@@ -647,110 +664,9 @@ ggplot(rmse_total_pib, aes(x = Horizonte, y = RMSE, color = Modelo)) +
 
 
 
-#======================
-#CROSS VALIDATION 
-#======================
-
-############################     IPC     #############################
-#autoarima
-length(train_ipc_estacionaria)
-
-#Funcion de forecast para tsCV
-funcion_autoarima_ipc <- function(y, h) {
-  # Ajusta ARIMA sin diferenciar de nuevo (d=0)
-  forecast(auto.arima(y, d=0), h = h)
-}
-
-#Cross validation temporal
-tsCV_IPC_autoarima <- tsCV(
-  y = train_ipc_estacionaria,
-  forecastfunction = funcion_autoarima_ipc,
-  h = 3)
-
-#Calcular RMSE promedio del CV
-rmse_autoarima_cv <- sqrt(mean(tsCV_IPC_autoarima^2, na.rm = TRUE))
-cat("RMSE cross-validation (AutoARIMA - IPC):", rmse_autoarima_cv, "\n")
 
 
-#arima
-funcion_arima_ipc <- function(y, h) {
-  # Ajusta ARIMA sin diferenciar de nuevo (d=0)
-  forecast(auto.arima(y, d=0), h = h)
-}
-
-tsCV_IPC_autoarima <- tsCV(
-  y = train_ipc_estacionaria,
-  forecastfunction = funcion_autoarima_ipc,
-  h = 3
-)
-
-#sacar la rpeddcion
-
-
-#accrucay
-
-
-
-
-
-
-
-
-##########################
-library(forecast)
-
-#-----------------------------
-# 1️⃣ Función segura para tsCV
-#-----------------------------
-funcion_autoarima_ipc <- function(y, h) {
-  # Intentamos ajustar auto.arima y hacer forecast
-  fc <- tryCatch({
-    forecast(auto.arima(y, d = 0, seasonal = FALSE), h = h)$mean
-  }, error = function(e) {
-    rep(NA, h)  # Si falla, devolvemos NA de largo h
-  })
-  return(as.numeric(fc))
-}
-
-#-----------------------------
-# 2️⃣ Cross-validation
-#-----------------------------
-horizonte <- 3
-tsCV_IPC_autoarima <- tsCV(
-  y = train_ipc_estacionaria,
-  forecastfunction = funcion_autoarima_ipc,
-  h = horizonte
-)
-
-#-----------------------------
-# 3️⃣ RMSE global
-#-----------------------------
-rmse_total <- sqrt(mean(tsCV_IPC_autoarima^2, na.rm = TRUE))
-cat("RMSE promedio:", rmse_total, "\n")
-
-#-----------------------------
-# 4️⃣ MSE por horizonte
-#-----------------------------
-mse_horizonte <- colMeans(tsCV_IPC_autoarima^2, na.rm = TRUE)
-mse_horizonte_df <- data.frame(Horizonte = 1:horizonte, MSE = mse_horizonte)
-print(mse_horizonte_df)
-
-#-----------------------------
-# 5️⃣ Gráfico MSE por horizonte
-#-----------------------------
-plot(mse_horizonte_df$Horizonte, mse_horizonte_df$MSE, type="b", pch=16, col="red",
-     xlab="Horizonte de predicción", ylab="MSE",
-     main="MSE de Cross-Validation por horizonte (AutoARIMA - IPC)")
-grid()
-
-
-
-
-
-
-
-
-
+#MIRAR LOS AIC, AICC DE CADA MODELOS,
 
 
 
