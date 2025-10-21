@@ -625,7 +625,17 @@ cat("AIC:", aic_arimax, "BIC:", bic_arimax, "AICc:", aicc_arimax, "\n")
 
 #Prediccion:
 
+forecast_arimax <- forecast(
+  modelo_arimax_ipc,
+  xreg = (test_todas_exogenas),
+  h = nrow(test_todas_exogenas)
+)
 
+# Ver predicciones y límites
+print(forecast_arimax)
+
+# Graficar
+plot(forecast_arimax)
 
 
 #para ahce rla rpeddcion el test lo tengo que convertir en escenario tmabien pero de la misma maner auq ele train
