@@ -25,6 +25,8 @@ paleta <- c("#c88fb2",  "#8db41c",  "#93044e","#D1006F",  "#F5F0E6",  "#4D4D4D")
 #=========================
 datos_limpios_AUS<- read.csv("DATOS/limpios/Datos_Limpios_Australia.csv")
 
+
+
 #Cargar series temporales ESTACIONARIAS:
 train_money_supply_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Train_Money_Supply_ts_ESTACIONARIA.rds")
 train_unemployment_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Train_Unemployment_ts_ESTACIONARIA.rds")
@@ -34,8 +36,11 @@ train_stock_market_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Trai
 train_ipc<- readRDS("Series_Temporales/IPC_Train_ts.rds")
 test_ipc<- readRDS("Series_Temporales/IPC_Test_ts.rds")
 train_pib<- readRDS("Series_Temporales/PIB_Train_ts.rds")
-test_ipc<- readRDS("Series_Temporales/PIB_Test_ts.rds")
+test_pib<- readRDS("Series_Temporales/PIB_Test_ts.rds")
 train_pib_log<- readRDS("Series_Temporales/Train_PIB_log")
+
+
+#Cargar series originales (Sin diferencias):
 
 
 
@@ -328,13 +333,13 @@ autoplot(prediccion_autoarima_pib) + ggtitle("Predicción PIB con AutoARIMA") + 
 # Revertir la segunda diferencia (la no estacional)
 forecast_tmp_autoarima<- diffinv(prediccion_autoarima_pib$mean, 
                               differences = 1, 
-                              xi = tail(diff(train_gdp_log, lag = 4), 1))
+                              xi = tail(diff(train_pib_log, lag = 4), 1))
 
 # Revertir la primera diferencia (la estacional con lag = 4)
 forecast_autoarima_pib_revertida <- diffinv(forecast_tmp_autoarima, 
                                         lag = 4, 
                                         differences = 1, 
-                                        xi = tail(train_gdp_log, 4))
+                                        xi = tail(train_pib_log, 4))
 
 # Quitar los valores iniciales usados en la inversión
 forecast_autoarima_pib_revertida <- forecast_autoarima_pib_revertida[-c(1:5)]
@@ -405,13 +410,13 @@ autoplot(prediccion_arima_pib) + ggtitle("Predicción PIB con ARIMA") + ylab("PI
 # Revertir la segunda diferencia (la no estacional)
 forecast_tmp <- diffinv(prediccion_arima_pib$mean, 
                         differences = 1, 
-                        xi = tail(diff(train_gdp_log, lag = 4), 1))
+                        xi = tail(diff(train_pib_log, lag = 4), 1))
 
 # Revertir la primera diferencia (la estacional con lag = 4)
 forecast_arima_pib_revertida <- diffinv(forecast_tmp, 
                                         lag = 4, 
                                         differences = 1, 
-                                        xi = tail(train_gdp_log, 4))
+                                        xi = tail(train_pib_log, 4))
 
 # Quitar los valores iniciales usados en la inversión
 forecast_arima_pib_revertida <- forecast_arima_pib_revertida[-c(1:5)]
@@ -486,13 +491,13 @@ autoplot(prediccion_sarima_pib) +
 # Revertir la segunda diferencia (no estacional)
 forecast_tmp <- diffinv(prediccion_sarima_pib$mean, 
                         differences = 1, 
-                        xi = tail(diff(train_gdp_log, lag = 4), 1))
+                        xi = tail(diff(train_pib_log, lag = 4), 1))
 
 # Revertir la primera diferencia (estacional con lag = 4)
 forecast_sarima_pib_revertida <- diffinv(forecast_tmp, 
                                          lag = 4, 
                                          differences = 1, 
-                                         xi = tail(train_gdp_log, 4))
+                                         xi = tail(train_pib_log, 4))
 
 # Quitar los valores iniciales usados en la inversión
 forecast_sarima_pib_revertida <- forecast_sarima_pib_revertida[-c(1:5)]
@@ -621,6 +626,44 @@ bic_arimax <- BIC(modelo_arimax_ipc)
 aicc_arimax <- modelo_arimax_ipc$aicc
 
 cat("AIC:", aic_arimax, "BIC:", bic_arimax, "AICc:", aicc_arimax, "\n")
+
+# ------------------------------------------------------------
+# Preparación de variables exógenas del test para ARIMAX
+# Se añaden los últimos valores del train para poder aplicar
+# las diferencias y mantener coherencia con las series del train
+# ------------------------------------------------------------
+
+# -------------------- STOCK MARKET -------------------------
+# Log-transformación + 1ª diferencia
+stock_market_test_full <- ts(c(tail(train_stock_market, 1), test_stock_market),
+                start = start(tail(train_stock_market, 1)),
+                frequency = 4)
+test_stock_market_estacionaria <- diff(stock_market_test_full)  # 1ª diferencia (ya log-transformada en el train)
+test_stock_market_estacionaria <- window(test_stock_market_estacionaria, start = c(2022,1), end = c(2022,2))
+print(test_stock_market_estacionaria)
+
+# -------------------- MONEY SUPPLY -------------------------
+# Segunda diferencia
+money_supply_test_full <- ts(c(tail(train_money_supply, 2), test_money_supply),
+              start = start(tail(train_money_supply, 2)),
+              frequency = 4)
+test_money_supply_estacionaria <- diff(diff(money_supply_test_full))  # 2ª diferencia
+test_money_supply_estacionaria <- window(test_money_supply_estacionaria, start = c(2022,1), end = c(2022,2))
+print(test_stock_market_estacionaria)
+# -------------------- UNEMPLOYMENT RATE -------------------
+# Segunda diferencia con lag=4
+unemployment_test_full <- ts(c(tail(train_unemployment, 4), test_unemployment),
+              start = start(tail(train_unemployment, 4)),
+              frequency = 4)
+test_unemployment_estacionaria <- diff(diff(unemployment_test_full, lag = 4))  # 2ª diferencia con lag 4
+test_unemployment_estacionaria <- window(test_unemployment_estacionaria, start = c(2022,1), end = c(2022,3))
+print(test_unemployment_estacionaria)
+
+# -------------------- COMBINAR TODAS LAS EXÓGENAS -----------------
+test_exogenas_estacionarias <- cbind(test_stock_market_estacionaria, test_money_supply_estacionaria, test_unemployment_estacionaria)
+colnames(test_exogenas_estacionarias) <- colnames(train_exogenas_estacionarias)
+
+
 
 
 #Prediccion:
