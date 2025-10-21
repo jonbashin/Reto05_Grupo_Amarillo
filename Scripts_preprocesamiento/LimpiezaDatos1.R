@@ -365,7 +365,6 @@ test_stock_market<- window(stock_market_ts_trimestral_sin_outliers, start=c(2021
 train_money_supply <- window(money_supply_ts_trimestral_sin_outliers,start= c(1998,1),end=c(2020,4))
 test_money_supply<- window(money_supply_ts_trimestral_sin_outliers, start=c(2021,1), end= c(2022,2))
 
-
 train_unemployment<- window(unemployment_ts_trimestral_sin_outliers,start= c(1998,1),end=c(2020,4))
 test_unemployment <- window(unemployment_ts_trimestral_sin_outliers, start=c(2021,1), end= c(2022,2))
 
