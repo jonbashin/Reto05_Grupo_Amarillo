@@ -150,3 +150,64 @@ cat("
 - El PIB per cápita también crece, indicando mejoras en el nivel de vida.
 - Las tasas de crecimiento interanual muestran una economía sólida pero sensible a choques globales.
 ")
+
+
+
+##################################################################
+##################################################################
+##################################################################
+##################################################################
+
+
+# 1️⃣ Cargar librerías si no las tienes ya
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+
+# 2️⃣ Cargar datos
+deficit <- read.csv("DATOS/Externos/FISCAL/Deficit_Fiscal.csv")
+deuda <- read.csv("DATOS/Externos/FISCAL/Deuda_PIB.csv")
+gasto <- read.csv("DATOS/Externos/FISCAL/Gasto_Publico.csv")
+
+# 3️⃣ Renombrar columnas para que sea más claro
+deficit <- deficit %>% rename(Fecha = observation_date, Deficit_PIB = Value)
+deuda <- deuda %>% rename(Fecha = observation_date, Deuda_PIB = Value)
+gasto <- gasto %>% rename(Fecha = observation_date, Gasto_Publico = Value)
+
+# Convertir fecha a Date y año
+deficit$Fecha <- as.Date(deficit$Fecha)
+deficit$Año <- year(deficit$Fecha)
+
+deuda$Fecha <- as.Date(deuda$Fecha)
+deuda$Año <- year(deuda$Fecha)
+
+gasto$Fecha <- as.Date(gasto$Fecha)
+gasto$Año <- year(gasto$Fecha)
+
+# 4️⃣ Calcular algunas estadísticas (media, max, min)
+summary_deficit <- deficit %>% summarise(Media = mean(Deficit_PIB, na.rm=TRUE),
+                                         Maximo = max(Deficit_PIB, na.rm=TRUE),
+                                         Minimo = min(Deficit_PIB, na.rm=TRUE))
+summary_deuda <- deuda %>% summarise(Media = mean(Deuda_PIB, na.rm=TRUE),
+                                     Maximo = max(Deuda_PIB, na.rm=TRUE),
+                                     Minimo = min(Deuda_PIB, na.rm=TRUE))
+summary_gasto <- gasto %>% summarise(Media = mean(Gasto_Publico, na.rm=TRUE),
+                                     Maximo = max(Gasto_Publico, na.rm=TRUE),
+                                     Minimo = min(Gasto_Publico, na.rm=TRUE))
+
+# 5️⃣ Graficar evolución de cada variable
+ggplot(deficit, aes(x=Año, y=Deficit_PIB)) +
+  geom_line(color="red", size=1) +
+  labs(title="Déficit Fiscal (% PIB)", x="Año", y="% del PIB") +
+  theme_minimal()
+
+ggplot(deuda, aes(x=Año, y=Deuda_PIB)) +
+  geom_line(color="blue", size=1) +
+  labs(title="Deuda Pública (% PIB)", x="Año", y="% del PIB") +
+  theme_minimal()
+
+ggplot(gasto, aes(x=Año, y=Gasto_Publico)) +
+  geom_line(color="green", size=1) +
+  labs(title="Gasto Público", x="Año", y="Millones AUD") +
+  theme_minimal()
