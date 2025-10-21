@@ -348,9 +348,15 @@ plot_outliers(gdp_ts_trimestral, "PIB (Trimestral)")
 
 train_ipc<-window(cpi_ts_trimestral_sin_outliers,start= c(1998,1),end=c(2020,4))
 test_ipc<-window(cpi_ts_trimestral_sin_outliers,start=c(2021,1), end= c(2022,2))
+#saveRDS(train_ipc, file = "IPC_Train_ts.rds")
+#saveRDS(test_ipc, file = "IPC_Test_ts.rds")
+
 
 train_pib<-window(gdp_ts_trimestral_sin_outliers,start= c(1998,1),end=c(2020,4))
 test_pib<-window(gdp_ts_trimestral_sin_outliers,start=c(2021,1), end= c(2022,2))
+#saveRDS(train_pib, file = "PIB_Train_ts.rds")
+#saveRDS(test_ipc, file = "PIB_Test_ts.rds")
+
 
 
 train_stock_market<- window(stock_market_ts_trimestral_sin_outliers,start= c(1998,1),end=c(2020,4))
