@@ -353,6 +353,16 @@ train_pib<-window(gdp_ts_trimestral_sin_outliers,start= c(1998,1),end=c(2020,4))
 test_pib<-window(gdp_ts_trimestral_sin_outliers,start=c(2021,1), end= c(2022,2))
 
 
+train_stock_market<- window(stock_market_ts_trimestral_sin_outliers,start= c(1998,1),end=c(2020,4))
+test_stock_market<- window(stock_market_ts_trimestral_sin_outliers, start=c(2021,1), end= c(2022,2))
+
+train_money_supply <- window(money_supply_ts_trimestral_sin_outliers,start= c(1998,1),end=c(2020,4))
+test_money_supply<- window(money_supply_ts_trimestral_sin_outliers, start=c(2021,1), end= c(2022,2))
+
+
+train_unemployment<- window(unemployment_ts_trimestral_sin_outliers,start= c(1998,1),end=c(2020,4))
+test_unemployment <- window(unemployment_ts_trimestral_sin_outliers, start=c(2021,1), end= c(2022,2))
+
 # 5. TIENEN VARIANZA?
 #======================
 
@@ -372,21 +382,21 @@ tsplot(train_ipc, col=paleta[2], lwd=2,
 
 # Stock Market
 #png("varianza_stock_market_Serie_Sin_Outliers.png", width=800, height=600)
-tsplot(stock_market_ts_trimestral_sin_outliers, col=paleta[1], lwd=2,
+tsplot(train_stock_market, col=paleta[1], lwd=2,
        main="Stock Market (Sin Outliers)", ylab="Valor", xlab="Tiempo")
 #dev.off()
 #Varianza Creciente
 
 # Money Supply
 #png("money_supply_Serie_Sin_Outliers.png", width=800, height=600)
-tsplot(money_supply_ts_trimestral_sin_outliers, col=paleta[1], lwd=2,
+tsplot(train_money_supply, col=paleta[1], lwd=2,
        main="Money Supply (Sin Outliers)", ylab="Valor", xlab="Tiempo")
 #dev.off()
 #Varianza constante
 
 # Unemployment
 #png("unemployment_Serie_Sin_Outliers.png", width=800, height=600)
-tsplot(unemployment_ts_trimestral_sin_outliers, col=paleta[1], lwd=2,
+tsplot(train_unemployment, col=paleta[1], lwd=2,
        main="Unemployment (Sin Outliers)", ylab="Valor", xlab="Tiempo")
 #dev.off()
 #Varianza Constante
@@ -397,12 +407,12 @@ tsplot(unemployment_ts_trimestral_sin_outliers, col=paleta[1], lwd=2,
 # -------------------------
 
 # Transformación log para estabilizar la varianza
-stock_market_ts_trimestral_sin_outliers_log <- log(stock_market_ts_trimestral_sin_outliers)
+train_stock_market_log <- log(train_stock_market)
 train_pib_log <- log(train_pib)
 
 # Graficar después de log-transform
 #png("varianza_estabilizada_stock_market_Serie_log.png", width=800, height=600)
-tsplot(stock_market_ts_trimestral_sin_outliers_log, col=paleta[1], lwd=2,
+tsplot(train_stock_market_log, col=paleta[1], lwd=2,
        main="Stock Market - Serie log-transformada", ylab="Log-Valor", xlab="Tiempo")
 #dev.off()
 
@@ -435,7 +445,7 @@ descomposicion_pib$trend
 random_pib <- descomposicion_pib$random
 
 # Descomposición de la serie de masa monetaria
-descomposicion_money_supply <- decompose(money_supply_ts_trimestral_sin_outliers)
+descomposicion_money_supply <- decompose(train_money_supply)
 plot(descomposicion_money_supply, col= paleta[1])
 #png("money_supply_descomposicion.png", width = 800, height = 600)
 plot(descomposicion_money_supply, col=paleta[1])
@@ -445,7 +455,7 @@ descomposicion_money_supply$trend
 random_money_supply <- descomposicion_money_supply$random
 
 # Descomposición de la serie de indice bursatil
-descomposicion_stock_market <- decompose(stock_market_ts_trimestral_sin_outliers_log)
+descomposicion_stock_market <- decompose(train_stock_market_log)
 plot(descomposicion_stock_market, col= paleta[1])
 #png("stock_market_descomposicion.png", width = 800, height = 600)
 plot(descomposicion_stock_market, col=paleta[1])
@@ -455,7 +465,7 @@ descomposicion_stock_market$trend
 random_stock_market <- descomposicion_stock_market$random
 
 # Descomposición de la serie del paro
-descomposicion_unemployment <- decompose(unemployment_ts_trimestral_sin_outliers)
+descomposicion_unemployment <- decompose(train_unemployment)
 plot(descomposicion_unemployment, col=paleta[1])
 #png("unemployment_descomposicion.png", width = 800, height = 600)
 plot(descomposicion_unemployment, col=paleta[1])
@@ -469,9 +479,9 @@ random_unemployment <- descomposicion_unemployment$random
 #Comprobar estacionalidad apra ver si meter lag o no
 nsdiffs(train_pib_log) #SI
 nsdiffs(train_ipc) #NO
-nsdiffs(money_supply_ts_trimestral_sin_outliers) #NO
-nsdiffs(stock_market_ts_trimestral_sin_outliers_log) #NO
-nsdiffs(unemployment_ts_trimestral_sin_outliers) #SI
+nsdiffs(train_money_supply) #NO
+nsdiffs(train_stock_market_log) #NO
+nsdiffs(train_unemployment) #SI
 
 # 8. ANALIZAR TENDENCIA
 #========================
@@ -515,9 +525,9 @@ exp(5.0057757 + 0.0142585*12) # Después de 1 año
 # ACF y PACF
 train_ipc <- na.omit(train_ipc)
 train_pib_log <- na.omit(train_pib_log)
-stock_market_ts_trimestral_sin_outliers_log <- na.omit(stock_market_ts_trimestral_sin_outliers_log)
-money_supply_ts_trimestral_sin_outliers <- na.omit(money_supply_ts_trimestral_sin_outliers)
-unemployment_ts_trimestral_sin_outliers <- na.omit(unemployment_ts_trimestral_sin_outliers)
+train_stock_market_log <- na.omit(train_stock_market_log)
+train_money_supply <- na.omit(train_money_supply)
+train_unemployment <- na.omit(train_unemployment)
 
 # ---- IPC ----
 #png("ACF_IPC_Sin_Diferencia.png", width=800, height=600)
@@ -530,11 +540,11 @@ ggPacf(train_ipc) + ggtitle("PACF de IPC (Sin diferenciar)") + theme_minimal()
 
 # ---- Money Supply ----
 #png("ACF_Money_Supply_Sin_Diferencia.png", width=800, height=600)
-ggAcf(money_supply_ts_trimestral_sin_outliers) + ggtitle("ACF de Money Supply (Sin diferenciar)") + theme_minimal()
+ggAcf(train_money_supply) + ggtitle("ACF de Money Supply (Sin diferenciar)") + theme_minimal()
 #dev.off()
 
 #png("PACF_Money_Supply_Sin_Diferencia.png", width=800, height=600)
-ggPacf(money_supply_ts_trimestral_sin_outliers) + ggtitle("PACF de Money Supply (Sin diferenciar)") + theme_minimal()
+ggPacf(train_money_supply) + ggtitle("PACF de Money Supply (Sin diferenciar)") + theme_minimal()
 #dev.off()
 
 # ---- GDP ----
@@ -548,20 +558,20 @@ ggPacf(train_pib_log) + ggtitle("PACF de PIB (Log, Sin diferenciar)") + theme_mi
 
 # ---- Stock Market ----
 #png("ACF_Stock_Market_Sin_Diferencia.png", width=800, height=600)
-ggAcf(stock_market_ts_trimestral_sin_outliers_log) + ggtitle("ACF de Stock Market (Log, Sin diferenciar)") + theme_minimal()
+ggAcf(train_stock_market_log) + ggtitle("ACF de Stock Market (Log, Sin diferenciar)") + theme_minimal()
 #dev.off()
 
 #png("PACF_Stock_Market_Sin_Diferencia.png", width=800, height=600)
-ggPacf(stock_market_ts_trimestral_sin_outliers_log) + ggtitle("PACF de Stock Market (Log, Sin diferenciar)") + theme_minimal()
+ggPacf(train_stock_market_log) + ggtitle("PACF de Stock Market (Log, Sin diferenciar)") + theme_minimal()
 #dev.off()
 
 # ---- Unemployment Rate ----
 #png("ACF_Unemployment_Sin_Diferencia.png", width=800, height=600)
-ggAcf(unemployment_ts_trimestral_sin_outliers) + ggtitle("ACF de Unemployment (Sin diferenciar)") + theme_minimal()
+ggAcf(train_unemployment) + ggtitle("ACF de Unemployment (Sin diferenciar)") + theme_minimal()
 #dev.off()
 
 #png("PACF_Unemployment_Sin_Diferencia.png", width=800, height=600)
-ggPacf(unemployment_ts_trimestral_sin_outliers) + ggtitle("PACF de Unemployment (Sin diferenciar)") + theme_minimal()
+ggPacf(train_unemployment) + ggtitle("PACF de Unemployment (Sin diferenciar)") + theme_minimal()
 #dev.off()
 
 # 10. SON SERIES ESTACIONARIAS?
@@ -577,11 +587,11 @@ ggPacf(unemployment_ts_trimestral_sin_outliers) + ggtitle("PACF de Unemployment 
 
 #Aplicaremos ts.display() para ver si graficamente si son estacionarias o no
 #----                 SIN DIFERENCIA
-tsdisplay(money_supply_ts_trimestral_sin_outliers)             
+tsdisplay(train_money_supply)             
 
 #----               PRIMERA DIFERENCIA
 #Aplicar diferencia
-money_supply_diff1 <- diff(money_supply_ts_trimestral_sin_outliers, differences = 1)
+money_supply_diff1 <- diff(train_money_supply, differences = 1)
 tsdisplay(money_supply_diff1)
 
 #Aplicaremos los teses para asegurarnos de que no es estacionaria al 100%
@@ -615,8 +625,8 @@ if (LBtest_money_supply_1$p.value < 0.05) {
 
 #---            PRIMERA DIFERRENCIA Y LAG                -----
 
-acf(money_supply_ts_trimestral_sin_outliers)
-money_supply_diff1_lag <- diff(money_supply_ts_trimestral_sin_outliers, lag=4)
+acf(train_money_supply)
+money_supply_diff1_lag <- diff(train_money_supply, lag=4)
 tsdisplay(money_supply_diff1_lag) 
 
 
@@ -651,7 +661,7 @@ if (LBtest_money_supply_1_lag$p.value < 0.05) {
 
 #----                 SEGUNDA DIFERENCIA
 
-money_supply_diff2 <- diff(money_supply_ts_trimestral_sin_outliers, differences = 2)
+money_supply_diff2 <- diff(train_money_supply, differences = 2)
 tsdisplay(money_supply_diff2)
 
 #Aplicar los teses
@@ -684,9 +694,9 @@ if (LBtest_money_supply_2$p.value < 0.05) {
 
 #MONEY SUPPLY--> Estacionaria con la segunda diferencia!
 #Cambiamos el nombre para que sea mas faci
-money_supply_ts_trimestral_sin_outliers_estacionaria<- money_supply_diff2
+train_money_supply_estacionaria<- money_supply_diff2
 
-#saveRDS(money_supply_ts_trimestral_sin_outliers_estacionaria, file = "Money_Supply_ts_ESTACIONARIA.rds")
+#saveRDS(train_money_supply_estacionaria, file = "Train_Money_Supply_ts_ESTACIONARIA.rds")
 
 #-----------------------------------------------------------------
 #Graficamos
@@ -694,24 +704,24 @@ money_supply_ts_trimestral_sin_outliers_estacionaria<- money_supply_diff2
 #-------    SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparacion)
 #png("Money_supply_Original_vs_Diferenciada.png", width = 900, height = 700)
 par(mfrow=c(2,1))  # dos gráficos en una ventana
-plot(money_supply_ts_trimestral_sin_outliers, type="l", main="Money Supply (log) - Serie original", ylab="Nivel (log)")
-plot(money_supply_ts_trimestral_sin_outliers_estacionaria, type="l", main="Money Supply (log) - Segunda diferencia (estacionaria)", ylab="Cambio trimestral")
+plot(train_money_supply, type="l", main="Money Supply (log) - Serie original", ylab="Nivel (log)")
+plot(train__money_supply_estacionaria, type="l", main="Money Supply (log) - Segunda diferencia (estacionaria)", ylab="Cambio trimestral")
 par(mfrow=c(1,1)) 
 #dev.off()
 
 #-------    ACF Y PACF
 #png("ACF_Money_Supply_Segunda_Diferencia.png", width=800, height=600)
-ggAcf(money_supply_ts_trimestral_sin_outliers_estacionaria) + ggtitle("ACF de Money Supply (Segunda diferencia)") + theme_minimal()
+ggAcf(train__money_supply_estacionaria) + ggtitle("ACF de Money Supply (Segunda diferencia)") + theme_minimal()
 #dev.off()
 
 #png("PACF_Money_Supply_Segunda_Diferencia.png", width=800, height=600)
-ggPacf(money_supply_ts_trimestral_sin_outliers_estacionaria) + ggtitle("PACF de Money Supply (Segunda diferencia)") + theme_minimal()
+ggPacf(train__money_supply_estacionaria) + ggtitle("PACF de Money Supply (Segunda diferencia)") + theme_minimal()
 #dev.off()  
 
 #-------   QQ-PLOT --> Sirve para evaluar si los residuos o valores transformados siguen una distribución normal.
 #png("QQ_money_supply.png", width=800, height=600)
-qqnorm(money_supply_ts_trimestral_sin_outliers_estacionaria, main="QQ-plot - Money Supply (log, diff2)")
-qqline(money_supply_ts_trimestral_sin_outliers_estacionaria, col="red")
+qqnorm(train__money_supply_estacionaria, main="QQ-plot - Money Supply (log, diff2)")
+qqline(train__money_supply_estacionaria, col="red")
 #dev.off()
 #La linea roja representa como se verian los datos si sigugieran una distribucion normal
 
@@ -722,11 +732,11 @@ qqline(money_supply_ts_trimestral_sin_outliers_estacionaria, col="red")
 #######################################################################
 
 #----                 SIN DIFERENCIA
-tsdisplay(unemployment_ts_trimestral_sin_outliers)             
+tsdisplay(train_unemployment)             
 
 #----               PRIMERA DIFERENCIA
 #Aplicar diferencia
-unemployment_diff1 <- diff(unemployment_ts_trimestral_sin_outliers, differences = 1, lag=4)
+unemployment_diff1 <- diff(train_unemployment, differences = 1, lag=4)
 tsdisplay(unemployment_diff1)
 
 #Aplicaremos los tests para comprobra
@@ -759,7 +769,7 @@ if (LBtest_unemployment_1$p.value < 0.05) {
 
 #----               SEGUNDA DIFERENCIA
 #Aplicar diferencia
-unemployment_diff2 <- diff(diff(unemployment_ts_trimestral_sin_outliers, lag=4))
+unemployment_diff2 <- diff(diff(train_unemployment, lag=4))
 tsdisplay(unemployment_diff2)
 
 #Aplicaremos los tests para comprobra
@@ -792,9 +802,9 @@ if (LBtest_unemployment_1$p.value < 0.05) {
 
 #UNEMPLOYMENT RATE--> Estacionaria con la segunda diferencia!
 #Cambiamos el nombre para que sea mas faci
-unemployment_ts_trimestral_sin_outliers_estacionaria<- unemployment_diff2
+train_unemployment_estacionaria<- unemployment_diff2
 
-#saveRDS(unemployment_ts_trimestral_sin_outliers_estacionaria, file = "Unemployment_ts_ESTACIONARIA.rds")
+#saveRDS(train_unemployment_estacionaria, file = "Train_Unemployment_ts_ESTACIONARIA.rds")
 
 
 #-----------------------------------------------------------------
@@ -804,23 +814,23 @@ unemployment_ts_trimestral_sin_outliers_estacionaria<- unemployment_diff2
 #png("Unemployment_Original_vs_Diferenciada.png", width = 900, height = 700)
 par(mfrow=c(2,1))  # dos gráficos en una ventana
 plot(unemployment_ts_trimestral_sin_outliers, type="l", main="Unemployment Rate (log) - Serie original", ylab="Nivel (log)")
-plot(unemployment_ts_trimestral_sin_outliers_estacionaria, type="l", main="Unemployment Rate (log) - Segunda diferencia (estacionaria)", ylab="Cambio trimestral")
+plot(train_unemployment_estacionaria, type="l", main="Unemployment Rate (log) - Segunda diferencia (estacionaria)", ylab="Cambio trimestral")
 par(mfrow=c(1,1))  
 #dev.off()
 
 #-------    ACF Y PACF
 #png("ACF_Unemployment_Segunda_Diferencia.png", width=800, height=600)
-ggAcf(unemployment_ts_trimestral_sin_outliers_estacionaria) + ggtitle("ACF de Unemployment (Segunda diferencia)") + theme_minimal()
+ggAcf(train_unemployment_estacionaria) + ggtitle("ACF de Unemployment (Segunda diferencia)") + theme_minimal()
 #dev.off() 
 
 #png("PACF_Unemployment_Primera_Diferencia.png", width=800, height=600)
-ggPacf(unemployment_ts_trimestral_sin_outliers_estacionaria) + ggtitle("PACF de Unemployment (Segunda diferencia)") + theme_minimal()
+ggPacf(train_unemployment_estacionaria) + ggtitle("PACF de Unemployment (Segunda diferencia)") + theme_minimal()
 #dev.off() 
 
 #-------   QQ-PLOT 
 #png("QQ_unemployment.png", width=800, height=600)
-qqnorm(unemployment_ts_trimestral_sin_outliers_estacionaria, main="QQ-plot - Unemployment Rate (log, diff1)")
-qqline(unemployment_ts_trimestral_sin_outliers_estacionaria, col="red")
+qqnorm(train_unemployment_estacionaria, main="QQ-plot - Unemployment Rate (log, diff1)")
+qqline(train_unemployment_estacionaria, col="red")
 #dev.off()
 
 
@@ -1021,11 +1031,11 @@ dev.off()
 #######################################################################
 
 #---- SIN DIFERENCIA
-tsdisplay(stock_market_ts_trimestral_sin_outliers_log)             
+tsdisplay(train_stock_market_log)             
 
 #---- PRIMERA DIFERENCIA
 # Aplicar diferencia
-stock_market_diff1 <- diff(stock_market_ts_trimestral_sin_outliers_log, differences = 1)
+stock_market_diff1 <- diff(train_stock_market_log, differences = 1)
 tsdisplay(stock_market_diff1)
 
 #---- TESTS DE ESTACIONARIEDAD
@@ -1036,7 +1046,7 @@ if(adf_test_stock_market_1$p.value < 0.05){
 } else{
   print("Stock Market - ADF (diff1): NO estacionaria")
 }
-#ESTACIONARIA diff=1
+#NO ESTACIONARIA diff=1
 
 # TEST KPSS
 kpss_test_stock_market_1 <- kpss.test(stock_market_diff1, null="Level")
@@ -1057,8 +1067,8 @@ if (LBtest_stock_market_1$p.value < 0.05) {
 #AUSENCIA DE CORRELACION
 
 # Los tests indican que la serie es estacionaria con la primera diferencia.
-stock_market_ts_trimestral_sin_outliers_log_estacionaria <- stock_market_diff1
-#saveRDS(stock_market_ts_trimestral_sin_outliers_log_estacionaria, file = "Stock_Market_ts_ESTACIONARIA.rds")
+train_stock_market_estacionaria <- stock_market_diff1
+#saveRDS(train_stock_market_estacionaria, file = "Train_Stock_Market_ts_ESTACIONARIA.rds")
 
 
 #-----------------------------------------------------------------
@@ -1067,24 +1077,24 @@ stock_market_ts_trimestral_sin_outliers_log_estacionaria <- stock_market_diff1
 #------- SERIE ORIGINAL VS SERIE EN DIFERENCIA (Comparación)
 #png("Stock_Market_Original_vs_Diferenciada.png", width = 900, height = 700)
 par(mfrow=c(2,1))
-plot(stock_market_ts_trimestral_sin_outliers_log, type="l", main="Stock Market Index (log) - Serie original", ylab="Nivel (log)")
-plot(stock_market_ts_trimestral_sin_outliers_log_estacionaria, type="l", main="Stock Market Index (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
+plot(train_stock_market_log, type="l", main="Stock Market Index (log) - Serie original", ylab="Nivel (log)")
+plot(train_stock_market_estacionaria, type="l", main="Stock Market Index (log) - Primera diferencia (estacionaria)", ylab="Cambio trimestral")
 par(mfrow=c(1,1)) 
 #dev.off()
 
 #------- ACF Y PACF
 #png("ACF_Stock_Market_Primera_Diferencia.png", width=800, height=600)
-ggAcf(stock_market_ts_trimestral_sin_outliers_log_estacionaria) + ggtitle("ACF de Stock Market (Primera diferencia)") + theme_minimal()
+ggAcf(train_stock_market_estacionaria) + ggtitle("ACF de Stock Market (Primera diferencia)") + theme_minimal()
 #dev.off() 
 
 #png("PACF_Stock_Market_Primera_Diferencia.png", width=800, height=600)
-ggPacf(stock_market_ts_trimestral_sin_outliers_log_estacionaria) + ggtitle("PACF de Stock Market (Primera diferencia)") + theme_minimal()
+ggPacf(train_stock_market_estacionaria) + ggtitle("PACF de Stock Market (Primera diferencia)") + theme_minimal()
 #dev.off()   
 
 #------- QQ-PLOT 
 #png("QQ_stock_market.png", width=800, height=600)
-qqnorm(stock_market_ts_trimestral_sin_outliers_log_estacionaria, main="QQ-plot - Stock Market (log, diff1)")
-qqline(stock_market_ts_trimestral_sin_outliers_log_estacionaria, col="red")
+qqnorm(train_stock_market_estacionaria, main="QQ-plot - Stock Market (log, diff1)")
+qqline(train_stock_market_estacionaria, col="red")
 #dev.off()
 
 
