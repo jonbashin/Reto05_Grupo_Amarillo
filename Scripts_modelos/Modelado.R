@@ -31,6 +31,13 @@ train_unemployment_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Trai
 train_gdp_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/PIB_Train_ts_ESTACIONARIA.rds")
 train_ipc_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/IPC_Train_ts_ESTACIONARIA.rds")
 train_stock_market_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Train_Stock_Market_ts_ESTACIONARIA.rds")
+train_ipc<- readRDS("Series_Temporales/IPC_Train_ts.rds")
+test_ipc<- readRDS("Series_Temporales/IPC_Test_ts.rds")
+train_pib<- readRDS("Series_Temporales/PIB_Train_ts.rds")
+test_ipc<- readRDS("Series_Temporales/PIB_Test_ts.rds")
+train_pib_log<- readRDS("Series_Temporales/Train_PIB_log")
+
+
 
 
 ############################################################
@@ -564,6 +571,72 @@ ggplot(accuracy_long_pib, aes(x = Modelo, y = Valor, fill = Modelo)) +
   theme(legend.position = "none") +
   geom_text(aes(label = round(Valor, 2)), vjust = -0.3, size = 3) +
   scale_fill_manual(values = c(paleta[1], paleta[2], paleta[3]))
+
+
+
+
+
+
+
+
+##############################################################################################
+################                      ARIMAX 
+##############################################################################################
+
+################ ---------    ipc   ---------  #########
+
+train_exogenas_estacionarias<- cbind(train_money_supply_estacionaria, train_stock_market_estacionaria, train_unemployment_estacionaria)
+train_exogenas_estacionarias<- na.omit(train_exogenas_estacionarias)
+
+#Cambairmos el train del ipc para que el start de las exgoneas y el del ipc sean iguales
+
+#El IPC empieza en 1998 segundo trimestres, y las exogenas en 1999 segundo trimestre. Hya que quitar un año
+train_ipc_estacionaria 
+start(train_ipc_estacionaria)   
+end(train_ipc_estacionaria) 
+
+train_ipc_estacionaria_ARIMAX <- window(train_ipc_estacionaria, start = c(1999, 2))   # empieza 1999 trimestre 2
+length(train_ipc_estacionaria_ARIMAX)
+start(train_ipc_estacionaria_ARIMAX)   
+end(train_ipc_estacionaria_ARIMAX) 
+
+
+# Convertir las variables exógenas a matriz si no lo están
+X <- as.matrix(train_exogenas_estacionarias)
+
+# Ajustar ARIMAX
+modelo_arimax_ipc <- auto.arima(
+  train_ipc_estacionaria_ARIMAX,
+  seasonal = FALSE,
+  d = 0,           # ya está estacionaria
+  xreg = train_exogenas_estacionarias
+)
+
+# Resumen del modelo
+summary(modelo_arimax_ipc)
+
+# Calcular criterios
+aic_arimax <- AIC(modelo_arimax_ipc)
+bic_arimax <- BIC(modelo_arimax_ipc)
+aicc_arimax <- modelo_arimax_ipc$aicc
+
+cat("AIC:", aic_arimax, "BIC:", bic_arimax, "AICc:", aicc_arimax, "\n")
+
+
+#Prediccion:
+
+
+
+
+#para ahce rla rpeddcion el test lo tengo que convertir en escenario tmabien pero de la misma maner auq ele train
+
+
+
+
+
+
+
+
 
 
 
