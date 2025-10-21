@@ -92,4 +92,11 @@ g3 <- ggplot(politica_fiscal, aes(x = Gasto_Público, y = Déficit_Fiscal)) +
   theme_minimal(base_size = 13)
 
 ggplotly(g3)
+cat(paste("\n Política Fiscal de Australia (1990-2020)
+Australia ha experimentado ciclos fiscales marcados por el contexto económico. Durante los años 90 y principios de los 2000, el país logró generar superávits fiscales y reducir significativamente su deuda pública (hasta aproximadamente el 10% del PIB). 
 
+Sin embargo, a partir de 2008, la crisis financiera global provocó un cambio estructural: la respuesta de política fiscal anticíclica generó déficits crecientes que impulsaron el aumento sostenido de la deuda pública.
+
+Los mayores déficits se registraron tras la crisis de 2008-2009 (cercanos al -4% del PIB) y especialmente durante la pandemia de 2020 (hasta -7% del PIB), reflejando expansiones fiscales masivas. Como resultado, la deuda pública alcanzó su nivel histórico más alto, aproximándose al 50% del PIB hacia finales del período analizado.
+
+Un factor clave en esta dinámica es la volatilidad de los ciclos económicos y los precios de materias primas, que afectan simultáneamente los ingresos y gastos públicos, determinando el saldo fiscal general."))
