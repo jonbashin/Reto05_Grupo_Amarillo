@@ -42,7 +42,13 @@ train_pib_log<- readRDS("Series_Temporales/Train_PIB_log")
 
 #Cargar series originales (Sin diferencias):
 
-train_pib_log <- as.numeric(train_pib_log)
+train_stock_market <- readRDS("Series_Temporales/Train_stock_market.rds")
+train_money_supply <- readRDS("Series_Temporales/Train_money_supply.rds")
+train_unemployment<- readRDS("Series_Temporales/Train_unemployment.rds")
+
+test_stock_market <- readRDS("Series_Temporales/Test_stock_market.rds")
+test_money_supply <- readRDS("Series_Temporales/Test_money_supply.rds")
+test_unemployment<- readRDS("Series_Temporales/Test_unemployment.rds")
 
 
 ############################################################
@@ -606,26 +612,21 @@ start(train_ipc_estacionaria_ARIMAX)
 end(train_ipc_estacionaria_ARIMAX) 
 
 
-# Convertir las variables exógenas a matriz si no lo están
-X <- as.matrix(train_exogenas_estacionarias)
-
-# Ajustar ARIMAX
+# Modelo ARIMAX
 modelo_arimax_ipc <- auto.arima(
   train_ipc_estacionaria_ARIMAX,
   seasonal = FALSE,
   d = 0,           # ya está estacionaria
   xreg = train_exogenas_estacionarias
 )
-
-# Resumen del modelo
 summary(modelo_arimax_ipc)
 
 # Calcular criterios
-aic_arimax <- AIC(modelo_arimax_ipc)
-bic_arimax <- BIC(modelo_arimax_ipc)
-aicc_arimax <- modelo_arimax_ipc$aicc
+aic_arimax_IPC <- AIC(modelo_arimax_ipc)
+bic_arimax_IPC <- BIC(modelo_arimax_ipc)
+aicc_arimax_IPC <- modelo_arimax_ipc$aicc
 
-cat("AIC:", aic_arimax, "BIC:", bic_arimax, "AICc:", aicc_arimax, "\n")
+cat("AIC:", aic_arimax_IPC, "BIC:", bic_arimax_IPC, "AICc:", aicc_arimax_IPC, "\n")
 
 # ------------------------------------------------------------
 # Preparación de variables exógenas del test para ARIMAX
@@ -639,7 +640,7 @@ stock_market_test_full <- ts(c(tail(train_stock_market, 1), test_stock_market),
                 start = start(tail(train_stock_market, 1)),
                 frequency = 4)
 test_stock_market_estacionaria <- diff(stock_market_test_full)  # 1ª diferencia (ya log-transformada en el train)
-test_stock_market_estacionaria <- window(test_stock_market_estacionaria, start = c(2022,1), end = c(2022,2))
+test_stock_market_estacionaria <- window(test_stock_market_estacionaria, start = start(test_stock_market), end = end(test_stock_market)) #start(test_stock_market), end ("")
 print(test_stock_market_estacionaria)
 
 # -------------------- MONEY SUPPLY -------------------------
@@ -648,21 +649,23 @@ money_supply_test_full <- ts(c(tail(train_money_supply, 2), test_money_supply),
               start = start(tail(train_money_supply, 2)),
               frequency = 4)
 test_money_supply_estacionaria <- diff(diff(money_supply_test_full))  # 2ª diferencia
-test_money_supply_estacionaria <- window(test_money_supply_estacionaria, start = c(2022,1), end = c(2022,2))
-print(test_stock_market_estacionaria)
+test_money_supply_estacionaria <- window(test_money_supply_estacionaria, start = start(test_money_supply), end = end(test_money_supply))
+print(test_money_supply_estacionaria)
 # -------------------- UNEMPLOYMENT RATE -------------------
 # Segunda diferencia con lag=4
 unemployment_test_full <- ts(c(tail(train_unemployment, 4), test_unemployment),
               start = start(tail(train_unemployment, 4)),
               frequency = 4)
 test_unemployment_estacionaria <- diff(diff(unemployment_test_full, lag = 4))  # 2ª diferencia con lag 4
-test_unemployment_estacionaria <- window(test_unemployment_estacionaria, start = c(2022,1), end = c(2022,3))
+test_unemployment_estacionaria <- window(test_unemployment_estacionaria, start = start(test_unemployment), end = end(test_unemployment))
 print(test_unemployment_estacionaria)
 
 # -------------------- COMBINAR TODAS LAS EXÓGENAS -----------------
 test_exogenas_estacionarias <- cbind(test_stock_market_estacionaria, test_money_supply_estacionaria, test_unemployment_estacionaria)
 colnames(test_exogenas_estacionarias) <- colnames(train_exogenas_estacionarias)
 
+start(test_stock_market)
+end(test_stock_market)
 
 
 
@@ -670,8 +673,8 @@ colnames(test_exogenas_estacionarias) <- colnames(train_exogenas_estacionarias)
 
 forecast_arimax <- forecast(
   modelo_arimax_ipc,
-  xreg = (test_todas_exogenas),
-  h = nrow(test_todas_exogenas)
+  xreg = test_exogenas_estacionarias,
+  h = nrow(test_exogenas_estacionarias)
 )
 
 # Ver predicciones y límites
