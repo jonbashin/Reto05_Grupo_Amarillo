@@ -247,3 +247,4 @@ p4<-ggplot(reservas, aes(x = observation_date, y = AUINTDDL)) +
 p4
 # ---- Visualización combinada 2x2 ----
 grid.arrange(p1, p2, p3, p4, ncol = 2)
+
