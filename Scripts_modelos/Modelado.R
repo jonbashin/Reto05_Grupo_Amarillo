@@ -339,7 +339,8 @@ autoplot(prediccion_autoarima_pib) + ggtitle("Predicción PIB con AutoARIMA") + 
 # Revertir la segunda diferencia (la no estacional)
 forecast_tmp_autoarima<- diffinv(prediccion_autoarima_pib$mean, 
                               differences = 1, 
-                              xi = tail(diff(train_pib_log, lag = 4), 1))
+                              lag=4,
+                              xi = tail(diff(log(train_pib),lag=4), 4))
 
 # Revertir la primera diferencia (la estacional con lag = 4)
 forecast_autoarima_pib_revertida <- diffinv(forecast_tmp_autoarima, 
@@ -348,7 +349,7 @@ forecast_autoarima_pib_revertida <- diffinv(forecast_tmp_autoarima,
                                         xi = tail(train_pib_log, 4))
 
 # Quitar los valores iniciales usados en la inversión
-forecast_autoarima_pib_revertida <- forecast_autoarima_pib_revertida[-c(1:5)]
+forecast_autoarima_pib_revertida <- forecast_autoarima_pib_revertida[-c(1:4)]
 
 # Deshacer el logaritmo
 forecast_autoarima_pib_revertida <- exp(forecast_autoarima_pib_revertida)
@@ -600,7 +601,6 @@ ggplot(accuracy_long_pib, aes(x = Modelo, y = Valor, fill = Modelo)) +
 
 train_exogenas_estacionarias<- cbind(train_money_supply_estacionaria, train_stock_market_estacionaria, train_unemployment_estacionaria)
 train_exogenas_estacionarias<- na.omit(train_exogenas_estacionarias)
-start(train_exogenas_estacionarias) == start(train_ipc_estacionaria)
 
 #Cambairmos el train del ipc para que el start de las exgoneas y el del ipc sean iguales
 
@@ -688,9 +688,9 @@ accuracy_arimax_ipc
 
 ############## ARIMAX   -   ARIMA MANUAL
 
-modelo_arima_ipc <- arima(
+modelo_arimax_arima_ipc <- arima(
   train_ipc_estacionaria_ARIMAX,
-  order = c(1,0,0),
+  order = c(1, 0, 0),
   xreg = train_exogenas_estacionarias
 )
 summary(modelo_arimax_ipc)
@@ -702,7 +702,11 @@ prediccion_arima_ipc <- forecast(
   h = length(test_ipc)
 )
 
-
+prediccion_arimax_arima_ipc <- forecast(
+  modelo_arimax_arima_ipc,
+  xreg = test_exogenas_estacionarias,
+  h = length(test_ipc)
+)
 
 
 
