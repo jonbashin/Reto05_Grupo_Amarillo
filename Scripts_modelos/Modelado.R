@@ -652,8 +652,8 @@ print(test_money_supply_estacionaria)
 
 # --------- UNEMPLOYMENT RATE ---------
 # Segunda diferencia con lag=4
-unemployment_test_full <- ts(c(tail(train_unemployment, 8), test_unemployment),
-              start = start(tail(train_unemployment, 8)),
+unemployment_test_full <- ts(c(tail(train_unemployment, 6), test_unemployment),
+              start = start(tail(train_unemployment, 6)),
               frequency = 4)
 test_unemployment_estacionaria <- diff(diff(unemployment_test_full, lag = 4))  # 2ª diferencia con lag 4
 test_unemployment_estacionaria <- window(test_unemployment_estacionaria, start = start(test_unemployment), end = end(test_unemployment))
@@ -686,18 +686,21 @@ accuracy_arimax_ipc
 
 
 
-############## ARIMA MANUAL
-# modelo_arimax_manual <- arima(
-#   train_ipc_estacionaria_ARIMAX,
-#   order = c(1,0,0),      
-#   xreg = train_exogenas_estacionarias
-# )
-# 
-# pred_manual <- forecast(modelo_arimax_manual, xreg=test_exogenas_estacionarias, h=length(test_ipc))
-# 
+############## ARIMAX   -   ARIMA MANUAL
+
+modelo_arima_ipc <- arima(
+  train_ipc_estacionaria_ARIMAX,
+  order = c(1,0,0),
+  xreg = train_exogenas_estacionarias
+)
+summary(modelo_arimax_ipc)
 
 
-
+prediccion_arima_ipc <- forecast(
+  modelo_arima_ipc,
+  xreg = test_exogenas_estacionarias,
+  h = length(test_ipc)
+)
 
 
 
