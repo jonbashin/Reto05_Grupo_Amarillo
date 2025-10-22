@@ -595,7 +595,7 @@ ggplot(accuracy_long_pib, aes(x = Modelo, y = Valor, fill = Modelo)) +
 ################                      ARIMAX 
 ##############################################################################################
 
-################ ---------    ipc   ---------  #########
+################ ---------    IPC   ---------  #########
 
 # -------------------- PREPARAR TRAIN EXÓGENAS --------------------
 
@@ -609,31 +609,32 @@ train_exogenas_estacionarias<- na.omit(train_exogenas_estacionarias)
 train_ipc_estacionaria_ARIMAX <- window(train_ipc_estacionaria, start = c(1999, 2))   # empieza 1999 trimestre 2
 
  
-# -------------------- AJUSTAR MODELO ARIMAX ----------------------
+# -------------------- AJUSTAR MODELO ARIMAX - AUTOARIMA ----------------------
 
-# Modelo ARIMAX
-modelo_arimax_ipc <- auto.arima(
+# Modelo ARIMAX- AUTOARIMA
+modelo_arimax_autoarima_ipc <- auto.arima(
   train_ipc_estacionaria_ARIMAX,
   seasonal = FALSE,
   d = 0,           # ya está estacionaria
   xreg = train_exogenas_estacionarias
 )
-summary(modelo_arimax_ipc)
+summary(modelo_arimax_autoarima_ipc)
 
 # Calcular criterios
-aic_arimax_IPC <- AIC(modelo_arimax_ipc)
-bic_arimax_IPC <- BIC(modelo_arimax_ipc)
-aicc_arimax_IPC <- modelo_arimax_ipc$aicc
+aic_arimax_autoarima_IPC <- AIC(modelo_arimax_autoarima_ipc)
+bic_arimax_autoarima_IPC <- BIC(modelo_arimax_autoarima_ipc)
+aicc_arimax_autoarima_IPC <- modelo_arimax_autoarima_ipc$aicc
 
-cat("AIC:", aic_arimax_IPC, "BIC:", bic_arimax_IPC, "AICc:", aicc_arimax_IPC, "\n")
+cat("AIC:", aic_arimax_autoarima_IPC, 
+    "BIC:", bic_arimax_autoarima_IPC, 
+    "AICc:", aicc_arimax_autoarima_IPC, "\n")
 
 
 # -------------------- PREPARAR TEST EXÓGENAS ---------------------
 
 # Preparación de variables exógenas del test para ARIMAX, Se añaden los últimos valores del train para poder aplicar las diferencias y mantener coherencia con las series del train
 
-# --------- STOCK MARKET ---------
-# Log-transformación + 1ª diferencia
+# --------- STOCK MARKET (1º diferencia) ---------
 stock_market_test_full <- ts(c(tail(train_stock_market, 1), test_stock_market),
                 start = start(tail(train_stock_market, 1)),
                 frequency = 4)
@@ -641,8 +642,7 @@ test_stock_market_estacionaria <- diff(stock_market_test_full)  # 1ª diferencia
 test_stock_market_estacionaria <- window(test_stock_market_estacionaria, start = start(test_stock_market), end = end(test_stock_market)) #start(test_stock_market), end ("")
 print(test_stock_market_estacionaria)
 
-#--------- MONEY SUPPLY ---------
-# Segunda diferencia
+#--------- MONEY SUPPLY (2º diferencia) ---------
 money_supply_test_full <- ts(c(tail(train_money_supply, 2), test_money_supply),
               start = start(tail(train_money_supply, 2)),
               frequency = 4)
@@ -650,8 +650,7 @@ test_money_supply_estacionaria <- diff(diff(money_supply_test_full))  # 2ª dife
 test_money_supply_estacionaria <- window(test_money_supply_estacionaria, start = start(test_money_supply), end = end(test_money_supply))
 print(test_money_supply_estacionaria)
 
-# --------- UNEMPLOYMENT RATE ---------
-# Segunda diferencia con lag=4
+# --------- UNEMPLOYMENT RATE (2º diferencia con lag = 4) ---------
 unemployment_test_full <- ts(c(tail(train_unemployment, 6), test_unemployment),
               start = start(tail(train_unemployment, 6)),
               frequency = 4)
@@ -664,49 +663,72 @@ test_exogenas_estacionarias <- cbind(test_stock_market_estacionaria, test_money_
 colnames(test_exogenas_estacionarias) <- colnames(train_exogenas_estacionarias)
 
 
-# -------------------- PREDICCION ARIMAX  -----------------
+# -------------------- PREDICCION ARIMAX AUTOARIMA -----------------
 
-prediccion_arimax_ipc <- forecast(
-  modelo_arimax_ipc,
+prediccion_arimax_autoarima_ipc <- forecast(
+  modelo_arimax_autoarima_ipc,
   xreg = test_exogenas_estacionarias,
   h = length(test_ipc)
 )
 
-summary(prediccion_arimax_ipc)
+summary(prediccion_arimax_autoarima_ipc)
 
 #-----------     REVERTIR
 #Revertimos el forecast (IPC TRAIN)
 # La serie original fue diferenciada 1 vez, usamos diffinv
-forecast_arimax_ipc_revertida <- diffinv(prediccion_arimax_ipc$mean, differences = 1, xi=tail(train_ipc, 1))
-forecast_arimax_ipc_revertida <- forecast_arimax_ipc_revertida[-1]
+forecast_arimax_autoarima_ipc_revertida <- diffinv(prediccion_arimax_autoarima_ipc$mean, differences = 1, xi=tail(train_ipc, 1))
+forecast_arimax_ipc_autoarima_revertida <- forecast_arimax_autoarima_ipc_revertida[-1]
 
 #-- ACCURACY
-accuracy_arimax_ipc<- forecast::accuracy(forecast_arimax_ipc_revertida, test_ipc)
-accuracy_arimax_ipc
+accuracy_arimax_autoarim_ipc<- forecast::accuracy(forecast_arimax_autoarima_ipc_revertida, test_ipc)
+accuracy_arimax_autoarim_ipc
 
 
 
-############## ARIMAX   -   ARIMA MANUAL
+# -------------------- MODELO ARIMAX MANUAL -----------------
 
 modelo_arimax_arima_ipc <- arima(
   train_ipc_estacionaria_ARIMAX,
   order = c(1, 0, 0),
   xreg = train_exogenas_estacionarias
 )
-summary(modelo_arimax_ipc)
+summary(modelo_arimax_arima_ipc)
 
-
-prediccion_arima_ipc <- forecast(
-  modelo_arima_ipc,
-  xreg = test_exogenas_estacionarias,
-  h = length(test_ipc)
-)
 
 prediccion_arimax_arima_ipc <- forecast(
   modelo_arimax_arima_ipc,
   xreg = test_exogenas_estacionarias,
   h = length(test_ipc)
 )
+
+forecast_arimax_arima_ipc_revertida <- diffinv(prediccion_arimax_arima_ipc$mean, differences = 1, xi=tail(train_ipc, 1))
+forecast_arimax_arima_ipc_revertida <- forecast_arimax_arima_ipc_revertida[-1]
+accuracy_arimax_arima_ipc<- forecast::accuracy(forecast_arimax_arima_ipc_revertida, test_ipc)
+accuracy_arimax_arima_ipc
+
+
+# -------------------- GRAFICO COMPARATIVO -----------------
+# Convertimos a ts para graficar
+forecast_auto_ts <- ts(forecast_arimax_auto_ipc_revertida, start=start(test_ipc), frequency=4)
+forecast_manual_ts <- ts(forecast_arimax_manual_ipc_revertida, start=start(test_ipc), frequency=4)
+
+ts.plot(
+  train_ipc, test_ipc, forecast_auto_ts, forecast_manual_ts,
+  col=c("black", "blue", "red", "green"),
+  lty=c(1,1,2,2),
+  lwd=c(2,2,2,2),
+  main="Predicción IPC ARIMAX vs Observado",
+  ylab="IPC"
+)
+legend(
+  "topleft",
+  legend=c("Train IPC", "Test IPC", "ARIMAX Auto", "ARIMAX Manual"),
+  col=c("black", "blue", "red", "green"),
+  lty=c(1,1,2,2),
+  lwd=c(2,2,2,2)
+)
+
+
 
 
 
