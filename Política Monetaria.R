@@ -189,7 +189,7 @@ plot_ly(cambio_interes, x = ~interes_trimestral, y = ~tipo_cambio,
 #GRÁFICOS CON DATASETS SEPARADOS
 #Tipo de cambio
 #Gráfico 1:
-c1<-ggplot(tipo_cambio, aes(x = observation_date, y = DEXUSAL)) +
+c1<-ggplot(tipo_cambio, aes(x = observation_date, y = tipo_cambio)) +
   geom_line(color = pal_laboral["berenjena"]) +
   geom_smooth(method = "loess", color = pal_laboral["verde"], se = FALSE) +
   labs(title = "Tipo de cambio AUD/USD con tendencia suavizada")
@@ -197,7 +197,7 @@ c1
 
 tipo_cambio <- tipo_cambio %>%
   arrange(observation_date) %>%
-  mutate(var_anual = (DEXUSAL / lag(DEXUSAL, 12) - 1) * 100)
+  mutate(var_anual = (tipo_cambio / lag(tipo_cambio, 12) - 1) * 100)
 
 #Gráfico de variación interanual
 c2<-ggplot(tipo_cambio, aes(x = observation_date, y = tipo_cambio)) +
