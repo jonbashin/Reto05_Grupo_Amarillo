@@ -355,7 +355,7 @@ test_ipc<-window(cpi_ts_trimestral_sin_outliers,start=c(2021,1), end= c(2022,2))
 train_pib<-window(gdp_ts_trimestral_sin_outliers,start= c(1998,1),end=c(2020,4))
 test_pib<-window(gdp_ts_trimestral_sin_outliers,start=c(2021,1), end= c(2022,2))
 #saveRDS(train_pib, file = "PIB_Train_ts.rds")
-#saveRDS(test_ipc, file = "PIB_Test_ts.rds")
+#saveRDS(test_pib, file = "PIB_Test_ts.rds")
 
 
 
