@@ -30,7 +30,7 @@ datos_limpios_AUS<- read.csv("DATOS/limpios/Datos_Limpios_Australia.csv")
 #Cargar series temporales ESTACIONARIAS:
 train_money_supply_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Train_Money_Supply_ts_ESTACIONARIA.rds")
 train_unemployment_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Train_Unemployment_ts_ESTACIONARIA.rds")
-train_gdp_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/PIB_Train_ts_ESTACIONARIA.rds")
+train_pib_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/PIB_Train_ts_ESTACIONARIA.rds")
 train_ipc_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/IPC_Train_ts_ESTACIONARIA.rds")
 train_stock_market_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Train_Stock_Market_ts_ESTACIONARIA.rds")
 train_ipc<- readRDS("Series_Temporales/IPC_Train_ts.rds")
@@ -315,7 +315,7 @@ ggplot(accuracy_long, aes(x = Modelo, y = Valor, fill = Modelo)) +
 #-----------------      AUTOARIMA ---- PIB        ----------------------
 ###########################################################################
 #-------  MODELO
-modelo_autoarima_pib <- auto.arima(train_gdp_estacionaria, seasonal = FALSE, d = 0)
+modelo_autoarima_pib <- auto.arima(train_pib_estacionaria, seasonal = FALSE, d = 0)
 summary(modelo_autoarima_pib)
 
 # Validación gráfica de residuales
@@ -333,14 +333,11 @@ if (boxtest_autoarima_pib$p.value > 0.05) {
 #-------  PREDICCIONES
 prediccion_autoarima_pib <- forecast(modelo_autoarima_pib, h = length(test_pib), level = 90)
 autoplot(prediccion_autoarima_pib) + ggtitle("Predicción PIB con AutoARIMA") + ylab("PIB") + xlab("Trimestre") + theme_minimal()
-
-
 #-----------------      REVERTIR
 # Revertir la segunda diferencia (la no estacional)
 forecast_tmp_autoarima<- diffinv(prediccion_autoarima_pib$mean, 
-                              differences = 1, 
-                              lag=4,
-                              xi = tail(diff(log(train_pib),lag=4), 4))
+                        differences = 1, 
+                        xi = tail(diff(train_pib_log, lag = 4), 1))
 
 # Revertir la primera diferencia (la estacional con lag = 4)
 forecast_autoarima_pib_revertida <- diffinv(forecast_tmp_autoarima, 
@@ -388,13 +385,13 @@ legend("topleft",
 #Elegiriremos p y q fijandolnos en la autoccorelacion:
 #p=orden autoregresivo → se decide con la PACF.--> p ≈ 1 (PACF corta rápido después de lag 1)
 #q= orden de media móvil → se decide con la ACF. -_> q ≈ 1 (ACF corta rápido después de lag 1)
-acf(train_gdp_estacionaria, main="ACF PIB diferenciada")
-pacf(train_gdp_estacionaria, main="PACF PIB diferenciada")
-tsdisplay(train_gdp_estacionaria)
+acf(train_pib_estacionaria, main="ACF PIB diferenciada")
+pacf(train_pib_estacionaria, main="PACF PIB diferenciada")
+tsdisplay(train_pib_estacionaria)
 #ROSA: con el acf y pacf me dice que (1,0,1) pero es que el accuracy me da mejor con (2,0,2)
 
 #----------   MODELOS
-modelo_arima_pib <- arima(train_gdp_estacionaria, order=c(2,0,2))  # d=0 porque ya diferenciamos
+modelo_arima_pib <- arima(train_pib_estacionaria, order=c(2,0,2))  # d=0 porque ya diferenciamos
 summary(modelo_arima_pib)
 
 # Validación de residuales
@@ -463,9 +460,9 @@ legend("topleft",
 #p=1 --> El PACF corta bruscamente despues de lag 1
 #P=0 No hay un pico grande en lag =4
 
-tsdisplay(train_gdp_estacionaria)
+tsdisplay(train_pib_estacionaria)
 #----------   MODELO
-modelo_sarima_pib<- arima(train_gdp_estacionaria,
+modelo_sarima_pib<- arima(train_pib_estacionaria,
                        order = c(2, 0, 2),
                        seasonal = list(order = c(0, 0, 0), period = 4),
                        method = "ML")
@@ -608,6 +605,55 @@ train_exogenas_estacionarias<- na.omit(train_exogenas_estacionarias)
 #Alinear fechas con train IPC
 train_ipc_estacionaria_ARIMAX <- window(train_ipc_estacionaria, start = c(1999, 2))   # empieza 1999 trimestre 2
 
+
+# -------------------- ANALIZAR CORRELACIÓN --------------------
+# Calcular correlación entre IPC diferenciado y cada exógena
+correlaciones <- cor(train_ipc_estacionaria_ARIMAX, train_exogenas_estacionarias)
+print("Correlaciones entre IPC y exógenas:")
+print(correlaciones)
+
+# Seleccionar solo exógenas con correlación mayor a un umbral (por ejemplo |0.3|)
+exogenas_significativas_IPC <- train_exogenas_estacionarias[, abs(correlaciones) > 0.3, drop=FALSE]
+print("Exógenas seleccionadas para el modelo de IPC:")
+print(colnames(exogenas_significativas_IPC))
+
+exogenas_significativas_IPC <- train_exogenas_estacionarias[, abs(correlaciones) > 0.05, drop=FALSE]
+print(colnames(exogenas_significativas_IPC))
+
+# -------------------- PREPARAR TEST EXÓGENAS ---------------------
+
+# Preparación de variables exógenas del test para ARIMAX, Se añaden los últimos valores del train para poder aplicar las diferencias y mantener coherencia con las series del train
+
+# --------- STOCK MARKET (1º diferencia) ---------
+stock_market_test_full <- ts(c(tail(train_stock_market, 1), test_stock_market),
+                             start = start(tail(train_stock_market, 1)),
+                             frequency = 4)
+test_stock_market_estacionaria <- diff(stock_market_test_full)  # 1ª diferencia (ya log-transformada en el train)
+test_stock_market_estacionaria <- window(test_stock_market_estacionaria, start = start(test_stock_market), end = end(test_stock_market)) #start(test_stock_market), end ("")
+print(test_stock_market_estacionaria)
+
+#--------- MONEY SUPPLY (2º diferencia) ---------
+money_supply_test_full <- ts(c(tail(train_money_supply, 2), test_money_supply),
+                             start = start(tail(train_money_supply, 2)),
+                             frequency = 4)
+test_money_supply_estacionaria <- diff(diff(money_supply_test_full))  # 2ª diferencia
+test_money_supply_estacionaria <- window(test_money_supply_estacionaria, start = start(test_money_supply), end = end(test_money_supply))
+print(test_money_supply_estacionaria)
+
+# --------- UNEMPLOYMENT RATE (2º diferencia con lag = 4) ---------
+unemployment_test_full <- ts(c(tail(train_unemployment, 6), test_unemployment),
+                             start = start(tail(train_unemployment, 6)),
+                             frequency = 4)
+test_unemployment_estacionaria <- diff(diff(unemployment_test_full, lag = 4))  # 2ª diferencia con lag 4
+test_unemployment_estacionaria <- window(test_unemployment_estacionaria, start = start(test_unemployment), end = end(test_unemployment))
+print(test_unemployment_estacionaria)
+
+# -------------------- COMBINAR TODAS LAS EXÓGENAS -----------------
+test_exogenas_estacionarias <- cbind(test_stock_market_estacionaria, test_money_supply_estacionaria, test_unemployment_estacionaria) #xreg
+colnames(test_exogenas_estacionarias) <- colnames(train_exogenas_estacionarias)
+
+test_exogenas_significativas_IPC <- test_exogenas_estacionarias[, colnames(exogenas_significativas_IPC), drop=FALSE]
+
  
 # -------------------- AJUSTAR MODELO ARIMAX - AUTOARIMA ----------------------
 
@@ -629,38 +675,15 @@ cat("AIC:", aic_arimax_autoarima_IPC,
     "BIC:", bic_arimax_autoarima_IPC, 
     "AICc:", aicc_arimax_autoarima_IPC, "\n")
 
+#CORRELACIONADAS
+modelo_arimax_autoarima_ipc_correlacionada <- auto.arima(
+  train_ipc_estacionaria_ARIMAX,
+  seasonal = FALSE,
+  d = 0,           # ya está estacionaria
+  xreg = exogenas_significativas_IPC
+)
+summary(modelo_arimax_autoarima_ipc_correlacionada)
 
-# -------------------- PREPARAR TEST EXÓGENAS ---------------------
-
-# Preparación de variables exógenas del test para ARIMAX, Se añaden los últimos valores del train para poder aplicar las diferencias y mantener coherencia con las series del train
-
-# --------- STOCK MARKET (1º diferencia) ---------
-stock_market_test_full <- ts(c(tail(train_stock_market, 1), test_stock_market),
-                start = start(tail(train_stock_market, 1)),
-                frequency = 4)
-test_stock_market_estacionaria <- diff(stock_market_test_full)  # 1ª diferencia (ya log-transformada en el train)
-test_stock_market_estacionaria <- window(test_stock_market_estacionaria, start = start(test_stock_market), end = end(test_stock_market)) #start(test_stock_market), end ("")
-print(test_stock_market_estacionaria)
-
-#--------- MONEY SUPPLY (2º diferencia) ---------
-money_supply_test_full <- ts(c(tail(train_money_supply, 2), test_money_supply),
-              start = start(tail(train_money_supply, 2)),
-              frequency = 4)
-test_money_supply_estacionaria <- diff(diff(money_supply_test_full))  # 2ª diferencia
-test_money_supply_estacionaria <- window(test_money_supply_estacionaria, start = start(test_money_supply), end = end(test_money_supply))
-print(test_money_supply_estacionaria)
-
-# --------- UNEMPLOYMENT RATE (2º diferencia con lag = 4) ---------
-unemployment_test_full <- ts(c(tail(train_unemployment, 6), test_unemployment),
-              start = start(tail(train_unemployment, 6)),
-              frequency = 4)
-test_unemployment_estacionaria <- diff(diff(unemployment_test_full, lag = 4))  # 2ª diferencia con lag 4
-test_unemployment_estacionaria <- window(test_unemployment_estacionaria, start = start(test_unemployment), end = end(test_unemployment))
-print(test_unemployment_estacionaria)
-
-# -------------------- COMBINAR TODAS LAS EXÓGENAS -----------------
-test_exogenas_estacionarias <- cbind(test_stock_market_estacionaria, test_money_supply_estacionaria, test_unemployment_estacionaria) #xreg
-colnames(test_exogenas_estacionarias) <- colnames(train_exogenas_estacionarias)
 
 
 # -------------------- PREDICCION ARIMAX AUTOARIMA -----------------
@@ -670,8 +693,15 @@ prediccion_arimax_autoarima_ipc <- forecast(
   xreg = test_exogenas_estacionarias,
   h = length(test_ipc)
 )
-
 summary(prediccion_arimax_autoarima_ipc)
+
+#CORRRELACIONADA
+prediccion_arimax_autoarima_ipc_correlacionada<- forecast(
+  modelo_arimax_autoarima_ipc_correlacionada,
+  xreg = test_exogenas_significativas_IPC,
+  h = length(test_ipc)
+)
+summary(prediccion_arimax_autoarima_ipc_correlacionada)
 
 #-----------     REVERTIR
 #Revertimos el forecast (IPC TRAIN)
@@ -683,22 +713,46 @@ forecast_arimax_ipc_autoarima_revertida <- forecast_arimax_autoarima_ipc_reverti
 accuracy_arimax_autoarim_ipc<- forecast::accuracy(forecast_arimax_autoarima_ipc_revertida, test_ipc)
 accuracy_arimax_autoarim_ipc
 
+#CORRELACIOANDA
+forecast_arimax_autoarima_ipc_revertida_cor <- diffinv(prediccion_arimax_autoarima_ipc_correlacionada$mean, differences = 1, xi=tail(train_ipc, 1))
+forecast_arimax_ipc_autoarima_revertida_cor <- forecast_arimax_autoarima_ipc_revertida_cor[-1]
+
+#-- ACCURACY
+accuracy_arimax_autoarim_ipc_cor<- forecast::accuracy(forecast_arimax_autoarima_ipc_revertida_cor, test_ipc)
+accuracy_arimax_autoarim_ipc_cor
+
 
 
 # -------------------- MODELO ARIMAX MANUAL -----------------
 
-modelo_arimax_arima_ipc <- arima(
+modelo_arimax_arima_ipc <- Arima(
   train_ipc_estacionaria_ARIMAX,
   order = c(1, 0, 0),
   xreg = train_exogenas_estacionarias
 )
 summary(modelo_arimax_arima_ipc)
 
+#CORRELACIONADA
+modelo_arimax_arima_ipc_correlacionada <- Arima(
+  train_ipc_estacionaria_ARIMAX,
+  order = c(1, 0, 0),
+  xreg = exogenas_significativas_IPC
+)
+summary(modelo_arimax_arima_ipc_correlacionada)
+
+
 
 prediccion_arimax_arima_ipc <- forecast(
   modelo_arimax_arima_ipc,
   xreg = test_exogenas_estacionarias,
-  h = length(test_ipc)
+  h = nrow(test_ipc)
+)
+
+#CORRELACIONADA
+prediccion_arimax_arima_ipc_correlacionada <- forecast(
+  modelo_arimax_arima_ipc_correlacionada,
+  xreg = test_exogenas_significativas_IPC,
+  h = nrow(test_ipc)
 )
 
 forecast_arimax_arima_ipc_revertida <- diffinv(prediccion_arimax_arima_ipc$mean, differences = 1, xi=tail(train_ipc, 1))
@@ -706,11 +760,18 @@ forecast_arimax_arima_ipc_revertida <- forecast_arimax_arima_ipc_revertida[-1]
 accuracy_arimax_arima_ipc<- forecast::accuracy(forecast_arimax_arima_ipc_revertida, test_ipc)
 accuracy_arimax_arima_ipc
 
+#CORRELACIONADA
+forecast_arimax_arima_ipc_revertida_cor<- diffinv(prediccion_arimax_arima_ipc_correlacionada$mean, differences = 1, xi=tail(train_ipc, 1))
+forecast_arimax_arima_ipc_revertida_cor <- forecast_arimax_arima_ipc_revertida_cor[-1]
+accuracy_arimax_arima_ipc_cor<- forecast::accuracy(forecast_arimax_arima_ipc_revertida_cor, test_ipc)
+accuracy_arimax_arima_ipc_cor
+
+
 
 # -------------------- GRAFICO COMPARATIVO -----------------
 # Convertimos a ts para graficar
-forecast_auto_ts <- ts(forecast_arimax_auto_ipc_revertida, start=start(test_ipc), frequency=4)
-forecast_manual_ts <- ts(forecast_arimax_manual_ipc_revertida, start=start(test_ipc), frequency=4)
+forecast_auto_ts <- ts(forecast_arimax_autoarima_ipc_revertida, start=start(test_ipc), frequency=4)
+forecast_manual_ts <- ts(forecast_arimax_arima_ipc_revertida, start=start(test_ipc), frequency=4)
 
 ts.plot(
   train_ipc, test_ipc, forecast_auto_ts, forecast_manual_ts,
@@ -722,7 +783,7 @@ ts.plot(
 )
 legend(
   "topleft",
-  legend=c("Train IPC", "Test IPC", "ARIMAX Auto", "ARIMAX Manual"),
+  legend=c("Train IPC", "Test IPC", "ARIMAX Autoarima", "ARIMAX Arima- Manual"),
   col=c("black", "blue", "red", "green"),
   lty=c(1,1,2,2),
   lwd=c(2,2,2,2)
@@ -731,6 +792,131 @@ legend(
 
 
 
+
+
+################################################################################################################################
+#######################################################################################################################################
+##############################################################################################
+################                      ARIMAX PIB
+##############################################################################################
+
+################ ---------    PIB   ---------  #########
+
+# -------------------- PREPARAR TRAIN EXÓGENAS --------------------
+# Alinear fechas con train PIB
+train_pib_estacionaria_ARIMAX <- window(train_pib_estacionaria, start = c(1999, 2))  # ajustar según inicio exógenas
+
+# -------------------- ANALIZAR CORRELACIÓN --------------------
+correlaciones_pib <- cor(train_pib_estacionaria_ARIMAX, train_exogenas_estacionarias)
+print("Correlaciones entre PIB y exógenas:")
+print(correlaciones_pib)
+
+# Seleccionar exógenas significativas (umbral |0.05|)
+exogenas_significativas_PIB <- train_exogenas_estacionarias[, abs(correlaciones_pib) > 0.05, drop=FALSE]
+print("Exógenas seleccionadas para el modelo de PIB:")
+print(colnames(exogenas_significativas_PIB))
+
+# -------------------- PREPARAR TEST EXÓGENAS ---------------------
+test_exogenas_significativas_PIB <- test_exogenas_estacionarias[, colnames(exogenas_significativas_PIB), drop=FALSE]
+
+# -------------------- AJUSTAR MODELO ARIMAX - AUTOARIMA ----------------------
+modelo_arimax_autoarima_pib <- auto.arima(
+  train_pib_estacionaria_ARIMAX,
+  seasonal = FALSE,
+  d = 0,  # ya está estacionaria
+  xreg = train_exogenas_estacionarias)
+
+# CORRELACIONADAS
+modelo_arimax_autoarima_pib_correlacionada <- auto.arima(
+  train_pib_estacionaria_ARIMAX,
+  seasonal = FALSE,
+  d = 0,
+  xreg = exogenas_significativas_PIB
+)
+
+# -------------------- PREDICCION ARIMAX AUTOARIMA -----------------
+prediccion_arimax_autoarima_pib <- forecast(
+  modelo_arimax_autoarima_pib,
+  xreg = test_exogenas_estacionarias,
+  h = length(test_pib)
+)
+
+# CORRELACIONADAS
+prediccion_arimax_autoarima_pib_cor <- forecast(
+  modelo_arimax_autoarima_pib_correlacionada,
+  xreg = test_exogenas_significativas_PIB,
+  h = length(test_pib)
+)
+
+# Revertir diferencias
+forecast_arimax_autoarima_pib_revertida <- diffinv(prediccion_arimax_autoarima_pib$mean, differences = 1, xi = tail(train_pib,1))[-1]
+forecast_arimax_autoarima_pib_revertida_cor <- diffinv(prediccion_arimax_autoarima_pib_cor$mean, differences = 1, xi = tail(train_pib,1))[-1]
+
+# Evaluar accuracy
+accuracy_arimax_autoarima_pib <- forecast::accuracy(forecast_arimax_autoarima_pib_revertida, test_pib)
+accuracy_arimax_autoarima_pib_cor <- forecast::accuracy(forecast_arimax_autoarima_pib_revertida_cor, test_pib)
+
+print(accuracy_arimax_autoarima_pib)
+print(accuracy_arimax_autoarima_pib_cor)
+
+# -------------------- MODELO ARIMAX MANUAL -----------------
+modelo_arimax_arima_pib <- Arima(
+  train_pib_estacionaria_ARIMAX,
+  order = c(1,0,0),
+  xreg = train_exogenas_estacionarias
+)
+
+# CORRELACIONADAS
+modelo_arimax_arima_pib_correlacionada <- Arima(
+  train_pib_estacionaria_ARIMAX,
+  order = c(1,0,0),
+  xreg = exogenas_significativas_PIB
+)
+
+# Predicciones
+prediccion_arimax_arima_pib <- forecast(
+  modelo_arimax_arima_pib,
+  xreg = test_exogenas_estacionarias,
+  h = nrow(test_pib)
+)
+
+# CORRELACIONADAS
+prediccion_arimax_arima_pib_cor <- forecast(
+  modelo_arimax_arima_pib_correlacionada,
+  xreg = test_exogenas_significativas_PIB,
+  h = nrow(test_pib)
+)
+
+# Revertir diferencias
+forecast_arimax_arima_pib_revertida <- diffinv(prediccion_arimax_arima_pib$mean, differences = 1, xi = tail(train_pib,1))[-1]
+forecast_arimax_arima_pib_revertida_cor <- diffinv(prediccion_arimax_arima_pib_cor$mean, differences = 1, xi = tail(train_pib,1))[-1]
+
+# Accuracy
+accuracy_arimax_arima_pib <- forecast::accuracy(forecast_arimax_arima_pib_revertida, test_pib)
+accuracy_arimax_arima_pib_cor <- forecast::accuracy(forecast_arimax_arima_pib_revertida_cor, test_pib)
+
+print(accuracy_arimax_arima_pib)
+print(accuracy_arimax_arima_pib_cor)
+
+# -------------------- GRAFICO COMPARATIVO -----------------
+forecast_auto_ts_pib <- ts(forecast_arimax_autoarima_pib_revertida, start=start(test_pib), frequency=4)
+forecast_manual_ts_pib <- ts(forecast_arimax_arima_pib_revertida, start=start(test_pib), frequency=4)
+
+ts.plot(
+  train_pib, test_pib, forecast_auto_ts_pib, forecast_manual_ts_pib,
+  col=c("black", "blue", "red", "green"),
+  lty=c(1,1,2,2),
+  lwd=c(2,2,2,2),
+  main="Predicción PIB ARIMAX vs Observado",
+  ylab="PIB"
+)
+legend(
+  "topleft",
+  legend=c("Train PIB", "Test PIB", "ARIMAX Autoarima", "ARIMAX Arima-Manual"),
+  col=c("black","blue","red","green"),
+  lty=c(1,1,2,2),
+  lwd=c(2,2,2,2)
+)
 
 
 
@@ -816,9 +1002,9 @@ ggplot(rmse_total_ipc, aes(x = Horizonte, y = RMSE, color = Modelo)) +
 # ⚙️ PIB
 # ======================================================
 
-rmse_auto_pib  <- calc_rmse_tscv(train_gdp_estacionaria, f_autoarima,  h = 2, nombre = "AutoARIMA")
-rmse_arima_pib <- calc_rmse_tscv(train_gdp_estacionaria, f_arima_pib,  h = 2, nombre = "ARIMA")
-rmse_sarima_pib <- calc_rmse_tscv(train_gdp_estacionaria, f_sarima,    h = 2, nombre = "SARIMA")
+rmse_auto_pib  <- calc_rmse_tscv(train_pib_estacionaria, f_autoarima,  h = 2, nombre = "AutoARIMA")
+rmse_arima_pib <- calc_rmse_tscv(train_pib_estacionaria, f_arima_pib,  h = 2, nombre = "ARIMA")
+rmse_sarima_pib <- calc_rmse_tscv(train_pib_estacionaria, f_sarima,    h = 2, nombre = "SARIMA")
 
 rmse_total_pib <- rbind(rmse_auto_pib, rmse_arima_pib, rmse_sarima_pib)
 
@@ -834,6 +1020,113 @@ ggplot(rmse_total_pib, aes(x = Horizonte, y = RMSE, color = Modelo)) +
 
 
 
+##########################################################################################################################################################################
+#################################################################################################################################################################################
+############################################            RESULTADOS           ####################################################################################################
+
+accuracy_final_ipc <- data.frame(
+  Modelo = c("AutoARIMA", "ARIMA", "SARIMA", "ARIMAX AutoARIMA", "ARIMAX ARIMA", 
+             "ARIMAX AutoARIMA Corr", "ARIMAX ARIMA Corr"),
+  ME   = c(acc_autoarima["Test set","ME"],
+           acc_arima["Test set","ME"],
+           acc_sarima_ipc["Test set","ME"],
+           accuracy_arimax_autoarim_ipc["Test set","ME"],
+           accuracy_arimax_arima_ipc["Test set","ME"],
+           accuracy_arimax_autoarim_ipc_cor["Test set","ME"],
+           accuracy_arimax_arima_ipc_cor["Test set","ME"]),
+  RMSE = c(acc_autoarima["Test set","RMSE"],
+           acc_arima["Test set","RMSE"],
+           acc_sarima_ipc["Test set","RMSE"],
+           accuracy_arimax_autoarim_ipc["Test set","RMSE"],
+           accuracy_arimax_arima_ipc["Test set","RMSE"],
+           accuracy_arimax_autoarim_ipc_cor["Test set","RMSE"],
+           accuracy_arimax_arima_ipc_cor["Test set","RMSE"]),
+  MAE  = c(acc_autoarima["Test set","MAE"],
+           acc_arima["Test set","MAE"],
+           acc_sarima_ipc["Test set","MAE"],
+           accuracy_arimax_autoarim_ipc["Test set","MAE"],
+           accuracy_arimax_arima_ipc["Test set","MAE"],
+           accuracy_arimax_autoarim_ipc_cor["Test set","MAE"],
+           accuracy_arimax_arima_ipc_cor["Test set","MAE"]),
+  MAPE = c(acc_autoarima["Test set","MAPE"],
+           acc_arima["Test set","MAPE"],
+           acc_sarima_ipc["Test set","MAPE"],
+           accuracy_arimax_autoarim_ipc["Test set","MAPE"],
+           accuracy_arimax_arima_ipc["Test set","MAPE"],
+           accuracy_arimax_autoarim_ipc_cor["Test set","MAPE"],
+           accuracy_arimax_arima_ipc_cor["Test set","MAPE"]))
+accuracy_final_ipc <- accuracy_final_ipc[order(accuracy_final_ipc$RMSE), ]
+accuracy_final_ipc
+
+
+accuracy_final_pib <- data.frame(
+  Modelo = c("AutoARIMA", "ARIMA", "SARIMA", "ARIMAX AutoARIMA", "ARIMAX ARIMA", 
+             "ARIMAX AutoARIMA Corr", "ARIMAX ARIMA Corr"),
+  ME   = c(acc_autoarima_pib["Test set","ME"],
+           acc_arima_pib["Test set","ME"],
+           acc_sarima_pib["Test set","ME"],
+           accuracy_arimax_autoarima_pib["Test set","ME"],
+           accuracy_arimax_arima_pib["Test set","ME"],
+           accuracy_arimax_autoarima_pib_cor["Test set","ME"],
+           accuracy_arimax_arima_pib_cor["Test set","ME"]),
+  RMSE = c(acc_autoarima_pib["Test set","RMSE"],
+           acc_arima_pib["Test set","RMSE"],
+           acc_sarima_pib["Test set","RMSE"],
+           accuracy_arimax_autoarima_pib["Test set","RMSE"],
+           accuracy_arimax_arima_pib["Test set","RMSE"],
+           accuracy_arimax_autoarima_pib_cor["Test set","RMSE"],
+           accuracy_arimax_arima_pib_cor["Test set","RMSE"]),
+  MAE  = c(acc_autoarima_pib["Test set","MAE"],
+           acc_arima_pib["Test set","MAE"],
+           acc_sarima_pib["Test set","MAE"],
+           accuracy_arimax_autoarima_pib["Test set","MAE"],
+           accuracy_arimax_arima_pib["Test set","MAE"],
+           accuracy_arimax_autoarima_pib_cor["Test set","MAE"],
+           accuracy_arimax_arima_pib_cor["Test set","MAE"]),
+  MAPE = c(acc_autoarima_pib["Test set","MAPE"],
+           acc_arima_pib["Test set","MAPE"],
+           acc_sarima_pib["Test set","MAPE"],
+           accuracy_arimax_autoarima_pib["Test set","MAPE"],
+           accuracy_arimax_arima_pib["Test set","MAPE"],
+           accuracy_arimax_autoarima_pib_cor["Test set","MAPE"],
+           accuracy_arimax_arima_pib_cor["Test set","MAPE"]))
+accuracy_final_pib <- accuracy_final_pib[order(accuracy_final_pib$RMSE), ]
+accuracy_final_pib
+
+
+
+########------------------------ GRAFICOS ACCURACY
+
+library(ggplot2)
+library(tidyr)
+
+# IPC
+ipc_long <- pivot_longer(accuracy_final_ipc, cols = c(ME, RMSE, MAE, MAPE),
+                         names_to = "Métrica", values_to = "Valor")
+
+ggplot(ipc_long, aes(x=Modelo, y=Valor, fill=Modelo)) +
+  geom_bar(stat="identity", position="dodge") +
+  facet_wrap(~Métrica, scales="free_y") +
+  theme_minimal() +
+  geom_text(aes(label=round(Valor,2)), vjust=-0.3) +
+  ggtitle("Comparación de Accuracy: Modelos IPC") +
+  theme(legend.position="none") +
+  ylab("Valor") +
+  xlab("Modelo")
+
+# PIB
+pib_long <- pivot_longer(accuracy_final_pib, cols = c(ME, RMSE, MAE, MAPE),
+                         names_to = "Métrica", values_to = "Valor")
+
+ggplot(pib_long, aes(x=Modelo, y=Valor, fill=Modelo)) +
+  geom_bar(stat="identity", position="dodge") +
+  facet_wrap(~Métrica, scales="free_y") +
+  theme_minimal() +
+  geom_text(aes(label=round(Valor,2)), vjust=-0.3) +
+  ggtitle("Comparación de Accuracy: Modelos PIB") +
+  theme(legend.position="none") +
+  ylab("Valor") +
+  xlab("Modelo")
 
 
 
@@ -843,7 +1136,6 @@ ggplot(rmse_total_pib, aes(x = Horizonte, y = RMSE, color = Modelo)) +
 
 
 
-#MIRAR LOS AIC, AICC DE CADA MODELOS,
 
 
 
@@ -851,73 +1143,91 @@ ggplot(rmse_total_pib, aes(x = Horizonte, y = RMSE, color = Modelo)) +
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-############################################################
-# 5. GRAFICOS DE PREDICCIONES vs OBSERVADO
-############################################################
-
-extraer_valores <- function(pred){
-  if("forecast" %in% class(pred)){
-    return(as.numeric(pred$mean))
-  } else {
-    return(as.numeric(pred))  # ya es vector numérico
-  }
-}
-
-graficar_predicciones <- function(test, pred_list, nombres, titulo){
-  df <- data.frame(Tiempo = time(test), Observado = as.numeric(test))
-  
-  for(i in 1:length(pred_list)){
-    df[[nombres[i]]] <- extraer_valores(pred_list[[i]])
-  }
-  
-  library(tidyr)
-  df_long <- pivot_longer(df, cols = -Tiempo, names_to = "Modelo", values_to = "Valor")
-  
-  ggplot(df_long, aes(x = Tiempo, y = Valor, color = Modelo)) +
-    geom_line(size=1) +
-    scale_color_manual(values = c("Observado"="black",
-                                  "AutoARIMA"="blue",
-                                  "Naive"="green",
-                                  "SNaive"="red",
-                                  "Mean"="purple",
-                                  "MA"="orange",
-                                  "AR"="brown",
-                                  "ARMA"="pink")) +
-    ggtitle(titulo) +
-    ylab("Valor") +
-    xlab("Trimestre") +
-    theme_minimal()
-}
-# Ejemplo IPC
-graphics.off()  # cierra todos los dispositivos gráficos
-
-graficar_predicciones(test_ipc, 
-                      list(prediccion_autoarima_ipc, prediccion_naive_ipc, prediccion_snaive_ipc),
-                      c("AutoARIMA", "Naive", "SNaive"),
-                      "Predicciones vs Observado - IPC")
-
-# Ejemplo PIB
-graficar_predicciones(test_pib, 
-                      list(prediccion_autoarima_pib, prediccion_naive_pib, prediccion_snaive_pib),
-                      c("AutoARIMA", "Naive", "SNaive"),
-                      "Predicciones vs Observado - PIB")
-
-
-
-
-
-
+# 
+# library(ggplot2)
+# library(tidyr)
+# 
+# # Función para extraer valores de predicción
+# extraer_valores <- function(pred){
+#   if("forecast" %in% class(pred)){
+#     return(as.numeric(pred$mean))
+#   } else {
+#     return(as.numeric(pred))
+#   }
+# }
+# 
+# # Función para graficar todas las predicciones vs observado
+# graficar_predicciones_todos <- function(test, pred_list, nombres_modelos, titulo){
+#   df <- data.frame(Tiempo = time(test), Observado = as.numeric(test))
+#   
+#   # Añadir columnas de predicciones
+#   for(i in 1:length(pred_list)){
+#     df[[nombres_modelos[i]]] <- extraer_valores(pred_list[[i]])
+#   }
+#   
+#   # Convertir a formato long
+#   df_long <- pivot_longer(df, cols = -Tiempo, names_to = "Modelo", values_to = "Valor")
+#   
+#   # Asignar colores automáticos
+#   colores <- c("Observado" = "black")
+#   paleta <- c("#c88fb2", "#8db41c", "#93044e", "#D1006F", "#F5F0E6", "#4D4D4D", "#FFA500", "#00CED1", "#FF69B4", "#A52A2A")
+#   for(i in seq_along(nombres_modelos)){
+#     colores[nombres_modelos[i]] <- paleta[i]
+#   }
+#   
+#   # Gráfico
+#   ggplot(df_long, aes(x = Tiempo, y = Valor, color = Modelo)) +
+#     geom_line(size=1) +
+#     scale_color_manual(values = colores) +
+#     ggtitle(titulo) +
+#     ylab("Valor") +
+#     xlab("Trimestre") +
+#     theme_minimal() +
+#     theme(legend.title = element_blank())
+# }
+# 
+# # -------------------
+# # IPC
+# # -------------------
+# predicciones_ipc <- list(
+#   forecast_autoarima_ipc_revertida, 
+#   forecast_arima_ipc_revertida, 
+#   forecast_sarima_ipc_revertida,
+#   forecast_arimax_ipc_autoarima_revertida,
+#   forecast_arimax_ipc_autoarima_revertida_cor,
+#   forecast_arimax_arima_ipc_revertida,
+#   forecast_arimax_arima_ipc_revertida_cor
+# )
+# 
+# nombres_ipc <- c(
+#   "AutoARIMA", "ARIMA", "SARIMA",
+#   "ARIMAX Auto", "ARIMAX Auto Corr", 
+#   "ARIMAX Manual", "ARIMAX Manual Corr"
+# )
+# 
+# graficar_predicciones_todos(test_ipc, predicciones_ipc, nombres_ipc, "Predicciones vs Observado - IPC")
+# 
+# # -------------------
+# # PIB
+# # -------------------
+# predicciones_pib <- list(
+#   forecast_autoarima_pib_revertida,
+#   forecast_arima_pib_revertida,
+#   forecast_sarima_pib_revertida,
+#   forecast_arimax_autoarima_pib_revertida,
+#   forecast_arimax_autoarima_pib_revertida_cor,
+#   forecast_arimax_arima_pib_revertida,
+#   forecast_arimax_arima_pib_revertida_cor
+# )
+# 
+# nombres_pib <- c(
+#   "AutoARIMA", "ARIMA", "SARIMA",
+#   "ARIMAX Auto", "ARIMAX Auto Corr", 
+#   "ARIMAX Manual", "ARIMAX Manual Corr"
+# )
+# 
+# graficar_predicciones_todos(test_pib, predicciones_pib, nombres_pib, "Predicciones vs Observado - PIB")
+# 
 
 
 # Después de evaluar qué modelo funciona mejor:
