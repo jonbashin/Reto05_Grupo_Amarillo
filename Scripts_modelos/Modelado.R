@@ -884,14 +884,50 @@ print(colnames(exogenas_significativas_PIB))
 # -------------------- PREPARAR TEST EXÓGENAS ---------------------
 test_exogenas_significativas_PIB <- test_exogenas_estacionarias[, colnames(exogenas_significativas_PIB), drop=FALSE]
 
-# -------------------- AJUSTAR MODELO ARIMAX - AUTOARIMA ----------------------
+##############################################################################################
+################ ---------    PIB ARIMAX CORREGIDO (TODAS EXÓGENAS)   ---------  #########
+
+# -------------------- LOG + DIFERENCIAS --------------------
+train_pib_log <- log(train_pib)  # log para estabilizar varianza
+# Primera diferencia
+train_pib_diff1 <- diff(train_pib_log, differences = 1)
+# Segunda diferencia con lag estacional (4)
+train_pib_estacionaria_ARIMAX <- diff(train_pib_diff1, lag = 4)
+
+# -------------------- AJUSTAR MODELO ARIMAX ----------------------
 modelo_arimax_autoarima_pib <- auto.arima(
   train_pib_estacionaria_ARIMAX,
   seasonal = FALSE,
-  d = 0,  # ya está estacionaria
-  xreg = train_exogenas_estacionarias)
+  d = 0,  # ya estacionaria
+  xreg = train_exogenas_estacionarias
+)
+
+# -------------------- PREDICCIÓN -----------------
+prediccion_arimax <- forecast(
+  modelo_arimax_autoarima_pib,
+  xreg = test_exogenas_estacionarias,
+  h = nrow(test_exogenas_estacionarias)
+)
+
+# -------------------- REVERTIR DIFERENCIAS -----------------
+# Revertir lag estacional (segunda diferencia)
+revert_lag <- diffinv(prediccion_arimax$mean, differences = 1, lag = 4, xi = tail(train_pib_diff1, 4))
+
+# Revertir primera diferencia
+revert_diff1 <- diffinv(revert_lag, differences = 1, xi = tail(train_pib_log, 1))
+
+# Revertir log
+forecast_revertido <- exp(revert_diff1)
+
+# -------------------- EVALUAR ACCURACY -----------------
+accuracy_arimax <- forecast::accuracy(forecast_revertido, test_pib)
+print(accuracy_arimax)
+
+
+#####---- CORRELACIONADAS 
 
 # CORRELACIONADAS
+# ------------ MODELO
 modelo_arimax_autoarima_pib_correlacionada <- auto.arima(
   train_pib_estacionaria_ARIMAX,
   seasonal = FALSE,
@@ -899,15 +935,7 @@ modelo_arimax_autoarima_pib_correlacionada <- auto.arima(
   xreg = exogenas_significativas_PIB
 )
 
-# -------------------- PREDICCION ARIMAX AUTOARIMA -----------------
-prediccion_arimax_autoarima_pib <- forecast(
-  modelo_arimax_autoarima_pib,
-  xreg = test_exogenas_estacionarias,
-  h = length(test_pib)
-)
-prediccion_arimax_autoarima_ipc
-
-# CORRELACIONADAS
+# ------------ PREDICCION
 prediccion_arimax_autoarima_pib_cor <- forecast(
   modelo_arimax_autoarima_pib_correlacionada,
   xreg = test_exogenas_significativas_PIB,
@@ -915,34 +943,22 @@ prediccion_arimax_autoarima_pib_cor <- forecast(
 )
 
 #---   Revertir diferencias
-forecast_arimax_autoarima_pib_revertida <- diffinv(prediccion_arimax_autoarima_pib$mean, differences = 1, xi = tail(train_pib,1))[-1]
-forecast_arimax_autoarima_pib_revertida_cor <- diffinv(prediccion_arimax_autoarima_pib_cor$mean, differences = 1, xi = tail(train_pib,1))[-1]
-# Predicciones ARIMAX (serie diferenciada)
+# Revertir lag estacional (segunda diferencia)
+revert_lag <- diffinv(prediccion_arimax_autoarima_pib_cor$mean, differences = 1, lag = 4, xi = tail(train_pib_diff1, 4))
 
-prediccion_arimax_autoarima_pib <- forecast(
-  modelo_arimax_autoarima_pib,
-  xreg = test_exogenas_estacionarias,
-  h = length(test_pib)
-)
+# Revertir primera diferencia
+revert_diff1 <- diffinv(revert_lag, differences = 1, xi = tail(train_pib_log, 1))
 
-# Revertir la primera diferencia
-forecast_arimax_tmp <- diffinv(
-  prediccion_arimax_autoarima_pib$mean,
-  differences = 1,
-  xi = tail(train_pib, 1)  # último valor del train original
-)
+# Revertir log
+forecast_revertido_cor <- exp(revert_diff1)
 
-forecast_arimax_autoarima_pib_revertida <- forecast_arimax_tmp[-1]
 
-# Evaluar accuracy
-accuracy_arimax_autoarima_pib <- forecast::accuracy(forecast_arimax_autoarima_pib_revertida, test_pib)
-accuracy_arimax_autoarima_pib_cor <- forecast::accuracy(forecast_arimax_autoarima_pib_revertida_cor, test_pib)
+# -------------------- EVALUAR ACCURACY -----------------
+accuracy_arimax_cor <- forecast::accuracy(forecast_revertido_cor, test_pib)
+print(accuracy_arimax_cor)
 
-print(accuracy_arimax_autoarima_pib)
-print(accuracy_arimax_autoarima_pib_cor)
 
-forecast_auto_ts_pib <- ts(forecast_arimax_autoarima_pib_revertida, start=start(test_pib), frequency=4)
-forecast_manual_ts_pib <- ts(forecast_arimax_arima_pib_revertida, start=start(test_pib), frequency=4)
+
 
 ts.plot(
   train_pib, test_pib, forecast_auto_ts_pib, forecast_manual_ts_pib,
@@ -961,6 +977,14 @@ legend(
 )
 
 
+
+##############################################################################################
+################ ---------    PIB ARIMAX MANUAL TODAS EXÓGENAS   ---------  #########
+
+# -------------------- LOG + DIFERENCIAS --------------------
+train_pib_log <- log(train_pib)
+train_pib_diff1 <- diff(train_pib_log, differences = 1)
+train_pib_estacionaria_ARIMAX <- diff(train_pib_diff1, lag = 4)  # diferencia estacional
 
 # -------------------- MODELO ARIMAX MANUAL -----------------
 modelo_arimax_arima_pib <- Arima(
@@ -969,57 +993,50 @@ modelo_arimax_arima_pib <- Arima(
   xreg = train_exogenas_estacionarias
 )
 
-# CORRELACIONADAS
-modelo_arimax_arima_pib_correlacionada <- Arima(
+# -------------------- PREDICCIÓN -----------------
+prediccion_arimax_arima_pib <- forecast(
+  modelo_arimax_arima_pib,
+  xreg = test_exogenas_estacionarias,
+  h = nrow(test_exogenas_estacionarias)
+)
+
+# -------------------- REVERTIR DIFERENCIAS -----------------
+# Revertir lag estacional
+revert_lag <- diffinv(prediccion_arimax_arima_pib$mean, differences = 1, lag = 4, xi = tail(train_pib_diff1, 4))
+# Revertir primera diferencia
+revert_diff1 <- diffinv(revert_lag, differences = 1, xi = tail(train_pib_log, 1))
+# Revertir log
+forecast_arimax_arima_pib_revertida <- exp(revert_diff1)
+
+# -------------------- ACCURACY -----------------
+accuracy_arimax_arima_pib <- forecast::accuracy(forecast_arimax_arima_pib_revertida, test_pib)
+print(accuracy_arimax_arima_pib)
+
+
+########## CORRELACIONADAS
+
+modelo_arimax_arima_pib_cor <- Arima(
   train_pib_estacionaria_ARIMAX,
   order = c(1,0,0),
   xreg = exogenas_significativas_PIB
 )
 
-# Predicciones
-prediccion_arimax_arima_pib <- forecast(
-  modelo_arimax_arima_pib,
-  xreg = test_exogenas_estacionarias,
-  h = nrow(test_pib)
-)
-
-# CORRELACIONADAS
+# Predicción
 prediccion_arimax_arima_pib_cor <- forecast(
-  modelo_arimax_arima_pib_correlacionada,
+  modelo_arimax_arima_pib_cor,
   xreg = test_exogenas_significativas_PIB,
-  h = nrow(test_pib)
+  h = nrow(test_exogenas_significativas_PIB)
 )
 
 # Revertir diferencias
-forecast_arimax_arima_pib_revertida <- diffinv(prediccion_arimax_arima_pib$mean, differences = 1, xi = tail(train_pib,1))[-1]
-forecast_arimax_arima_pib_revertida_cor <- diffinv(prediccion_arimax_arima_pib_cor$mean, differences = 1, xi = tail(train_pib,1))[-1]
+revert_lag_cor <- diffinv(prediccion_arimax_arima_pib_cor$mean, differences = 1, lag = 4, xi = tail(train_pib_diff1, 4))
+revert_diff1_cor <- diffinv(revert_lag_cor, differences = 1, xi = tail(train_pib_log, 1))
+forecast_arimax_arima_pib_revertida_cor <- exp(revert_diff1_cor)
 
 # Accuracy
-accuracy_arimax_arima_pib <- forecast::accuracy(forecast_arimax_arima_pib_revertida, test_pib)
 accuracy_arimax_arima_pib_cor <- forecast::accuracy(forecast_arimax_arima_pib_revertida_cor, test_pib)
-
-print(accuracy_arimax_arima_pib)
 print(accuracy_arimax_arima_pib_cor)
 
-# -------------------- GRAFICO COMPARATIVO -----------------
-forecast_auto_ts_pib <- ts(forecast_arimax_autoarima_pib_revertida, start=start(test_pib), frequency=4)
-forecast_manual_ts_pib <- ts(forecast_arimax_arima_pib_revertida, start=start(test_pib), frequency=4)
-
-ts.plot(
-  train_pib, test_pib, forecast_auto_ts_pib, forecast_manual_ts_pib,
-  col=c("black", "blue", "red", "green"),
-  lty=c(1,1,2,2),
-  lwd=c(2,2,2,2),
-  main="Predicción PIB ARIMAX vs Observado",
-  ylab="PIB"
-)
-legend(
-  "topleft",
-  legend=c("Train PIB", "Test PIB", "ARIMAX Autoarima", "ARIMAX Arima-Manual"),
-  col=c("black","blue","red","green"),
-  lty=c(1,1,2,2),
-  lwd=c(2,2,2,2)
-)
 
 
 
