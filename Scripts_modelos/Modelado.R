@@ -356,23 +356,27 @@ forecast_autoarima_pib_revertida <- exp(forecast_autoarima_pib_revertida)
 acc_autoarima_pib <- forecast::accuracy(forecast_autoarima_pib_revertida, test_pib)
 acc_autoarima_pib
 
-#-------  GRAFICAR (Train vs Test vs Prediccion)
-# Crear la serie temporal de predicciones con la frecuencia adecuada
+
+#------------------ Graficar Train vs Test vs Predicción ------------------
+  
 forecast_autoarima_pib_revertida_ts <- ts(
   forecast_autoarima_pib_revertida,
-  start = c(2021, 1),   # <-- ajusta al inicio real de tu test
-  frequency = 4)       # trimestral
+  start = time(test_pib)[1],  # se alinea al inicio del test
+  frequency = 4               # trimestral
+)
 
-ts.plot(train_pib,test_pib,forecast_autoarima_pib_revertida_ts,
-        col = c("black", "blue", "red"),
-        lty = c(1, 1, 2),
-        lwd = c(2, 2, 3),  # ← controla el grosor de cada línea
-        main = "Predicción PIB AUTOARIMA vs Observado",
+# Graficar
+ts.plot(train_pib, test_pib, forecast_autoarima_pib_revertida_ts,
+        col = c("black", "blue", "red"),  # colores de las líneas
+        lty = c(1, 1, 1),                 # ← todas líneas continuas
+        lwd = c(2, 2, 3),                 # grosor
+        main = "Predicción PIB (AutoARIMA) vs Observado",
         ylab = "PIB")
+
 legend("topleft",
        legend = c("Entrenamiento", "Observado (Test)", "Predicción"),
        col = c("black", "blue", "red"),
-       lty = c(1, 1, 2),
+       lty = c(1, 1, 1),   # ← todas líneas continuas
        lwd = c(2, 2, 3))
 
 
@@ -625,7 +629,8 @@ print(colnames(exogenas_significativas_IPC))
 # Preparación de variables exógenas del test para ARIMAX, Se añaden los últimos valores del train para poder aplicar las diferencias y mantener coherencia con las series del train
 
 # --------- STOCK MARKET (1º diferencia) ---------
-stock_market_test_full <- ts(c(tail(train_stock_market, 1), test_stock_market),
+test_stock_market_log <- log(test_stock_market)
+stock_market_test_full <- ts(c(tail(train_stock_market, 1), test_stock_market_log),
                              start = start(tail(train_stock_market, 1)),
                              frequency = 4)
 test_stock_market_estacionaria <- diff(stock_market_test_full)  # 1ª diferencia (ya log-transformada en el train)
@@ -721,6 +726,27 @@ forecast_arimax_ipc_autoarima_revertida_cor <- forecast_arimax_autoarima_ipc_rev
 accuracy_arimax_autoarim_ipc_cor<- forecast::accuracy(forecast_arimax_autoarima_ipc_revertida_cor, test_ipc)
 accuracy_arimax_autoarim_ipc_cor
 
+################# GRAFICO
+# Crear serie temporal para la predicción (alineada con test)
+forecast_arimax_autoarima_ipc_revertida_ts <- ts(
+  forecast_arimax_autoarima_ipc_revertida,
+  start = time(test_ipc)[1],  # mismo inicio que test
+  frequency = 4               # trimestral
+)
+
+# Graficar train, test y predicción (NO correlacionada)
+ts.plot(train_ipc, test_ipc, forecast_arimax_autoarima_ipc_revertida_ts,
+        col = c("black", "blue", "red"),
+        lty = c(1, 1, 1),   # todas líneas continuas
+        lwd = c(2, 2, 3),
+        main = "Predicción IPC (ARIMAX AUTOARIMA sin correlacionadas)",
+        ylab = "IPC")
+
+legend("topleft",
+       legend = c("Entrenamiento", "Observado (Test)", "Predicción ARIMAX"),
+       col = c("black", "blue", "red"),
+       lty = c(1, 1, 1),
+       lwd = c(2, 2, 3))
 
 
 # -------------------- MODELO ARIMAX MANUAL -----------------
@@ -848,9 +874,25 @@ prediccion_arimax_autoarima_pib_cor <- forecast(
   h = length(test_pib)
 )
 
-# Revertir diferencias
-forecast_arimax_autoarima_pib_revertida <- diffinv(prediccion_arimax_autoarima_pib$mean, differences = 1, xi = tail(train_pib,1))[-1]
+#---   Revertir diferencias
+#forecast_arimax_autoarima_pib_revertida <- diffinv(prediccion_arimax_autoarima_pib$mean, differences = 1, xi = tail(train_pib,1))[-1]
 forecast_arimax_autoarima_pib_revertida_cor <- diffinv(prediccion_arimax_autoarima_pib_cor$mean, differences = 1, xi = tail(train_pib,1))[-1]
+# Predicciones ARIMAX (serie diferenciada)
+
+prediccion_arimax_autoarima_pib <- forecast(
+  modelo_arimax_autoarima_pib,
+  xreg = test_exogenas_estacionarias,
+  h = length(test_pib)
+)
+
+# Revertir la primera diferencia
+forecast_arimax_tmp <- diffinv(
+  prediccion_arimax_autoarima_pib$mean,
+  differences = 1,
+  xi = tail(train_pib, 1)  # último valor del train original
+)
+
+forecast_arimax_autoarima_pib_revertida <- forecast_arimax_tmp[-1]
 
 # Evaluar accuracy
 accuracy_arimax_autoarima_pib <- forecast::accuracy(forecast_arimax_autoarima_pib_revertida, test_pib)
@@ -858,6 +900,27 @@ accuracy_arimax_autoarima_pib_cor <- forecast::accuracy(forecast_arimax_autoarim
 
 print(accuracy_arimax_autoarima_pib)
 print(accuracy_arimax_autoarima_pib_cor)
+
+forecast_auto_ts_pib <- ts(forecast_arimax_autoarima_pib_revertida, start=start(test_pib), frequency=4)
+forecast_manual_ts_pib <- ts(forecast_arimax_arima_pib_revertida, start=start(test_pib), frequency=4)
+
+ts.plot(
+  train_pib, test_pib, forecast_auto_ts_pib, forecast_manual_ts_pib,
+  col=c("black", "blue", "red", "green"),
+  lty=c(1,1,2,2),
+  lwd=c(2,2,2,2),
+  main="Predicción PIB ARIMAX vs Observado",
+  ylab="PIB"
+)
+legend(
+  "topleft",
+  legend=c("Train PIB", "Test PIB", "ARIMAX Autoarima", "ARIMAX Arima-Manual"),
+  col=c("black","blue","red","green"),
+  lty=c(1,1,2,2),
+  lwd=c(2,2,2,2)
+)
+
+
 
 # -------------------- MODELO ARIMAX MANUAL -----------------
 modelo_arimax_arima_pib <- Arima(
@@ -1134,6 +1197,20 @@ ggplot(pib_long, aes(x=Modelo, y=Valor, fill=Modelo)) +
 
 
 
+#######################################################################################################################################################################
+####################################            PREDICCION FINAL             ######################################################################
+
+train_ipc_estacionaria
+
+
+modelo_autoarima_ipc <- auto.arima(train_ipc_estacionaria, seasonal=FALSE, d=0) #D=0 para que no vuelva a diferenciar
+prediccion_autoarima_ipc <- forecast(modelo_autoarima_ipc, h=8, level=90)
+prediccion_autoarima_ipc$mean
+
+forecast_autoarima_ipc_revertida <- diffinv(prediccion_autoarima_ipc$mean,
+                                            differences = 1,
+                                            xi = tail(train_ipc, 1))
+forecast_autoarima_ipc_revertida<- forecast_autoarima_ipc_revertida[-1]
 
 
 
