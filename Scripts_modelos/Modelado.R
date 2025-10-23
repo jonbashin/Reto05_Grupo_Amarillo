@@ -600,7 +600,7 @@ ggplot(accuracy_long_pib, aes(x = Modelo, y = Valor, fill = Modelo)) +
 
 # -------------------- PREPARAR TRAIN EXÓGENAS --------------------
 
-train_exogenas_estacionarias<- cbind(train_money_supply_estacionaria, train_stock_market_estacionaria, train_unemployment_estacionaria)
+train_exogenas_estacionarias<- cbind(train_stock_market_estacionaria, train_money_supply_estacionaria, train_unemployment_estacionaria)
 train_exogenas_estacionarias<- na.omit(train_exogenas_estacionarias)
 
 #Cambairmos el train del ipc para que el start de las exgoneas y el del ipc sean iguales
@@ -626,50 +626,88 @@ print(colnames(exogenas_significativas_IPC))
 
 # -------------------- PREPARAR TEST EXÓGENAS ---------------------
 
-# Preparación de variables exógenas del test para ARIMAX, Se añaden los últimos valores del train para poder aplicar las diferencias y mantener coherencia con las series del train
+# --------- STOCK MARKET (1ª diferencia + log) ---------
+# Transformación logarítmica del test
+stock_market_test_log <- log(test_stock_market)
+train_stock_market_log <- log(train_stock_market)
+# Usar el último valor del TRAIN *en log*, no sin log
+ultimo_train_log <- as.numeric(tail(train_stock_market_log, 1))
 
-# --------- STOCK MARKET (1º diferencia) ---------
-test_stock_market_log <- log(test_stock_market)
-stock_market_test_full <- ts(c(tail(train_stock_market, 1), test_stock_market_log),
-                             start = start(tail(train_stock_market, 1)),
-                             frequency = 4)
-test_stock_market_estacionaria <- diff(stock_market_test_full)  # 1ª diferencia (ya log-transformada en el train)
-test_stock_market_estacionaria <- window(test_stock_market_estacionaria, start = start(test_stock_market), end = end(test_stock_market)) #start(test_stock_market), end ("")
+# Concatenar para mantener continuidad temporal
+stock_market_test_full <- ts(
+  c(ultimo_train_log, as.numeric(stock_market_test_log)),
+  start = end(train_stock_market_log),
+  frequency = 4
+)
+
+# Aplicar primera diferencia
+test_stock_market_estacionaria <- diff(stock_market_test_full)
+
+# Mantener solo el rango del test
+test_stock_market_estacionaria <- window(
+  test_stock_market_estacionaria,
+  start = start(test_stock_market),
+  end = end(test_stock_market)
+)
+
+# Verificar
 print(test_stock_market_estacionaria)
+range(test_stock_market_estacionaria)
 
-#--------- MONEY SUPPLY (2º diferencia) ---------
+# --------- MONEY SUPPLY (2ª diferencia) ---------
 money_supply_test_full <- ts(c(tail(train_money_supply, 2), test_money_supply),
                              start = start(tail(train_money_supply, 2)),
                              frequency = 4)
 test_money_supply_estacionaria <- diff(diff(money_supply_test_full))  # 2ª diferencia
-test_money_supply_estacionaria <- window(test_money_supply_estacionaria, start = start(test_money_supply), end = end(test_money_supply))
-print(test_money_supply_estacionaria)
+test_money_supply_estacionaria <- window(test_money_supply_estacionaria, 
+                                         start = start(test_money_supply), 
+                                         end = end(test_money_supply))
 
-# --------- UNEMPLOYMENT RATE (2º diferencia con lag = 4) ---------
+# --------- UNEMPLOYMENT RATE (2ª diferencia con lag = 4) ---------
+# Para diferencias con lag=4 necesitamos los últimos 4+2=6 valores del train
 unemployment_test_full <- ts(c(tail(train_unemployment, 6), test_unemployment),
                              start = start(tail(train_unemployment, 6)),
                              frequency = 4)
 test_unemployment_estacionaria <- diff(diff(unemployment_test_full, lag = 4))  # 2ª diferencia con lag 4
-test_unemployment_estacionaria <- window(test_unemployment_estacionaria, start = start(test_unemployment), end = end(test_unemployment))
-print(test_unemployment_estacionaria)
+test_unemployment_estacionaria <- window(test_unemployment_estacionaria, 
+                                         start = start(test_unemployment), 
+                                         end = end(test_unemployment))
 
 # -------------------- COMBINAR TODAS LAS EXÓGENAS -----------------
-test_exogenas_estacionarias <- cbind(test_stock_market_estacionaria, test_money_supply_estacionaria, test_unemployment_estacionaria) #xreg
+test_exogenas_estacionarias <- cbind(
+  test_stock_market_estacionaria,
+  test_money_supply_estacionaria,
+  test_unemployment_estacionaria
+)
 colnames(test_exogenas_estacionarias) <- colnames(train_exogenas_estacionarias)
 
-test_exogenas_significativas_IPC <- test_exogenas_estacionarias[, colnames(exogenas_significativas_IPC), drop=FALSE]
+# Seleccionar solo exógenas significativas
+test_exogenas_significativas_IPC <- test_exogenas_estacionarias[, 
+                                                                colnames(exogenas_significativas_IPC), 
+                                                                drop = FALSE]
 
  
 # -------------------- AJUSTAR MODELO ARIMAX - AUTOARIMA ----------------------
 
 # Modelo ARIMAX- AUTOARIMA
+# modelo_arimax_autoarima_ipc <- auto.arima(
+#   train_ipc_estacionaria_ARIMAX,
+#   seasonal = FALSE,
+#   d = 0,           # ya está estacionaria
+#   xreg = train_exogenas_estacionarias
+# )
+# summary(modelo_arimax_autoarima_ipc)
+
 modelo_arimax_autoarima_ipc <- auto.arima(
   train_ipc_estacionaria_ARIMAX,
   seasonal = FALSE,
-  d = 0,           # ya está estacionaria
-  xreg = train_exogenas_estacionarias
+  d = 0,
+  xreg = train_exogenas_estacionarias,
+  stepwise = FALSE,
+  approximation = FALSE,
+  allowdrift = FALSE
 )
-summary(modelo_arimax_autoarima_ipc)
+
 
 # Calcular criterios
 aic_arimax_autoarima_IPC <- AIC(modelo_arimax_autoarima_ipc)
@@ -685,7 +723,8 @@ modelo_arimax_autoarima_ipc_correlacionada <- auto.arima(
   train_ipc_estacionaria_ARIMAX,
   seasonal = FALSE,
   d = 0,           # ya está estacionaria
-  xreg = exogenas_significativas_IPC
+  xreg = exogenas_significativas_IPC,
+  
 )
 summary(modelo_arimax_autoarima_ipc_correlacionada)
 
@@ -712,7 +751,7 @@ summary(prediccion_arimax_autoarima_ipc_correlacionada)
 #Revertimos el forecast (IPC TRAIN)
 # La serie original fue diferenciada 1 vez, usamos diffinv
 forecast_arimax_autoarima_ipc_revertida <- diffinv(prediccion_arimax_autoarima_ipc$mean, differences = 1, xi=tail(train_ipc, 1))
-forecast_arimax_ipc_autoarima_revertida <- forecast_arimax_autoarima_ipc_revertida[-1]
+forecast_arimax_autoarima_ipc_revertida <- forecast_arimax_autoarima_ipc_revertida[-1]
 
 #-- ACCURACY
 accuracy_arimax_autoarim_ipc<- forecast::accuracy(forecast_arimax_autoarima_ipc_revertida, test_ipc)
@@ -720,7 +759,7 @@ accuracy_arimax_autoarim_ipc
 
 #CORRELACIOANDA
 forecast_arimax_autoarima_ipc_revertida_cor <- diffinv(prediccion_arimax_autoarima_ipc_correlacionada$mean, differences = 1, xi=tail(train_ipc, 1))
-forecast_arimax_ipc_autoarima_revertida_cor <- forecast_arimax_autoarima_ipc_revertida_cor[-1]
+forecast_arimax_autoarima_ipc_revertida_cor <- forecast_arimax_autoarima_ipc_revertida_cor[-1]
 
 #-- ACCURACY
 accuracy_arimax_autoarim_ipc_cor<- forecast::accuracy(forecast_arimax_autoarima_ipc_revertida_cor, test_ipc)
@@ -866,6 +905,7 @@ prediccion_arimax_autoarima_pib <- forecast(
   xreg = test_exogenas_estacionarias,
   h = length(test_pib)
 )
+prediccion_arimax_autoarima_ipc
 
 # CORRELACIONADAS
 prediccion_arimax_autoarima_pib_cor <- forecast(
@@ -875,7 +915,7 @@ prediccion_arimax_autoarima_pib_cor <- forecast(
 )
 
 #---   Revertir diferencias
-#forecast_arimax_autoarima_pib_revertida <- diffinv(prediccion_arimax_autoarima_pib$mean, differences = 1, xi = tail(train_pib,1))[-1]
+forecast_arimax_autoarima_pib_revertida <- diffinv(prediccion_arimax_autoarima_pib$mean, differences = 1, xi = tail(train_pib,1))[-1]
 forecast_arimax_autoarima_pib_revertida_cor <- diffinv(prediccion_arimax_autoarima_pib_cor$mean, differences = 1, xi = tail(train_pib,1))[-1]
 # Predicciones ARIMAX (serie diferenciada)
 
