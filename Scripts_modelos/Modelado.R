@@ -1201,16 +1201,53 @@ ggplot(pib_long, aes(x=Modelo, y=Valor, fill=Modelo)) +
 ####################################            PREDICCION FINAL             ######################################################################
 
 train_ipc_estacionaria
-
+h= length(test_ipc) + 2
 
 modelo_autoarima_ipc <- auto.arima(train_ipc_estacionaria, seasonal=FALSE, d=0) #D=0 para que no vuelva a diferenciar
-prediccion_autoarima_ipc <- forecast(modelo_autoarima_ipc, h=8, level=90)
+prediccion_autoarima_ipc <- forecast(modelo_autoarima_ipc, h=h, level=90)
 prediccion_autoarima_ipc$mean
 
 forecast_autoarima_ipc_revertida <- diffinv(prediccion_autoarima_ipc$mean,
                                             differences = 1,
                                             xi = tail(train_ipc, 1))
 forecast_autoarima_ipc_revertida<- forecast_autoarima_ipc_revertida[-1]
+
+
+
+###pib
+h= length(test_ipc) + 2 
+modelo_sarima_pib<- arima(train_pib_estacionaria,
+                          order = c(2, 0, 2),
+                          seasonal = list(order = c(0, 0, 0), period = 4),
+                          method = "ML")
+summary(modelo_sarima_pib)
+
+#-----------------      PREDICCIONES
+prediccion_sarima_pib <- forecast(modelo_sarima_pib, h=h, level=90)
+autoplot(prediccion_sarima_pib) + 
+  ggtitle("Predicción PIB con SARIMA") + 
+  ylab("PIB") + xlab("Trimestre") + 
+  theme_minimal()
+
+#-----------------      REVERTIR
+# Revertir la segunda diferencia (no estacional)
+forecast_tmp <- diffinv(prediccion_sarima_pib$mean, 
+                        differences = 1, 
+                        xi = tail(diff(train_pib_log, lag = 4), 1))
+
+# Revertir la primera diferencia (estacional con lag = 4)
+forecast_sarima_pib_revertida <- diffinv(forecast_tmp, 
+                                         lag = 4, 
+                                         differences = 1, 
+                                         xi = tail(train_pib_log, 4))
+
+# Quitar los valores iniciales usados en la inversión
+forecast_sarima_pib_revertida <- forecast_sarima_pib_revertida[-c(1:5)]
+
+# Deshacer el logaritmo
+forecast_sarima_pib_revertida <- exp(forecast_sarima_pib_revertida)
+
+
 
 
 
