@@ -111,7 +111,7 @@ miss_var_summary(df_final)
 #Cargar datos:
 #=========================
 datos_limpios_AUS<- read.csv("DATOS/limpios/Datos_Limpios_Australia.csv")
-
+miss_var_summary(datos_limpios_AUS)
 #Analizar los datos
 str(datos_limpios_AUS)
 summary(datos_limpios_AUS)
@@ -119,7 +119,7 @@ dim(datos_limpios_AUS)
 head(datos_limpios_AUS)
 colnames(datos_limpios_AUS)
 
-
+datos_limpios_AUS$Consumer.Price.Index..CPI.
 
 #Las variables PCI y GDP las tenemos en trimestrales ya en los datos Originales, en cambio Unemployment, money supply y Stock Market estan en mensuales.
 #Por lo que las pasaremos a series trimestrals las tres que estan en mensual, ya que trabajaremos con datos trimestrales para hacer la prediccion.
@@ -144,15 +144,15 @@ stock_market_ts_mensual<- ts(as.numeric(datos_limpios_AUS$Stock.market.index), s
 # CPI y GDP ya son trimestrales. Pasaremos a series temporales pero necesitaremos eliminar los NA-s
 #-->CPI
 # Tomar solo los valores numéricos (sin NAs iniciales)
-cpi_vals <- na.omit(as.numeric(datos_limpios_AUS$Consumer.Price.Index..CPI.))
 # Crear serie trimestral empezando en el primer año y trimestre válido
-cpi_ts_trimestral <- ts(cpi_vals, start=c(1996,3), frequency=4)
+cpi_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$Consumer.Price.Index..CPI.)),
+                        start = c(1996, 1),frequency = 4)
 #Guardar
 #saveRDS(cpi_ts_trimestral, "cpi_ts_trimestral.rds")
 
 #-->GDP
-gdp_vals <- na.omit(as.numeric(datos_limpios_AUS$GDP.billion.currency.units))
-gdp_ts_trimestral <- ts(gdp_vals, start=c(1996,3), frequency=4)
+gdp_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$GDP.billion.currency.units))
+                        , start=c(1996,1), frequency=4)
 #Guardar
 #saveRDS(gdp_ts_trimestral, "gdp_ts_trimestral.rds")
 
