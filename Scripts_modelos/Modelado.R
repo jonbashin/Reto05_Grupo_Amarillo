@@ -11,7 +11,6 @@ library(forecast)
 library(zoo)
 library(ggplot2)
 library(VIM)
-#library(tsoutliers)
 library(tseries)
 library(gridExtra)
 library(astsa)
@@ -1257,6 +1256,210 @@ ggplot(pib_long, aes(x=Modelo, y=Valor, fill=Modelo)) +
 #######################################################################################################################################################################
 ####################################            PREDICCION FINAL             ######################################################################
 
+
+#-------------------------                CPI (Modelo ARIMA)                   --------------------------------------------
+
+#Serie orginal 
+series_IPC_trimestrales <- readRDS("Series_Temporales/Trimestrales/cpi_ts_trimestral.rds")
+
+#Aplicaremos primera diferencia (Como hicimos anteriormente)
+IPC_estacionaria <- diff(series_IPC_trimestrales, differences = 1)
+tsdisplay(IPC_estacionaria)
+
+#Aplicamos el modelos osbre la series diferenciada
+modelo_final_arima_IPC <- arima(IPC_estacionaria, order=c(1,0,0))  # d=0 porque ya diferenciamos anteriormente. y no necesitamos diferenciarlo otra vez
+summary(modelo_final_arima_IPC)
+
+# Validación de residuales
+hist(residuals(modelo_final_arima_IPC), main="Histograma de residuales ARIMA IPC", xlab="Residual", col=paleta[2])
+checkresiduals(modelo_final_arima_IPC)
+
+boxtest_arima_ipc <- Box.test(residuals(modelo_final_arima_IPC), lag = round(log(length(series_IPC_trimestrales))), type="Ljung-Box")
+if (boxtest_arima_ipc$p.value > 0.05) {
+  cat("Residuos ARIMA IPC parecen ruido blanco\n")
+} else {
+  cat("Residuos ARIMA IPC muestran autocorrelación\n")
+}
+#Residuos ARIMA IPC parecen ruido blanco
+
+#-----------------      PREDICCIONES
+prediccion_arima_IPC <- forecast(modelo_final_arima_IPC, h=2, level=90)
+autoplot(prediccion_arima_IPC) + ggtitle("Predicción IPC con ARIMA") + ylab("IPC") + xlab("Trimestre") + theme_minimal()
+
+#-----------------      REVERTIR
+# La serie original fue diferenciada 1 vez, usamos diffinv
+forecast_arima_ipc_revertida1 <- diffinv(prediccion_arima_IPC$mean, differences = 1, xi=tail(series_IPC_trimestrales, 1))
+forecast_arima_ipc_revertida1 <- forecast_arima_ipc_revertida1[-1]
+prediccion_final_Arima_IPC<- forecast_arima_ipc_revertida1
+
+
+# ---------------- JUNTAR DF (ORIGINAL + PREDICCION)
+# Obtener el tiempo final de la serie
+tiempo_final <- end(series_IPC_trimestrales)  # año y trimestre
+# Crear serie de predicciones como ts, frecuencia 4 (trimestral)
+predicciones_ts <- ts(prediccion_final_Arima_IPC, start = c(tiempo_final[1], tiempo_final[2]+1), frequency = 4)
+# Unir series históricas y predicciones
+df_IPC_Completo <- ts(c(series_IPC_trimestrales, predicciones_ts), start = start(series_IPC_trimestrales), frequency = 4)
+df_IPC_Completo
+
+
+#-----------------      GRAFICO FINAL
+# Convertir a vector y Convertir la serie ts a data.frame
+ipc_matrix <- as.matrix(df_IPC_Completo)   # convierte ts a matriz
+df_IPC <- as.data.frame(ipc_matrix)       # matriz a data.frame
+ipc <- df_IPC$V1
+n <- length(ipc)
+
+# Crear vector de años (asumiendo trimestral desde 1996)
+# Cada año tiene 4 trimestres, entonces repetimos años 4 veces
+años <- rep(1996:(1996 + ceiling(n/4) - 1), each=4)[1:n]
+
+# Crear data.frame para ggplot
+df_plot_Arima_IPC <- data.frame(Año = años,
+                                Trimestre = rep(1:4, length.out=n),
+                                IPC = ipc,
+                                Tipo = c(rep("Serie original", n-2), rep("Predicción", 2)))
+
+# Convertir Año+Trimestre a decimal para línea continua
+df_plot_Arima_IPC <- df_plot_Arima_IPC %>%
+  mutate(Fecha = Año + (Trimestre-1)/4)
+
+ggplot(df_plot_Arima_IPC, aes(x = Fecha, y = IPC)) +
+  geom_line(color="blue", size=1.2) +  # línea histórica azul
+  geom_line(data = df_plot_Arima_IPC %>% filter(Tipo=="Predicción"), aes(x=Fecha, y=IPC), color="red", size=1.2) + # tramo final rojo
+  geom_point(aes(color=Tipo), size=2) +
+  scale_color_manual(values=c("Serie original"="blue","Predicción"="red")) +
+  labs(title="Predicción ARIMA IPC", x="Año", y="IPC", color="Leyenda") +
+  theme_minimal(base_size=13) +
+  theme(plot.title = element_text(hjust=0.5), legend.position="top")
+
+
+
+
+#-------------------------                PIB (Modelo ARIMAX - Arima CORRELACIONADAS)                   --------------------------------------------
+
+#Serie orginal 
+series_PIB_trimestrales <- readRDS("Series_Temporales/Trimestrales/gdp_ts_trimestral.rds")
+
+#Aplicaremos segunda diferencia y lag=4 (Como hicimos anteriormente)
+PIB_estacionaria_log<- log(series_PIB_trimestrales)
+PIB_estacionaria <- diff(diff(PIB_estacionaria_log, lag=4))
+tsdisplay(PIB_estacionaria)
+
+#Preparar la serie orginal de las exogenas y diferenciar
+serie_stock_market_trimestral <- readRDS("Series_Temporales/Trimestrales/stock_market_ts_trimestral.rds")
+serie_money_supply_market_trimestral <- readRDS("Series_Temporales/Trimestrales/money_supply_ts_trimestral.rds")
+serie_unemployment_market_trimestral <- readRDS("Series_Temporales/Trimestrales/unemployment_ts_trimestral.rds")
+
+#Diferenciarlas (Como anteriormente)
+STOCK_MARKET_estacionaria<- log(serie_stock_market_trimestral) #log
+STOCK_MARKET_estacionaria <- diff(STOCK_MARKET_estacionaria, differences = 1) # 1 diferencia
+MONEY_SUPPLY_estacionaria<- diff(serie_money_supply_market_trimestral, differences = 2) # 2 diferencia
+UNEMPLOYMENT_estacionaria <- diff(diff(serie_unemployment_market_trimestral, lag=4)) #2 diferencia y lag =4
+
+exogenas_estacionarias_todas<- cbind(STOCK_MARKET_estacionaria, MONEY_SUPPLY_estacionaria, UNEMPLOYMENT_estacionaria)
+exogenas_estacionarias_todas <- window(exogenas_estacionarias_todas, start=c(1999,2), end=c(2022,2))
+
+PIB_estacionaria_arimax <- window(PIB_estacionaria, start=c(1999,2), end=c(2022,2))
+
+
+#Aplicamos el modelos osbre la series diferenciada
+modelo_final_arimax_arima_PIB <- Arima(
+  PIB_estacionaria_arimax,
+  order = c(1,0,0),
+  xreg = exogenas_estacionarias_todas
+)
+summary(modelo_final_arimax_arima_PIB)
+
+# Validación de residuales
+hist(residuals(modelo_final_arimax_arima_PIB), main="Histograma de residuales Arimax-arima PIB", xlab="Residual", col=paleta[2])
+checkresiduals(modelo_final_arimax_arima_PIB)
+
+boxtest_arima_pib<- Box.test(residuals(modelo_final_arimax_arima_PIB), lag = round(log(length(series_PIB_trimestrales))), type="Ljung-Box")
+if (boxtest_arima_pib$p.value > 0.05) {
+  cat("Residuos ARIMAx-Arima PIB parecen ruido blanco\n")
+} else {
+  cat("Residuos ARIMA IPC muestran autocorrelación\n")
+}
+#Residuos ARIMA IPC parecen ruido blanco
+
+#-----------------      PREDICCIONES
+prediccion_final_arimax_arima_PIB <- forecast(
+  modelo_final_arimax_arima_PIB,
+  xreg = exogenas_estacionarias_todas,
+  h = 2
+)
+
+# -------------------- REVERTIR DIFERENCIAS -----------------
+# Predicción diferenciada (segunda diferencia con lag=4)
+pred <- prediccion_final_arimax_arima_PIB$mean
+revert_diff1 <- diffinv(pred, differences = 1, xi = tail(PIB_log_diff_seasonal, 1))
+revert_diff_seasonal <- diffinv(revert_diff1, differences = 1, lag = 4, xi = tail(PIB_estacionaria_log, 4))
+prediccion_final_Arimax_arima_PIB <- exp(revert_diff_seasonal)[1:2]
+
+# ---------------- JUNTAR DF (ORIGINAL + PREDICCION)
+# Obtener el tiempo final de la serie
+tiempo_final1 <- end(series_PIB_trimestrales)  # año y trimestre
+# Crear serie de predicciones como ts, frecuencia 4 (trimestral)
+predicciones_ts1 <- ts(prediccion_final_Arimax_arima_PIB, start = c(tiempo_final1[1], tiempo_final1[2]+1), frequency = 4)
+# Unir series históricas y predicciones
+df_PIB_Completo <- ts(c(series_PIB_trimestrales, predicciones_ts1), start = start(series_PIB_trimestrales), frequency = 4)
+df_PIB_Completo
+
+
+#-----------------      GRAFICO FINAL
+# Convertir a vector y Convertir la serie ts a data.frame
+pib_matrix <- as.matrix(df_PIB_Completo)   # convierte ts a matriz
+df_PIB <- as.data.frame(pib_matrix)       # matriz a data.frame
+pib <- df_PIB$V1
+n <- length(pib)
+
+# Crear vector de años (asumiendo trimestral desde 1996)
+# Cada año tiene 4 trimestres, entonces repetimos años 4 veces
+años <- rep(1996:(1996 + ceiling(n/4) - 1), each=4)[1:n]
+
+# Crear data.frame para ggplot
+df_plot_Arimax_arima_PIB <- data.frame(Año = años,
+                                Trimestre = rep(1:4, length.out=n),
+                                PIB = pib,
+                                Tipo = c(rep("Serie original", n-2), rep("Predicción", 2)))
+
+# Convertir Año+Trimestre a decimal para línea continua
+df_plot_Arimax_arima_IPC <- df_plot_Arimax_arima_IPC %>%
+  mutate(Fecha = Año + (Trimestre-1)/4)
+
+ggplot(df_plot_Arimax_arima_IPC, aes(x = Fecha, y = PIB)) +
+  geom_line(color="blue", size=1.2) +  # línea histórica azul
+  geom_line(data = df_plot_Arimax_arima_IPC %>% filter(Tipo=="Predicción"), aes(x=Fecha, y=IPC), color="red", size=1.2) + # tramo final rojo
+  geom_point(aes(color=Tipo), size=2) +
+  scale_color_manual(values=c("Serie original"="blue","Predicción"="red")) +
+  labs(title="Predicción ARIMA IPC", x="Año", y="IPC", color="Leyenda") +
+  theme_minimal(base_size=13) +
+  theme(plot.title = element_text(hjust=0.5), legend.position="top")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#################################################
 train_ipc_estacionaria
 h= length(test_ipc) + 2
 
