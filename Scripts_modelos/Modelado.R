@@ -15,6 +15,8 @@ library(tseries)
 library(gridExtra)
 library(astsa)
 library(Metrics)
+library(reshape2)
+
 
 paleta <- c("#c88fb2",  "#8db41c",  "#93044e","#D1006F",  "#F5F0E6",  "#4D4D4D")
 
@@ -104,24 +106,23 @@ acc_autoarima<- forecast::accuracy(forecast_autoarima_ipc_revertida,test_ipc)
 acc_autoarima
 
 #-------  GRAFICAR (Train vs Test vs Prediccion)
-# Crear la serie temporal de predicciones con la frecuencia adecuada
-forecast_autoarima_ipc_revertida_ts <- ts(
-  forecast_autoarima_ipc_revertida,
-  start = c(2021, 1),   # <-- ajusta al inicio real de tu test
-  frequency = 4)       # trimestral
+# Convertir train y test a ts
+train_ts <- ts(as.numeric(train_ipc), start=c(1998,1), frequency=4)
+test_ts  <- ts(as.numeric(test_ipc),  start=c(2021,1), frequency=4)
+forecast_ts <- ts(forecast_autoarima_ipc_revertida,start = end(train_ts) + c(0,1), frequency = 4)
 
-ts.plot(train_ipc,test_ipc,forecast_autoarima_ipc_revertida_ts,
-        col = c("black", "blue", "red"),
-        lty = c(1, 1, 2),
-        lwd = c(2, 2, 3),  # ← controla el grosor de cada línea
-        main = "Predicción IPC AUTOARIMA vs Observado",
-        ylab = "IPC")
-legend("topleft",
-       legend = c("Entrenamiento", "Observado (Test)", "Predicción"),
-       col = c("black", "blue", "red"),
-       lty = c(1, 1, 2),
-       lwd = c(2, 2, 3))
+# Combinar para ggplot
+df_plot <- data.frame(Fecha = c(time(train_ts), time(forecast_ts), time(test_ts)),
+                      Valor = c(as.numeric(train_ts), as.numeric(forecast_ts), as.numeric(test_ts)), Tipo  = c(rep("Train", length(train_ts)),rep("Predicción", length(forecast_ts)),rep("Test", length(test_ts))))
 
+# Graficar
+ggplot(df_plot, aes(x=Fecha, y=Valor, color=Tipo)) +
+  geom_line(size=1.2) +
+  geom_point(size=2) +
+  scale_color_manual(values=c("Train"=paleta[3], "Predicción"=paleta[4], "Test"=paleta[2])) +
+  labs(title="Predicción IPC AutoARIMA", x="Año", y="IPC") +
+  theme_minimal(base_size=13) +
+  theme(plot.title=element_text(hjust=0.5), legend.position="top")
 
 
 #-----------------      ARIMA MANUAL ---- IPC        ----------------------
@@ -166,19 +167,33 @@ acc_arima <- forecast::accuracy(forecast_arima_ipc_revertida, test_ipc)
 acc_arima
 
 #-----------------      GRAFICO FINAL
-forecast_arima_ipc_revertida_ts <- ts(forecast_arima_ipc_revertida, start=c(2021,1), frequency=4)
+train_ts1 <- ts(as.numeric(train_ipc), start=c(1998,1), frequency=4)
+test_ts1  <- ts(as.numeric(test_ipc),  start=c(2021,1), frequency=4)
 
-ts.plot(train_ipc, test_ipc, forecast_arima_ipc_revertida_ts,
-        col=c("black","blue","red"),
-        lty=c(1,1,2),
-        lwd=c(2,2,3),
-        main="Predicción IPC ARIMA vs Observado",
-        ylab="IPC")
-legend("topleft",
-       legend=c("Entrenamiento","Observado (Test)","Predicción"),
-       col=c("black","blue","red"),
-       lty=c(1,1,2),
-       lwd=c(2,2,3))
+# Predicción pegada al train
+forecast_ts1 <- ts(forecast_arima_ipc_revertida,
+                  start = end(train_ts1) + c(0,1),frequency = 4)
+
+# Combinar para ggplot
+df_plot1 <- data.frame(
+  Fecha = c(time(train_ts1), time(forecast_ts1), time(test_ts1)),
+  Valor = c(as.numeric(train_ts1), as.numeric(forecast_ts1), as.numeric(test_ts1)),
+  Tipo  = c(rep("Train", length(train_ts1)),
+            rep("Predicción", length(forecast_ts1)),
+            rep("Test", length(test_ts1)))
+)
+
+# Graficar
+ggplot(df_plot1, aes(x=Fecha, y=Valor, color=Tipo)) +
+  geom_line(size=1.2) +
+  geom_point(size=2) +
+  scale_color_manual(values=c("Train"=paleta[3], "Predicción"=paleta[4], "Test"=paleta[2])) +
+  labs(title="Predicción IPC ARIMA Manual", x="Año", y="IPC") +
+  theme_minimal(base_size=13) +
+  theme(plot.title=element_text(hjust=0.5), legend.position="top")
+
+
+
 
 #-----------------      SARIMA MANUAL ---- IPC----------------------
 ###########################################################################
@@ -232,77 +247,35 @@ forecast_sarima_ipc_revertida <- diffinv(prediccion_sarima_ipc$mean, differences
 forecast_sarima_ipc_revertida <- forecast_sarima_ipc_revertida[-1]
 
 #-----------------      ACCURACY
-acc_sarima_ipc <- forecast::accuracy(forecast_sarima_ipc_revertida, 
-                                     test_ipc)
+acc_sarima_ipc <- forecast::accuracy(forecast_sarima_ipc_revertida, test_ipc)
 acc_sarima_ipc
 
 #-----------------      GRAFICO FINAL
-forecast_sarima_ipc_revertida_ts <- ts(forecast_sarima_ipc_revertida, 
-                                       start=c(2021,1), frequency=4)
+# Convertir train y test a series temporales trimestrales
+train_ts2 <- ts(as.numeric(train_ipc), start=c(1998,1), frequency=4)
+test_ts2  <- ts(as.numeric(test_ipc),  start=c(2021,1), frequency=4)
 
-ts.plot(train_ipc, test_ipc, forecast_sarima_ipc_revertida_ts,
-        col=c("black","blue","red"),
-        lty=c(1,1,2),
-        lwd=c(2,2,3),
-        main="Predicción IPC SARIMA vs Observado",
-        ylab="IPC")
-legend("topleft",
-       legend=c("Entrenamiento","Observado (Test)","Predicción"),
-       col=c("black","blue","red"),
-       lty=c(1,1,2),
-       lwd=c(2,2,3))
+# Predicción pegada al train
+forecast_ts2 <- ts(forecast_sarima_ipc_revertida,
+                   start = end(train_ts2) + c(0,1), frequency = 4)
 
-
-
-#================
-#COMPARACION IPC MODELOS (AUTOARIMA, SARIMA, ARIMA)
-#================
-
-#TABLA MODELOS IPC
-accuracy_tabla_IPC <- data.frame(
-  Modelo = c("AutoARIMA", "Arima", "SARIMA"),
-  ME   = c(acc_autoarima["Test set","ME"],
-           acc_arima["Test set", "ME"],
-           acc_sarima_ipc["Test set", "ME"]),
-  RMSE = c(acc_autoarima["Test set","RMSE"],
-           acc_arima["Test set", "RMSE"],
-           acc_sarima_ipc["Test set", "RMSE"]),
-  MAE  = c(acc_autoarima["Test set","MAE"],
-           acc_arima["Test set", "MAE"],
-           acc_sarima_ipc["Test set", "MAE"]),
-  MAPE = c(acc_autoarima["Test set","MAPE"],
-           acc_arima["Test set", "MAPE"],
-           acc_sarima_ipc["Test set", "MAPE"])
+# Combinar todo en un solo data frame para ggplot
+df_plot2 <- data.frame(
+  Fecha = c(time(train_ts2), time(forecast_ts2), time(test_ts2)),
+  Valor = c(as.numeric(train_ts2), as.numeric(forecast_ts2), as.numeric(test_ts2)),
+  Tipo  = c(rep("Train", length(train_ts2)),
+            rep("Predicción", length(forecast_ts2)),
+            rep("Test", length(test_ts2)))
 )
 
-accuracy_tabla_IPC
-
-accuracy_tabla_IPC_ordenada <- accuracy_tabla_IPC[order(accuracy_tabla_IPC$RMSE), ]
-accuracy_tabla_IPC_ordenada 
-
-# Imprimir el mejor modelo
-cat("El mejor modelo según RMSE es:", accuracy_tabla_IPC_ordenada$Modelo[1], "\n")
-cat("Con RMSE =", accuracy_tabla_IPC_ordenada$RMSE[1], "\n")
-#AUTOARIMA
-
-#tscv--> validacion cruzada (diapo 141) 
-
-
-
-#GRAFICO MODELOS IPC
-# Convertir la tabla a formato largo para ggplot
-accuracy_long <- accuracy_tabla_IPC %>%pivot_longer(cols = c(ME, RMSE, MAE, MAPE), names_to = "Métrica", values_to = "Valor")
-
-# Gráfico
-ggplot(accuracy_long, aes(x = Modelo, y = Valor, fill = Modelo)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  facet_wrap(~Métrica, scales = "free_y") +  # cada métrica en un panel
-  theme_minimal() +
-  ylab("Valor") +
-  ggtitle("Comparación de Accuracy: Modelos de IPC") +
-  theme(legend.position = "none") +
-  geom_text(aes(label = round(Valor, 2)), vjust = -0.3, size = 3) +
-  scale_fill_manual(values = c(paleta[1], paleta[2], paleta[3]))
+# Graficar
+ggplot(df_plot2, aes(x=Fecha, y=Valor, color=Tipo)) +
+  geom_line(size=1.2) +
+  geom_point(size=2) +
+  scale_color_manual(values=c("Train"=paleta[3], "Predicción"=paleta[4], "Test"=paleta[2])) +
+  labs(title="Predicción IPC SARIMA Manual", x="Año", y="IPC") +
+  theme_minimal(base_size=13) +
+  theme(plot.title=element_text(hjust=0.5), legend.position="top")
 
 
 
@@ -357,26 +330,28 @@ acc_autoarima_pib
 
 
 #------------------ Graficar Train vs Test vs Predicción ------------------
-  
-forecast_autoarima_pib_revertida_ts <- ts(
-  forecast_autoarima_pib_revertida,
-  start = time(test_pib)[1],  # se alinea al inicio del test
-  frequency = 4               # trimestral
-)
+#-----------------      GRAFICO FINAL 3
+train_ts3 <- ts(as.numeric(train_pib), start=c(1998,1), frequency=4)
+test_ts3  <- ts(as.numeric(test_pib),  start=c(2021,1), frequency=4)
+forecast_ts3 <- ts(forecast_autoarima_pib_revertida,
+                   start = end(train_ts3) + c(0,1), frequency = 4)
+
+df_plot3 <- data.frame(
+  Fecha = c(time(train_ts3), time(forecast_ts3), time(test_ts3)),
+  Valor = c(as.numeric(train_ts3), as.numeric(forecast_ts3), as.numeric(test_ts3)),
+  Tipo  = c(rep("Train", length(train_ts3)),
+            rep("Predicción", length(forecast_ts3)),
+            rep("Test", length(test_ts3))))
 
 # Graficar
-ts.plot(train_pib, test_pib, forecast_autoarima_pib_revertida_ts,
-        col = c("black", "blue", "red"),  # colores de las líneas
-        lty = c(1, 1, 1),                 # ← todas líneas continuas
-        lwd = c(2, 2, 3),                 # grosor
-        main = "Predicción PIB (AutoARIMA) vs Observado",
-        ylab = "PIB")
+ggplot(df_plot3, aes(x=Fecha, y=Valor, color=Tipo)) +
+  geom_line(size=1.2) +
+  geom_point(size=2) +
+  scale_color_manual(values=c("Train"=paleta[3], "Predicción"=paleta[4], "Test"=paleta[2])) +
+  labs(title="Predicción PIB AutoARIMA", x="Año", y="PIB") +
+  theme_minimal(base_size=13) +
+  theme(plot.title=element_text(hjust=0.5), legend.position="top")
 
-legend("topleft",
-       legend = c("Entrenamiento", "Observado (Test)", "Predicción"),
-       col = c("black", "blue", "red"),
-       lty = c(1, 1, 1),   # ← todas líneas continuas
-       lwd = c(2, 2, 3))
 
 
 
@@ -438,20 +413,27 @@ acc_arima_pib
 
 
 #-----------------      GRAFICO FINAL
-forecast_arima_pib_revertida_ts <- ts(forecast_arima_pib_revertida, start=c(2021,1), frequency=4)
+#-----------------      GRAFICO FINAL 4
+train_ts4 <- ts(as.numeric(train_pib), start=c(1998,1), frequency=4)
+test_ts4  <- ts(as.numeric(test_pib),  start=c(2021,1), frequency=4)
+forecast_ts4 <- ts(forecast_arima_pib_revertida,
+                   start = end(train_ts4) + c(0,1), frequency = 4)
 
-ts.plot(train_pib, test_pib, forecast_arima_pib_revertida_ts,
-        col=c("black","blue","red"),
-        lty=c(1,1,2),
-        lwd=c(2,2,3),
-        main="Predicción PIB ARIMA vs Observado",
-        ylab="IPC")
-legend("topleft",
-       legend=c("Entrenamiento","Observado (Test)","Predicción"),
-       col=c("black","blue","red"),
-       lty=c(1,1,2),
-       lwd=c(2,2,3))
+df_plot4 <- data.frame(
+  Fecha = c(time(train_ts4), time(forecast_ts4), time(test_ts4)),
+  Valor = c(as.numeric(train_ts4), as.numeric(forecast_ts4), as.numeric(test_ts4)),
+  Tipo  = c(rep("Train", length(train_ts4)),
+            rep("Predicción", length(forecast_ts4)),
+            rep("Test", length(test_ts4))))
 
+# Graficar
+ggplot(df_plot4, aes(x=Fecha, y=Valor, color=Tipo)) +
+  geom_line(size=1.2) +
+  geom_point(size=2) +
+  scale_color_manual(values=c("Train"=paleta[3], "Predicción"=paleta[4], "Test"=paleta[2])) +
+  labs(title="Predicción PIB ARIMA Manual", x="Año", y="PIB") +
+  theme_minimal(base_size=13) +
+  theme(plot.title=element_text(hjust=0.5), legend.position="top")
 
 
 #-----------------      SARIMA MANUAL ---- PIB       ----------------------
@@ -513,78 +495,30 @@ forecast_sarima_pib_revertida <- forecast_sarima_pib_revertida[-c(1:5)]
 forecast_sarima_pib_revertida <- exp(forecast_sarima_pib_revertida)
 
 #-----------------      ACCURACY
-acc_sarima_pib <- forecast::accuracy(forecast_sarima_pib_revertida, 
-                                     test_pib)
+acc_sarima_pib <- forecast::accuracy(forecast_sarima_pib_revertida,test_pib)
 acc_sarima_pib
 
 #-----------------      GRAFICO FINAL
-forecast_sarima_pib_revertida_ts <- ts(forecast_sarima_pib_revertida, 
-                                       start=c(2021,1), frequency=4)
+train_ts5 <- ts(as.numeric(train_pib), start=c(1998,1), frequency=4)
+test_ts5  <- ts(as.numeric(test_pib),  start=c(2021,1), frequency=4)
+forecast_ts5 <- ts(forecast_sarima_pib_revertida,
+                   start = end(train_ts5) + c(0,1), frequency = 4)
 
-ts.plot(train_pib, test_pib, forecast_sarima_pib_revertida_ts,
-        col=c("black","blue","red"),
-        lty=c(1,1,2),
-        lwd=c(2,2,3),
-        main="Predicción PIB SARIMA vs Observado",
-        ylab="PIB")
-legend("topleft",
-       legend=c("Entrenamiento","Observado (Test)","Predicción"),
-       col=c("black","blue","red"),
-       lty=c(1,1,2),
-       lwd=c(2,2,3))
+df_plot5 <- data.frame(
+  Fecha = c(time(train_ts5), time(forecast_ts5), time(test_ts5)),
+  Valor = c(as.numeric(train_ts5), as.numeric(forecast_ts5), as.numeric(test_ts5)),
+  Tipo  = c(rep("Train", length(train_ts5)),
+            rep("Predicción", length(forecast_ts5)),
+            rep("Test", length(test_ts5))))
 
-# ME     RMSE      MAE      MPE     MAPE
-# Test set 15.895 29.29282 23.80709 2.768286 4.286727
-
-
-#================
-# COMPARACIÓN MODELOS PIB
-#================
-accuracy_table_pib <- data.frame(
-  Modelo = c("AutoARIMA", "Arima", "SARIMA"),
-  ME   = c(acc_autoarima_pib["Test set","ME"],
-           acc_arima_pib["Test set", "ME"],
-           acc_sarima_pib["Test set", "ME"]),
-  RMSE = c(acc_autoarima_pib["Test set","RMSE"],
-           acc_arima_pib["Test set", "RMSE"],
-           acc_sarima_pib["Test set", "RMSE"]),
-  MAE  = c(acc_autoarima_pib["Test set","MAE"],
-           acc_arima_pib["Test set", "MAE"],
-           acc_sarima_pib["Test set", "MAE"]),
-  MAPE = c(acc_autoarima_pib["Test set","MAPE"],
-           acc_arima_pib["Test set", "MAPE"],
-           acc_sarima_pib["Test set", "MAPE"])
-)
-
-
-accuracy_table_pib
-#Tomar en ceunta el ACF1 tambien, frist order autoccorrleation coefficient error.
-
-# Ordenar la tabla por RMSE
-accuracy_table_pib_ordenada <- accuracy_table_pib[order(accuracy_table_pib$RMSE), ]
-accuracy_table_pib_ordenada
-
-# Imprimir el mejor modelo
-cat("El mejor modelo para PIB según RMSE es:", accuracy_table_pib_ordenada$Modelo[1], "\n")
-cat("Con RMSE =", accuracy_table_pib_ordenada$RMSE[1], "\n")
-#SARIMA
-
-
-# Gráfico comparativo
-accuracy_long_pib <- accuracy_table_pib %>%
-  pivot_longer(cols = c(ME, RMSE, MAE, MAPE), names_to = "Métrica", values_to = "Valor")
-
-ggplot(accuracy_long_pib, aes(x = Modelo, y = Valor, fill = Modelo)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  facet_wrap(~Métrica, scales = "free_y") +
-  theme_minimal() +
-  ylab("Valor") +
-  ggtitle("Comparación de Accuracy: Modelos de PIB") +
-  theme(legend.position = "none") +
-  geom_text(aes(label = round(Valor, 2)), vjust = -0.3, size = 3) +
-  scale_fill_manual(values = c(paleta[1], paleta[2], paleta[3]))
-
-
+# Graficar
+ggplot(df_plot5, aes(x=Fecha, y=Valor, color=Tipo)) +
+  geom_line(size=1.2) +
+  geom_point(size=2) +
+  scale_color_manual(values=c("Train"=paleta[3], "Predicción"=paleta[4], "Test"=paleta[2])) +
+  labs(title="Predicción PIB SARIMA Manual", x="Año", y="PIB") +
+  theme_minimal(base_size=13) +
+  theme(plot.title=element_text(hjust=0.5), legend.position="top")
 
 
 
@@ -703,26 +637,27 @@ accuracy_arimax_autoarim_ipc
 
 
 #----------       GRAFICO
-# Crear serie temporal para la predicción (alineada con test)
-forecast_arimax_autoarima_ipc_revertida_ts <- ts(
-  forecast_arimax_autoarima_ipc_revertida,
-  start = time(test_ipc)[1],  # mismo inicio que test
-  frequency = 4               # trimestral
-)
+train_ts6 <- ts(as.numeric(train_ipc), start=c(1999,2), end=c(2020,4), frequency=4)
+test_ts6  <- ts(as.numeric(test_ipc), start=c(2021,1), frequency=4)
+forecast_ts6 <- ts(forecast_arimax_autoarima_ipc_revertida,
+                   start = end(train_ts6) + c(0,1), frequency = 4)
 
-# Graficar train, test y predicción (NO correlacionada)
-ts.plot(train_ipc, test_ipc, forecast_arimax_autoarima_ipc_revertida_ts,
-        col = c("black", "blue", "red"),
-        lty = c(1, 1, 1),   # todas líneas continuas
-        lwd = c(2, 2, 3),
-        main = "Predicción IPC (ARIMAX AUTOARIMA sin correlacionadas)",
-        ylab = "IPC")
+df_plot6 <- data.frame(
+  Fecha = c(time(train_ts6), time(forecast_ts6), time(test_ts6)),
+  Valor = c(as.numeric(train_ts6), as.numeric(forecast_ts6), as.numeric(test_ts6)),
+  Tipo  = c(rep("Train", length(train_ts6)),
+            rep("Predicción", length(forecast_ts6)),
+            rep("Test", length(test_ts6))))
 
-legend("topleft",
-       legend = c("Entrenamiento", "Observado (Test)", "Predicción ARIMAX"),
-       col = c("black", "blue", "red"),
-       lty = c(1, 1, 1),
-       lwd = c(2, 2, 3))
+# Graficar
+ggplot(df_plot6, aes(x=Fecha, y=Valor, color=Tipo)) +
+  geom_line(size=1.2) +
+  geom_point(size=2) +
+  scale_color_manual(values=c("Train"=paleta[3], "Predicción"=paleta[4], "Test"=paleta[2])) +
+  labs(title="Predicción IPC ARIMAX AutoARIMA", x="Año", y="IPC") +
+  theme_minimal(base_size=13) +
+  theme(plot.title=element_text(hjust=0.5), legend.position="top")
+
 
 
 #######################################################################################################
@@ -745,34 +680,30 @@ prediccion_arimax_arima_ipc <- forecast(
 forecast_arimax_arima_ipc_revertida <- diffinv(prediccion_arimax_arima_ipc$mean, differences = 1, xi=tail(train_ipc, 1))
 forecast_arimax_arima_ipc_revertida <- forecast_arimax_arima_ipc_revertida[-1]
 
-#------     ACCURACY
+#-------------------     ACCURACY
 accuracy_arimax_arima_ipc<- forecast::accuracy(forecast_arimax_arima_ipc_revertida, test_ipc)
 accuracy_arimax_arima_ipc
 
 
+# -------------------- GRAFICO 
+train_ts7 <- ts(as.numeric(train_ipc),  start = c(1999, 2), end = c(2020, 4), frequency = 4)
+test_ts7 <- ts(as.numeric(test_ipc), start = c(2021, 1), frequency = 4)
+forecast_ts7 <- ts(as.numeric(forecast_arimax_arima_ipc_revertida),  start = end(train_ts7) + c(0, 1), frequency = 4)
 
+df_plot7 <- data.frame(
+  Fecha = c(time(train_ts7), time(forecast_ts7), time(test_ts7)),
+  Valor = c(as.numeric(train_ts7), as.numeric(forecast_ts7), as.numeric(test_ts7)),
+  Tipo  = c(rep("Train", length(train_ts7)),
+            rep("Predicción", length(forecast_ts7)),
+            rep("Test", length(test_ts7))))
 
-
-# -------------------- GRAFICO COMPARATIVO -----------------
-# Convertimos a ts para graficar
-forecast_auto_ts <- ts(forecast_arimax_autoarima_ipc_revertida, start=start(test_ipc), frequency=4)
-forecast_manual_ts <- ts(forecast_arimax_arima_ipc_revertida, start=start(test_ipc), frequency=4)
-
-ts.plot(
-  train_ipc, test_ipc, forecast_auto_ts, forecast_manual_ts,
-  col=c("black", "blue", "red", "green"),
-  lty=c(1,1,2,2),
-  lwd=c(2,2,2,2),
-  main="Predicción IPC ARIMAX vs Observado",
-  ylab="IPC"
-)
-legend(
-  "topleft",
-  legend=c("Train IPC", "Test IPC", "ARIMAX Autoarima", "ARIMAX Arima- Manual"),
-  col=c("black", "blue", "red", "green"),
-  lty=c(1,1,2,2),
-  lwd=c(2,2,2,2)
-)
+ggplot(df_plot7, aes(x = Fecha, y = Valor, color = Tipo)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  scale_color_manual(values = c("Train" = paleta[3], "Predicción" = paleta[4], "Test" = paleta[2])) +
+  labs(title = "Predicción IPC ARIMAX Manual", x = "Año", y = "IPC") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(hjust = 0.5), legend.position = "top")
 
 
 
@@ -831,6 +762,26 @@ forecast_arimax_autoarima_ipc_revertida_cor <- forecast_arimax_autoarima_ipc_rev
 accuracy_arimax_autoarim_ipc_cor<- forecast::accuracy(forecast_arimax_autoarima_ipc_revertida_cor, test_ipc)
 accuracy_arimax_autoarim_ipc_cor
 
+#-----------------    GRAFICO
+train_ts8 <- ts(as.numeric(train_ipc), start = c(1999, 2), end = c(2020, 4), frequency = 4)
+test_ts8 <- ts(as.numeric(test_ipc), start = c(2021, 1), frequency = 4)
+forecast_ts8 <- ts(as.numeric(forecast_arimax_autoarima_ipc_revertida_cor), start = end(train_ts8) + c(0, 1), frequency = 4)
+
+df_plot8 <- data.frame(
+  Fecha = c(time(train_ts8), time(forecast_ts8), time(test_ts8)),
+  Valor = c(as.numeric(train_ts8), as.numeric(forecast_ts8), as.numeric(test_ts8)),
+  Tipo  = c(rep("Train", length(train_ts8)),
+            rep("Predicción", length(forecast_ts8)),
+            rep("Test", length(test_ts8))))
+
+ggplot(df_plot8, aes(x = Fecha, y = Valor, color = Tipo)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  scale_color_manual(values = c("Train" = paleta[3], "Predicción" = paleta[4], "Test" = paleta[2])) +
+  labs(title = "Predicción IPC ARIMAX AutoARIMA Correlacionadas", x = "Año", y = "IPC") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(hjust = 0.5), legend.position = "top")
+
 
 
 ###################################     ARIMAX - ARIMA (Manual)      ###################################################
@@ -856,6 +807,29 @@ forecast_arimax_arima_ipc_revertida_cor <- forecast_arimax_arima_ipc_revertida_c
 #----------------      ACCURACY      ------------------------
 accuracy_arimax_arima_ipc_cor<- forecast::accuracy(forecast_arimax_arima_ipc_revertida_cor, test_ipc)
 accuracy_arimax_arima_ipc_cor
+
+#-----------------    GRAFICO
+train_ts9 <- ts(as.numeric(train_ipc), start = c(1999, 2), end = c(2020, 4), frequency = 4)
+test_ts9 <- ts(as.numeric(test_ipc), start = c(2021, 1), frequency = 4)
+forecast_ts9 <- ts(as.numeric(forecast_arimax_arima_ipc_revertida_cor), start = end(train_ts9) + c(0, 1), frequency = 4)
+
+#-----------------  Crear dataframe para ggplot -----------------
+df_plot9 <- data.frame(
+  Fecha = c(time(train_ts9), time(forecast_ts9), time(test_ts9)),
+  Valor = c(as.numeric(train_ts9), as.numeric(forecast_ts9), as.numeric(test_ts9)),
+  Tipo  = c(rep("Train", length(train_ts9)),
+            rep("Predicción", length(forecast_ts9)),
+            rep("Test", length(test_ts9))))
+
+#-----------------  Graficar -----------------
+ggplot(df_plot9, aes(x = Fecha, y = Valor, color = Tipo)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  scale_color_manual(values = c("Train" = paleta[3], "Predicción" = paleta[4], "Test" = paleta[2])) +
+  labs(title = "Predicción IPC ARIMAX Manual Correlacionadas", x = "Año", y = "IPC") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(hjust = 0.5), legend.position = "top")
+
 
 
 
@@ -908,6 +882,8 @@ revert_diff1 <- diffinv(revert_lag, differences = 1, xi = tail(train_pib_log, 1)
 
 # Revertir log
 forecast_revertido <- exp(revert_diff1)
+forecast_revertido <- window(forecast_revertido, start = c(2021, 1))
+forecast_revertido
 
 # --------------------  ACCURACY -----------------
 accuracy_arimax_autoarima_pib <- forecast::accuracy(forecast_revertido, test_pib)
@@ -915,6 +891,24 @@ print(accuracy_arimax_autoarima_pib)
 
 
 # ---------------      GRAFICAR            -----------------
+train_ts10 <- ts(as.numeric(train_pib),  start = c(1999, 2), end = c(2020, 4), frequency = 4)
+test_ts10 <- ts(as.numeric(test_pib), start = c(2021, 1), frequency = 4)
+forecast_ts10 <- ts(as.numeric(forecast_revertido),  start = end(train_ts10) + c(0, 1), frequency = 4)
+
+df_plot10 <- data.frame(
+  Fecha = c(time(train_ts10), time(forecast_ts10), time(test_ts10)),
+  Valor = c(as.numeric(train_ts10), as.numeric(forecast_ts10), as.numeric(test_ts10)),
+  Tipo  = c(rep("Train", length(train_ts10)),
+            rep("Predicción", length(forecast_ts10)),
+            rep("Test", length(test_ts10))))
+
+ggplot(df_plot10, aes(x = Fecha, y = Valor, color = Tipo)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  scale_color_manual(values = c("Train" = paleta[3], "Predicción" = paleta[4], "Test" = paleta[2])) +
+  labs(title = "Predicción PIB ARIMAX AutoARIMA", x = "Año", y = "PIB") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(hjust = 0.5), legend.position = "top")
 
 
 ##############################################################################################
@@ -946,10 +940,35 @@ revert_lag <- diffinv(prediccion_arimax_arima_pib$mean, differences = 1, lag = 4
 revert_diff1 <- diffinv(revert_lag, differences = 1, xi = tail(train_pib_log, 1))
 # Revertir log
 forecast_arimax_arima_pib_revertida <- exp(revert_diff1)
+forecast_arimax_arima_pib_revertida <- window(forecast_arimax_arima_pib_revertida, start = c(2021, 1))
+forecast_arimax_arima_pib_revertida
+
 
 # -------------------- ACCURACY -----------------
 accuracy_arimax_arima_pib <- forecast::accuracy(forecast_arimax_arima_pib_revertida, test_pib)
 print(accuracy_arimax_arima_pib)
+
+
+# --------------------    GRAFICO
+train_ts11 <- ts(as.numeric(train_pib),  start = c(1999, 2), end = c(2020, 4), frequency = 4)
+test_ts11 <- ts(as.numeric(test_pib), start = c(2021, 1), frequency = 4)
+forecast_ts11 <- forecast_arimax_arima_pib_revertida
+
+df_plot11 <- data.frame(
+  Fecha = c(time(train_ts11), time(forecast_ts11), time(test_ts11)),
+  Valor = c(as.numeric(train_ts11), as.numeric(forecast_ts11), as.numeric(test_ts11)),
+  Tipo  = c(rep("Train", length(train_ts11)),
+            rep("Predicción", length(forecast_ts11)),
+            rep("Test", length(test_ts11))))
+
+ggplot(df_plot11, aes(x = Fecha, y = Valor, color = Tipo)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  scale_color_manual(values = c("Train" = paleta[3], "Predicción" = paleta[4], "Test" = paleta[2])) +
+  labs(title = "Predicción PIB ARIMAX Manual", x = "Año", y = "PIB") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(hjust = 0.5), legend.position = "top")
+
 
 
 
@@ -1010,12 +1029,41 @@ revert_diff1 <- diffinv(revert_lag, differences = 1, xi = tail(train_pib_log, 1)
 
 # Revertir log
 forecast_revertido_cor <- exp(revert_diff1)
-
+forecast_revertido_cor <- window(forecast_revertido_cor, start = c(2021,1))
 
 # -------------------- EVALUAR ACCURACY -----------------
 accuracy_arimax_autoarima_pib_cor <- forecast::accuracy(forecast_revertido_cor, test_pib)
 print(accuracy_arimax_autoarima_pib_cor)
 
+
+# --------------------   GRAFICO
+train_ts13 <- ts(as.numeric(train_pib), start = c(1999, 2), end = c(2020, 4), frequency = 4)
+test_ts13  <- ts(as.numeric(test_pib),  start = c(2021, 1), frequency = 4)
+forecast_ts13 <- ts(as.numeric(forecast_revertido_cor),
+                    start = end(train_ts13) + c(0, 1),
+                    frequency = 4)
+
+# Combinar en un único dataframe
+df_plot13 <- data.frame(
+  Fecha = c(time(train_ts13), time(forecast_ts13), time(test_ts13)),
+  Valor = c(as.numeric(train_ts13), as.numeric(forecast_ts13), as.numeric(test_ts13)),
+  Tipo  = c(rep("Train", length(train_ts13)),
+            rep("Predicción", length(forecast_ts13)),
+            rep("Test", length(test_ts13)))
+)
+
+# Graficar con ggplot2
+ggplot(df_plot13, aes(x = Fecha, y = Valor, color = Tipo)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  scale_color_manual(values = c("Train" = paleta[3],
+                                "Predicción" = paleta[4],
+                                "Test" = paleta[2])) +
+  labs(title = "Predicción PIB - ARIMAX AutoArima (Correlacionadas)",
+       x = "Año", y = "PIB") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "top")
 
 
 ##################################################################################################################################
@@ -1039,10 +1087,40 @@ prediccion_arimax_arima_pib_cor <- forecast(
 revert_lag_cor <- diffinv(prediccion_arimax_arima_pib_cor$mean, differences = 1, lag = 4, xi = tail(train_pib_diff1, 4))
 revert_diff1_cor <- diffinv(revert_lag_cor, differences = 1, xi = tail(train_pib_log, 1))
 forecast_arimax_arima_pib_revertida_cor <- exp(revert_diff1_cor)
+forecast_arimax_arima_pib_revertida_cor <- window(forecast_arimax_arima_pib_revertida_cor, start= c(2021,1))
 
 # Accuracy
 accuracy_arimax_arima_pib_cor <- forecast::accuracy(forecast_arimax_arima_pib_revertida_cor, test_pib)
 print(accuracy_arimax_arima_pib_cor)
+
+#-------- GRAFICO
+train_ts14 <- ts(as.numeric(train_pib), start = c(1999, 2), end = c(2020, 4), frequency = 4)
+test_ts14  <- ts(as.numeric(test_pib),  start = c(2021, 1), frequency = 4)
+forecast_ts14 <- ts(as.numeric(forecast_arimax_arima_pib_revertida_cor),
+                    start = end(train_ts14) + c(0, 1),
+                    frequency = 4)
+
+# Combinar en un único dataframe
+df_plot14 <- data.frame(
+  Fecha = c(time(train_ts14), time(forecast_ts14), time(test_ts14)),
+  Valor = c(as.numeric(train_ts14), as.numeric(forecast_ts14), as.numeric(test_ts14)),
+  Tipo  = c(rep("Train", length(train_ts14)),
+            rep("Predicción", length(forecast_ts14)),
+            rep("Test", length(test_ts14)))
+)
+
+# Graficar
+ggplot(df_plot14, aes(x = Fecha, y = Valor, color = Tipo)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  scale_color_manual(values = c("Train" = paleta[3],
+                                "Predicción" = paleta[4],
+                                "Test" = paleta[2])) +
+  labs(title = "Predicción PIB - ARIMAX ARIMA (Correlacionadas)",
+       x = "Año", y = "PIB") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "top")
 
 
 
@@ -1128,37 +1206,42 @@ accuracy_final_pib
 
 ########------------------------ GRAFICOS ACCURACY
 
-# # IPC
-# ipc_long <- pivot_longer(accuracy_final_ipc, cols = c(ME, RMSE, MAE, MAPE),
-#                          names_to = "Métrica", values_to = "Valor")
-# 
-# ggplot(ipc_long, aes(x=Modelo, y=Valor, fill=Modelo)) +
-#   geom_bar(stat="identity", position="dodge") +
-#   facet_wrap(~Métrica, scales="free_y") +
-#   theme_minimal() +
-#   geom_text(aes(label=round(Valor,2)), vjust=-0.3) +
-#   ggtitle("Comparación de Accuracy: Modelos IPC") +
-#   theme(legend.position="none") +
-#   ylab("Valor") +
-#   xlab("Modelo")
-# 
-# # PIB
-# pib_long <- pivot_longer(accuracy_final_pib, cols = c(ME, RMSE, MAE, MAPE),
-#                          names_to = "Métrica", values_to = "Valor")
-# 
-# ggplot(pib_long, aes(x=Modelo, y=Valor, fill=Modelo)) +
-#   geom_bar(stat="identity", position="dodge") +
-#   facet_wrap(~Métrica, scales="free_y") +
-#   theme_minimal() +
-#   geom_text(aes(label=round(Valor,2)), vjust=-0.3) +
-#   ggtitle("Comparación de Accuracy: Modelos PIB") +
-#   theme(legend.position="none") +
-#   ylab("Valor") +
-#   xlab("Modelo")
-# 
-# 
+#   ---->  SARIMA IPC
+df_arima <- accuracy_final_ipc[accuracy_final_ipc$Modelo == "ARIMA", c("ME","RMSE","MAE","MAPE")]
+df_arima_long <- melt(df_arima, variable.name = "Métrica", value.name = "Valor")
+
+# Gráfico usando tu paleta
+ggplot(df_arima_long, aes(x = Métrica, y = Valor, fill = Métrica)) +
+  geom_col(width = 0.6, show.legend = FALSE) +
+  geom_text(aes(label = round(Valor, 3)), vjust = -0.5, size = 5) +
+  scale_fill_manual(values = paleta[c(2,4,1,3)]) +
+  labs(title = "Métricas del modelo IPC – ARIMA",
+       y = "Valor del error", x = NULL) +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.text = element_text(size = 12))
 
 
+#  ---> ARIMAX SARIMA PIB
+
+df_arima_pib <- accuracy_final_pib[accuracy_final_pib$Modelo == "ARIMAX ARIMA", c("ME","RMSE","MAE","MAPE")]
+df_arima_pib_long <- melt(df_arima_pib, variable.name = "Métrica", value.name = "Valor")
+
+# Gráfico con tu paleta
+ggplot(df_arima_pib_long, aes(x = Métrica, y = Valor, fill = Métrica)) +
+  geom_col(width = 0.6, show.legend = FALSE) +
+  geom_text(aes(label = round(Valor, 3)), vjust = -0.5, size = 5) +
+  scale_fill_manual(values = paleta[1:4]) +
+  labs(title = "Métricas del modelo PIB – ARIMAX ARIMA",
+       y = "Valor del error", x = NULL) +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.text = element_text(size = 12))
+
+
+
+
+           
 
 
 
@@ -1234,10 +1317,10 @@ df_plot_Arima_IPC <- df_plot_Arima_IPC %>%
   mutate(Fecha = Año + (Trimestre-1)/4)
 
 ggplot(df_plot_Arima_IPC, aes(x = Fecha, y = IPC)) +
-  geom_line(color="blue", size=1.2) +  # línea histórica azul
-  geom_line(data = df_plot_Arima_IPC %>% filter(Tipo=="Predicción"), aes(x=Fecha, y=IPC), color="red", size=1.2) + # tramo final rojo
+  geom_line(color=paleta[2], size=1.2) +  # línea histórica azul
+  geom_line(data = df_plot_Arima_IPC %>% filter(Tipo=="Predicción"), aes(x=Fecha, y=IPC), color=paleta[3], size=1.2) + # tramo final rojo
   geom_point(aes(color=Tipo), size=2) +
-  scale_color_manual(values=c("Serie original"="blue","Predicción"="red")) +
+  scale_color_manual(values=c("Serie original"=paleta[2],"Predicción"=paleta[3])) +
   labs(title="Predicción ARIMA IPC", x="Año", y="IPC", color="Leyenda") +
   theme_minimal(base_size=13) +
   theme(plot.title = element_text(hjust=0.5), legend.position="top")
@@ -1245,7 +1328,7 @@ ggplot(df_plot_Arima_IPC, aes(x = Fecha, y = IPC)) +
 
 
 
-#-------------------------                PIB (Modelo ARIMAX - Arima CORRELACIONADAS)                   --------------------------------------------
+#-------------------------                PIB (Modelo ARIMAX - Arima)                   --------------------------------------------
 
 #Serie orginal 
 series_PIB_trimestrales <- readRDS("Series_Temporales/Trimestrales/gdp_ts_trimestral.rds")
@@ -1340,10 +1423,10 @@ df_plot_Arimax_arima_PIB <- df_plot_Arimax_arima_PIB %>%
   mutate(Fecha = Año + (Trimestre-1)/4)
 
 ggplot(df_plot_Arimax_arima_PIB, aes(x = Fecha, y = PIB)) +
-  geom_line(color="blue", size=1.2) +  # línea histórica azul
-  geom_line(data = df_plot_Arimax_arima_PIB %>% filter(Tipo=="Predicción"), aes(x=Fecha, y=PIB), color="red", size=1.2) + # tramo final rojo
+  geom_line(color=paleta[2], size=1.2) +  # línea histórica azul
+  geom_line(data = df_plot_Arimax_arima_PIB %>% filter(Tipo=="Predicción"), aes(x=Fecha, y=PIB), color=paleta[3], size=1.2) + # tramo final rojo
   geom_point(aes(color=Tipo), size=2) +
-  scale_color_manual(values=c("Serie original"="blue","Predicción"="red")) +
+  scale_color_manual(values=c("Serie original"=paleta[2],"Predicción"=paleta[3])) +
   labs(title="Predicción ARIMAX- Arima (Manual) PIB", x="Año", y="IPC", color="Leyenda") +
   theme_minimal(base_size=13) +
   theme(plot.title = element_text(hjust=0.5), legend.position="top")
