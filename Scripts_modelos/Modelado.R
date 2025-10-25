@@ -666,10 +666,7 @@ test_exogenas_estacionarias <- cbind(
 )
 colnames(test_exogenas_estacionarias) <- colnames(train_exogenas_estacionarias)
 
-# Seleccionar solo exógenas significativas
-test_exogenas_significativas_IPC <- test_exogenas_estacionarias[, 
-                                                                colnames(exogenas_significativas_IPC), 
-                                                                drop = FALSE]
+
 
 ###############################################################################################################33
 # -------------------- AJUSTAR MODELO ARIMAX - AUTOARIMA  (IPC) ----------------------
@@ -805,6 +802,10 @@ exogenas_significativas_IPC <- exogenas_vec[, abs(correlations["ipc_vec", -1]) >
 print("Exógenas seleccionadas para el modelo de IPC:")
 print(colnames(exogenas_significativas_IPC))
 
+# Seleccionar solo las variables significativas
+train_exogenas_significativas_IPC <- train_exogenas_estacionarias[, colnames(exogenas_significativas_IPC), drop = FALSE]
+test_exogenas_significativas_IPC <- test_exogenas_estacionarias[, colnames(exogenas_significativas_IPC), drop = FALSE]
+
 
 #------------------      MODELO      -----------------------------
 #CORRELACIONADAS
@@ -812,7 +813,7 @@ modelo_arimax_autoarima_ipc_correlacionada <- auto.arima(
   train_ipc_estacionaria_ARIMAX,
   seasonal = FALSE,
   d = 0,           # ya está estacionaria
-  xreg = exogenas_significativas_IPC)
+  xreg = train_exogenas_significativas_IPC)
 summary(modelo_arimax_autoarima_ipc_correlacionada)
 
 #-----------------      PREDICCION     -----------------------
@@ -838,7 +839,7 @@ accuracy_arimax_autoarim_ipc_cor
 modelo_arimax_arima_ipc_correlacionada <- Arima(
   train_ipc_estacionaria_ARIMAX,
   order = c(1, 0, 0),
-  xreg = exogenas_significativas_IPC
+  xreg = train_exogenas_significativas_IPC
 )
 summary(modelo_arimax_arima_ipc_correlacionada)
 
@@ -871,32 +872,10 @@ accuracy_arimax_arima_ipc_cor
 # Alinear fechas con train PIB
 train_pib_estacionaria_ARIMAX <- window(train_pib_estacionaria, start = c(1999, 2))  # ajustar según inicio exógenas
 
-# -------------------- ANALIZAR CORRELACIÓN PARA PIB --------------------
-# Aplanar la serie dependiente (PIB)
-pib_vec <- as.vector(t(train_pib_estacionaria_ARIMAX))  # filas x columnas → vector trimestral
-
-# Aplanar las exógenas en el mismo orden y asegurar orden por fecha
-exogenas_vec <- as.data.frame(train_exogenas_estacionarias)
-exogenas_vec <- exogenas_vec[order(rownames(exogenas_vec)), ]
-
-# Correlación
-correlaciones_pib <- cor(cbind(pib_vec, exogenas_vec))
-print("Correlaciones entre PIB y exógenas:")
-print(correlaciones_pib)
-
-# Seleccionar solo exógenas con |cor| > umbral
-umbral <- 0.025
-exogenas_significativas_PIB <- exogenas_vec[, abs(correlaciones_pib["pib_vec", -1]) > umbral, drop=FALSE]
-
-print("Exógenas seleccionadas para el modelo de PIB:")
-print(colnames(exogenas_significativas_PIB))
-
-# -------------------- PREPARAR TEST EXÓGENAS ---------------------
-test_exogenas_significativas_PIB <- test_exogenas_estacionarias[, colnames(exogenas_significativas_PIB), drop=FALSE]
 
 
 ##############################################################################################
-#---------------------         ARIMAX- ARIMA (Manual) PIB         --------------------------
+#---------------------         ARIMAX- AUTOARIMA  PIB         --------------------------
 
 # -------------------- LOG + DIFERENCIAS --------------------
 train_pib_log <- log(train_pib)  # log para estabilizar varianza
@@ -931,31 +910,15 @@ revert_diff1 <- diffinv(revert_lag, differences = 1, xi = tail(train_pib_log, 1)
 forecast_revertido <- exp(revert_diff1)
 
 # --------------------  ACCURACY -----------------
-accuracy_arimax <- forecast::accuracy(forecast_revertido, test_pib)
-print(accuracy_arimax)
+accuracy_arimax_autoarima_pib <- forecast::accuracy(forecast_revertido, test_pib)
+print(accuracy_arimax_autoarima_pib)
 
 
 # ---------------      GRAFICAR            -----------------
-ts.plot(
-  train_pib, test_pib, forecast_auto_ts_pib, forecast_manual_ts_pib,
-  col=c("black", "blue", "red", "green"),
-  lty=c(1,1,2,2),
-  lwd=c(2,2,2,2),
-  main="Predicción PIB ARIMAX vs Observado",
-  ylab="PIB"
-)
-legend(
-  "topleft",
-  legend=c("Train PIB", "Test PIB", "ARIMAX Autoarima", "ARIMAX Arima-Manual"),
-  col=c("black","blue","red","green"),
-  lty=c(1,1,2,2),
-  lwd=c(2,2,2,2)
-)
-
 
 
 ##############################################################################################
-################ ---------    PIB ARIMAX MANUAL TODAS EXÓGENAS   ---------  #########
+#---------------------         ARIMAX- ARIMA (Manual) PIB         --------------------------
 
 # -------------------- LOG + DIFERENCIAS --------------------
 train_pib_log <- log(train_pib)
@@ -995,13 +958,40 @@ print(accuracy_arimax_arima_pib)
 ###############################################################################################################################
 ################################     CORRELACIONADAS PIB       ################################################################
 
+
+# -------------------- ANALIZAR CORRELACIÓN PARA PIB --------------------
+# Aplanar la serie dependiente (PIB)
+pib_vec <- as.vector(t(train_pib_estacionaria_ARIMAX))  # filas x columnas → vector trimestral
+
+# Aplanar las exógenas en el mismo orden y asegurar orden por fecha
+exogenas_vec <- as.data.frame(train_exogenas_estacionarias)
+exogenas_vec <- exogenas_vec[order(rownames(exogenas_vec)), ]
+
+# Correlación
+correlaciones_pib <- cor(cbind(pib_vec, exogenas_vec))
+print("Correlaciones entre PIB y exógenas:")
+print(correlaciones_pib)
+
+# Seleccionar solo exógenas con |cor| > umbral
+umbral <- 0.025
+exogenas_significativas_PIB <- exogenas_vec[, abs(correlaciones_pib["pib_vec", -1]) > umbral, drop=FALSE]
+
+print("Exógenas seleccionadas para el modelo de PIB:")
+print(colnames(exogenas_significativas_PIB))
+
+# Seleccionar solo las variables significativas
+train_exogenas_significativas_PIB <- train_exogenas_estacionarias[, colnames(exogenas_significativas_PIB), drop = FALSE]
+test_exogenas_significativas_PIB <- test_exogenas_estacionarias[, colnames(exogenas_significativas_PIB), drop = FALSE]
+
+
+##################################################################################################################################
 #--------------------------------     MODELO ARIMAX - AUTOARIMA PIB    ------------------------------------------------------
 # ------------ MODELO
 modelo_arimax_autoarima_pib_correlacionada <- auto.arima(
   train_pib_estacionaria_ARIMAX,
   seasonal = FALSE,
   d = 0,
-  xreg = exogenas_significativas_PIB
+  xreg = train_exogenas_significativas_PIB
 )
 
 # ------------ PREDICCION
@@ -1023,8 +1013,8 @@ forecast_revertido_cor <- exp(revert_diff1)
 
 
 # -------------------- EVALUAR ACCURACY -----------------
-accuracy_arimax_cor <- forecast::accuracy(forecast_revertido_cor, test_pib)
-print(accuracy_arimax_cor)
+accuracy_arimax_autoarima_pib_cor <- forecast::accuracy(forecast_revertido_cor, test_pib)
+print(accuracy_arimax_autoarima_pib_cor)
 
 
 
@@ -1035,7 +1025,7 @@ print(accuracy_arimax_cor)
 modelo_arimax_arima_pib_cor <- Arima(
   train_pib_estacionaria_ARIMAX,
   order = c(1,0,0),
-  xreg = exogenas_significativas_PIB
+  xreg = train_exogenas_significativas_PIB
 )
 
 # Predicción
@@ -1053,6 +1043,8 @@ forecast_arimax_arima_pib_revertida_cor <- exp(revert_diff1_cor)
 # Accuracy
 accuracy_arimax_arima_pib_cor <- forecast::accuracy(forecast_arimax_arima_pib_revertida_cor, test_pib)
 print(accuracy_arimax_arima_pib_cor)
+
+
 
 
 
@@ -1260,7 +1252,8 @@ series_PIB_trimestrales <- readRDS("Series_Temporales/Trimestrales/gdp_ts_trimes
 
 #Aplicaremos segunda diferencia y lag=4 (Como hicimos anteriormente)
 PIB_estacionaria_log<- log(series_PIB_trimestrales)
-PIB_estacionaria <- diff(diff(PIB_estacionaria_log, lag=4))
+PIB_log_diff_seasonal <- diff(PIB_estacionaria_log, lag = 4)
+PIB_estacionaria <- diff(PIB_log_diff_seasonal, differences = 1)
 tsdisplay(PIB_estacionaria)
 
 #Preparar la serie orginal de las exogenas y diferenciar
@@ -1308,6 +1301,7 @@ prediccion_final_arimax_arima_PIB <- forecast(
 )
 
 # -------------------- REVERTIR DIFERENCIAS -----------------
+PIB_estacionaria_log
 # Predicción diferenciada (segunda diferencia con lag=4)
 pred <- prediccion_final_arimax_arima_PIB$mean
 revert_diff1 <- diffinv(pred, differences = 1, xi = tail(PIB_log_diff_seasonal, 1))
@@ -1361,79 +1355,79 @@ ggplot(df_plot_Arimax_arima_PIB, aes(x = Fecha, y = PIB)) +
 
 
 
-###################################################################################################################################
-#########################               VALIDACIÓN CRUZADA (tsCV) PARA IPC Y PIB                   ###############################
-###################################################################################################################################
-
-# Función  para calcular RMSE desde tsCV
-calc_rmse_tscv <- function(ts_data, f_model, h = 2, nombre = "Modelo") {
-  errores <- forecast::tsCV(ts_data, f_model, h = h)
-  rmse <- sqrt(colMeans(errores^2, na.rm = TRUE))  # RMSE correcto
-  data.frame(Modelo = nombre,
-             Horizonte = 1:h,
-             RMSE = rmse)
-}
-
-#-------------------------------------------------------
-# AUTOARIMA (sin estacionalidad)
-#-------------------------------------------------------
-f_autoarima <- function(x, h) {
-  forecast(forecast::auto.arima(x, seasonal = FALSE, d = 0, D = 0), h = h)
-}
-
-#-------------------------------------------------------
-# ARIMA manual
-#-------------------------------------------------------
-f_arima_ipc <- function(x, h) {
-  forecast(forecast::arima(x, order = c(1, 0, 0)), h = h)
-}
-
-f_arima_pib <- function(x, h) {
-  forecast(forecast::arima(x, order = c(2, 0, 2)), h = h)
-}
-
-#-------------------------------------------------------
-# SARIMA 
-#-------------------------------------------------------
-f_sarima <- function(x, h) {
-  forecast(forecast::auto.arima(x,
-                                stepwise = FALSE,
-                                approximation = FALSE,
-                                seasonal = TRUE), h = h)
-}
-
-# -- IPC
-rmse_auto_ipc  <- calc_rmse_tscv(train_ipc_estacionaria, f_autoarima, h = 2, nombre = "AutoARIMA")
-#rmse_arima_ipc <- calc_rmse_tscv(train_ipc_estacionaria, f_arima_ipc,  h = 2, nombre = "ARIMA")
-rmse_sarima_ipc <- calc_rmse_tscv(train_ipc_estacionaria, f_sarima,   h = 2, nombre = "SARIMA")
-
-rmse_total_ipc <- rbind(rmse_auto_ipc, rmse_sarima_ipc)
-
-ggplot(rmse_total_ipc, aes(x = Horizonte, y = RMSE, color = Modelo)) +
-  geom_line(size = 1) +
-  geom_point(size = 2) +
-  scale_color_manual(values = c(paleta[1], paleta[2], paleta[3])) +
-  theme_minimal() +
-  labs(title = "Validación cruzada (RMSE) - Modelos IPC",
-       x = "Horizonte (h)",
-       y = "RMSE")
-
-
-# --- PIB
-rmse_auto_pib  <- calc_rmse_tscv(train_pib_estacionaria, f_autoarima,  h = 2, nombre = "AutoARIMA")
-rmse_arima_pib <- calc_rmse_tscv(train_pib_estacionaria, f_arima_pib,  h = 2, nombre = "ARIMA")
-rmse_sarima_pib <- calc_rmse_tscv(train_pib_estacionaria, f_sarima,    h = 2, nombre = "SARIMA")
-
-rmse_total_pib <- rbind(rmse_auto_pib, rmse_arima_pib, rmse_sarima_pib)
-
-ggplot(rmse_total_pib, aes(x = Horizonte, y = RMSE, color = Modelo)) +
-  geom_line(size = 1) +
-  geom_point(size = 2) +
-  scale_color_manual(values = c(paleta[1], paleta[2], paleta[3])) +
-  theme_minimal() +
-  labs(title = "Validación cruzada (RMSE) - Modelos PIB",
-       x = "Horizonte (h)",
-       y = "RMSE")
-
-
-
+# ###################################################################################################################################
+# #########################               VALIDACIÓN CRUZADA (tsCV) PARA IPC Y PIB                   ###############################
+# ###################################################################################################################################
+# 
+# # Función  para calcular RMSE desde tsCV
+# calc_rmse_tscv <- function(ts_data, f_model, h = 2, nombre = "Modelo") {
+#   errores <- forecast::tsCV(ts_data, f_model, h = h)
+#   rmse <- sqrt(colMeans(errores^2, na.rm = TRUE))  # RMSE correcto
+#   data.frame(Modelo = nombre,
+#              Horizonte = 1:h,
+#              RMSE = rmse)
+# }
+# 
+# #-------------------------------------------------------
+# # AUTOARIMA (sin estacionalidad)
+# #-------------------------------------------------------
+# f_autoarima <- function(x, h) {
+#   forecast(forecast::auto.arima(x, seasonal = FALSE, d = 0, D = 0), h = h)
+# }
+# 
+# #-------------------------------------------------------
+# # ARIMA manual
+# #-------------------------------------------------------
+# f_arima_ipc <- function(x, h) {
+#   forecast(forecast::arima(x, order = c(1, 0, 0)), h = h)
+# }
+# 
+# f_arima_pib <- function(x, h) {
+#   forecast(forecast::arima(x, order = c(2, 0, 2)), h = h)
+# }
+# 
+# #-------------------------------------------------------
+# # SARIMA 
+# #-------------------------------------------------------
+# f_sarima <- function(x, h) {
+#   forecast(forecast::auto.arima(x,
+#                                 stepwise = FALSE,
+#                                 approximation = FALSE,
+#                                 seasonal = TRUE), h = h)
+# }
+# 
+# # -- IPC
+# rmse_auto_ipc  <- calc_rmse_tscv(train_ipc_estacionaria, f_autoarima, h = 2, nombre = "AutoARIMA")
+# #rmse_arima_ipc <- calc_rmse_tscv(train_ipc_estacionaria, f_arima_ipc,  h = 2, nombre = "ARIMA")
+# rmse_sarima_ipc <- calc_rmse_tscv(train_ipc_estacionaria, f_sarima,   h = 2, nombre = "SARIMA")
+# 
+# rmse_total_ipc <- rbind(rmse_auto_ipc, rmse_sarima_ipc)
+# 
+# ggplot(rmse_total_ipc, aes(x = Horizonte, y = RMSE, color = Modelo)) +
+#   geom_line(size = 1) +
+#   geom_point(size = 2) +
+#   scale_color_manual(values = c(paleta[1], paleta[2], paleta[3])) +
+#   theme_minimal() +
+#   labs(title = "Validación cruzada (RMSE) - Modelos IPC",
+#        x = "Horizonte (h)",
+#        y = "RMSE")
+# 
+# 
+# # --- PIB
+# rmse_auto_pib  <- calc_rmse_tscv(train_pib_estacionaria, f_autoarima,  h = 2, nombre = "AutoARIMA")
+# rmse_arima_pib <- calc_rmse_tscv(train_pib_estacionaria, f_arima_pib,  h = 2, nombre = "ARIMA")
+# rmse_sarima_pib <- calc_rmse_tscv(train_pib_estacionaria, f_sarima,    h = 2, nombre = "SARIMA")
+# 
+# rmse_total_pib <- rbind(rmse_auto_pib, rmse_arima_pib, rmse_sarima_pib)
+# 
+# ggplot(rmse_total_pib, aes(x = Horizonte, y = RMSE, color = Modelo)) +
+#   geom_line(size = 1) +
+#   geom_point(size = 2) +
+#   scale_color_manual(values = c(paleta[1], paleta[2], paleta[3])) +
+#   theme_minimal() +
+#   labs(title = "Validación cruzada (RMSE) - Modelos PIB",
+#        x = "Horizonte (h)",
+#        y = "RMSE")
+# 
+# 
+# 
