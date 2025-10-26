@@ -1357,9 +1357,10 @@ PIB_estacionaria_arimax <- window(PIB_estacionaria, start=c(1999,2), end=c(2022,
 
 
 #Aplicamos el modelos osbre la series diferenciada
-modelo_final_arimax_arima_PIB <- Arima(
+modelo_final_arimax_arima_PIB <- auto.arima(
   PIB_estacionaria_arimax,
-  order = c(1,0,0),
+  seasonal = FALSE,
+  d=0,
   xreg = exogenas_estacionarias_todas
 )
 summary(modelo_final_arimax_arima_PIB)
@@ -1436,8 +1437,71 @@ ggplot(df_plot_Arimax_arima_PIB, aes(x = Fecha, y = PIB)) +
 
 
 
+###############################################################################################################################################
+#############################################################################################################################################
+##################3             COMAPRACION PREDICCIONES EXPERTOS     ################33
+
+#----------------   IPC (Expertos: del 2021 al 202 el IPC aumento 2,25%)
+
+# Valores promedio por año
+# Valores de 2021
+IPC_2021 <- window(df_IPC_Completo, start=c(2021,1), end=c(2021,4))
+IPC_2022 <- window(df_IPC_Completo, start=c(2022,1), end=c(2022,4))
+
+# Media anual
+mean_IPC_2021 <- mean(IPC_2021)
+mean_IPC_2022 <- mean(IPC_2022)
+
+# Variación porcentual anual
+variacion_IPC <- (mean_IPC_2022 - mean_IPC_2021) / mean_IPC_2021 * 100
+variacion_IPC
 
 
+# Variación porcentual
+variacion_IPC <- (IPC_2022 - IPC_2021) / IPC_2021 * 100
+variacion_IPC
+
+
+
+# Valores de 2021 y 2022
+PIB_2021 <- window(df_PIB_Completo, start=c(2021,1), end=c(2021,4))
+PIB_2022 <- window(df_PIB_Completo, start=c(2022,1), end=c(2022,4))
+
+# 1️⃣ Media anual
+mean_PIB_2021 <- mean(PIB_2021)
+mean_PIB_2022 <- mean(PIB_2022)
+
+# 2️⃣ Variación porcentual anual (media anual)
+variacion_PIB_anual <- (mean_PIB_2022 - mean_PIB_2021) / mean_PIB_2021 * 100
+
+# 3️⃣ Variación porcentual trimestre a trimestre
+variacion_PIB_trimestral <- (PIB_2022 - PIB_2021) / PIB_2021 * 100
+# Extraer los valores como vectores
+PIB_2021_vec <- as.numeric(window(df_PIB_Completo, start=c(2021,1), end=c(2021,4)))
+PIB_2022_vec <- as.numeric(window(df_PIB_Completo, start=c(2022,1), end=c(2022,4)))
+
+# Variación porcentaje trimestre a trimestre
+variacion_PIB_trimestral <- (PIB_2022_vec - PIB_2021_vec) / PIB_2021_vec * 100
+variacion_PIB_trimestral
+
+
+# Resultados
+mean_PIB_2021
+mean_PIB_2022
+variacion_PIB_anual
+variacion_PIB_trimestral
+
+
+# Extraer valores de 2021 y 2022 como vectores
+IPC_2021_vec <- as.numeric(window(df_IPC_Completo, start=c(2021,1), end=c(2021,4)))
+IPC_2022_vec <- as.numeric(window(df_IPC_Completo, start=c(2022,1), end=c(2022,4)))
+
+# Variación porcentaje trimestre a trimestre
+variacion_IPC_trimestral <- (IPC_2022_vec - IPC_2021_vec) / IPC_2021_vec * 100
+variacion_IPC_trimestral
+
+
+#IPC = 130,8
 # ###################################################################################################################################
 # #########################               VALIDACIÓN CRUZADA (tsCV) PARA IPC Y PIB                   ###############################
 # ###################################################################################################################################
