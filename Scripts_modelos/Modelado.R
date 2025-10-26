@@ -1264,6 +1264,10 @@ summary(modelo_final_arima_IPC)
 
 # Validación de residuales
 hist(residuals(modelo_final_arima_IPC), main="Histograma de residuales ARIMA IPC", xlab="Residual", col=paleta[2])
+#png("checkresiduals_IPC.png", width = 1800, height = 1400, res = 150)
+checkresiduals(modelo_final_arima_IPC)
+#dev.off()
+
 checkresiduals(modelo_final_arima_IPC)
 
 boxtest_arima_ipc <- Box.test(residuals(modelo_final_arima_IPC), lag = round(log(length(series_IPC_trimestrales))), type="Ljung-Box")
@@ -1367,7 +1371,9 @@ summary(modelo_final_arimax_arima_PIB)
 
 # Validación de residuales
 hist(residuals(modelo_final_arimax_arima_PIB), main="Histograma de residuales Arimax-arima PIB", xlab="Residual", col=paleta[2])
+#png("checkresiduals_PIB.png", width = 1800, height = 1400, res = 150)
 checkresiduals(modelo_final_arimax_arima_PIB)
+#dev.off()
 
 boxtest_arima_pib<- Box.test(residuals(modelo_final_arimax_arima_PIB), lag = round(log(length(series_PIB_trimestrales))), type="Ljung-Box")
 if (boxtest_arima_pib$p.value > 0.05) {
