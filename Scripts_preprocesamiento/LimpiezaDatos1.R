@@ -1049,13 +1049,28 @@ par(mfrow=c(1,1))
 #dev.off()
 
 #-------    ACF Y PACF
-#png("ACF_PIB_Segunda_Diferencia.png", width = 1800, height = 1400, res= 150)
-ggAcf(train_gdp_estacionaria) + ggtitle("ACF de PIB (Segunda diferencia)") + theme_minimal()
-#dev.off() 
+#png("ACF_PIB_Segunda_Diferencia.png", width = 1800, height = 1400, res=150)
+ggAcf(train_gdp_estacionaria) +
+  ggtitle("ACF de PIB (Segunda Diferencia)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 20, face = "bold"),
+    axis.title = element_text(size = 16),
+    axis.text = element_text(size = 14)
+  )
+#dev.off()
 
-#png("PACF_PIB_Segunda_Diferencia.png", width = 1800, height = 1400, res= 150)
-ggPacf(train_gdp_estacionaria) + ggtitle("PACF de PIB (Segunda diferencia)") + theme_minimal()
-#dev.off() 
+#png("PACF_PIB_Segunda_Diferencia.png", width = 1800, height = 1400, res=150)
+ggPacf(train_gdp_estacionaria) +
+  ggtitle("PACF de PIB (Segunda Diferencia)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 20, face = "bold"),
+    axis.title = element_text(size = 16),
+    axis.text = element_text(size = 14)
+  )
+#dev.off()
+
 
 #-------   QQ-PLOT
 #png("PIB_QQ_gdp.png", width = 1600, height = 1200, res = 150)
@@ -1127,14 +1142,28 @@ par(mfrow=c(1,1))
 #dev.off()
 
 #-------    ACF Y PACF
-#png("ACF_IPC_Primera_Diferencia.png",  width = 1800, height = 1400, res= 150)
-ggAcf(train_ipc_estacionaria) + ggtitle("ACF de IPC (Primera diferencia)") + theme_minimal()
-title(main = "ACF de IPC (Primera Diferencia)")
-#dev.off() 
+#png("ACF_IPC_Primera_Diferencia.png", width = 1800, height = 1400, res = 150)
+ggAcf(train_ipc_estacionaria) +
+  ggtitle("ACF de IPC (Primera Diferencia)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 20, face = "bold"),
+    axis.title = element_text(size = 16),
+    axis.text = element_text(size = 14)
+  )
+#dev.off()
 
-#png("PACF_IPC_Primera_Diferencia.png", width = 1800, height = 1400, res= 150)
-ggPacf(train_ipc_estacionaria) + ggtitle("PACF de IPC (Primera diferencia)") + theme_minimal()
-#dev.off()   
+#png("PACF_IPC_Primera_Diferencia.png", width = 1800, height = 1400, res = 150)
+ggPacf(train_ipc_estacionaria) +
+  ggtitle("PACF de IPC (Primera Diferencia)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 20, face = "bold"),
+    axis.title = element_text(size = 16),
+    axis.text = element_text(size = 14)
+  )
+#dev.off()
+
 
 #-------   QQ-PLOT 
 png("IPC_QQ.png",  width = 1800, height = 1400, res= 150)
