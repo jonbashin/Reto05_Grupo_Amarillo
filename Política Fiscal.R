@@ -44,6 +44,16 @@ ggplot(politica_fiscal, aes(x = Fecha, y = Deuda_PIB)) +
   ) +
   theme_minimal(base_size = 14)
 
+#Evolución del Gasto Público
+ggplot(politica_fiscal, aes(x = Fecha, y = Gasto_Público)) +
+  geom_line(color = "#27AE60", size = 1) +
+  geom_point(color = "#27AE60", size = 1.5) +
+  labs(title = "Evolución del Gasto Público de Australia",
+       subtitle = "Como porcentaje del PIB",
+       x = "Fecha", y = "Gasto Público (% PIB)") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+
 #Relación entre Déficit Fiscal y Gasto Público
 ggplot(politica_fiscal, aes(x = Gasto_Público, y = Déficit_Fiscal)) +
   geom_point(color = "#7A1E5A", size = 3, alpha = 0.7) +
@@ -55,7 +65,7 @@ ggplot(politica_fiscal, aes(x = Gasto_Público, y = Déficit_Fiscal)) +
   ) +
   theme_minimal(base_size = 14)
 
-#
+#Comparación entre Déficit Fiscal Y Deuda 
 fiscal_long<-politica_fiscal %>%
   select(Fecha, Déficit_Fiscal, Deuda_PIB) %>%
   pivot_longer(cols = c(Déficit_Fiscal, Deuda_PIB),
@@ -73,7 +83,7 @@ ggplot(fiscal_long, aes(x = Fecha, y = valor, color = variable)) +
   ) +
   theme_minimal(base_size = 14)
 
-# --- Gráfico 2: Relación entre Déficit y Deuda ---
+#Relación entre Déficit y Deuda
 g2 <- ggplot(politica_fiscal, aes(x = Déficit_Fiscal, y = Deuda_PIB)) +
   geom_point(color = "#8e44ad", size = 3) +
   geom_smooth(method = "lm", se = FALSE, color = "black", linetype = "dashed") +
@@ -83,20 +93,72 @@ g2 <- ggplot(politica_fiscal, aes(x = Déficit_Fiscal, y = Deuda_PIB)) +
 
 ggplotly(g2)
 
-# --- Gráfico 3: Relación entre Gasto Público y Déficit ---
-g3 <- ggplot(politica_fiscal, aes(x = Gasto_Público, y = Déficit_Fiscal)) +
-  geom_point(color = "#16a085", size = 3) +
-  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = "dotted") +
-  labs(title = "Relación entre Gasto Público y Déficit Fiscal",
-       x = "Gasto Público (% PIB)", y = "Déficit Fiscal (% PIB)") +
-  theme_minimal(base_size = 13)
 
-ggplotly(g3)
-cat(paste("\n Política Fiscal de Australia (1990-2020)
-Australia ha experimentado ciclos fiscales marcados por el contexto económico. Durante los años 90 y principios de los 2000, el país logró generar superávits fiscales y reducir significativamente su deuda pública (hasta aproximadamente el 10% del PIB). 
+# 5. GRÁFICOS DE BARRAS PARA COMPARACIÓN ENTRE AÑOS
+# ---------------------------------------------------------
+# Si tienes datos anuales, crear gráfico de barras comparativo
+if(length(unique(year(politica_fiscal$Fecha))) > 1) {
+  # Resumir por año (promedio o último valor)
+  anual_data <- politica_fiscal %>%
+    mutate(Año = year(Fecha)) %>%
+    group_by(Año) %>%
+    summarise(across(c(Déficit_Fiscal, Deuda_PIB), 
+                     mean, na.rm = TRUE)) %>%
+    pivot_longer(cols = c(Déficit_Fiscal, Deuda_PIB),
+                 names_to = "Variable", values_to = "Valor")
+  
+  p_barras <- ggplot(anual_data, aes(x = factor(Año), y = Valor, fill = Variable)) +
+    geom_col(position = "dodge") +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+    labs(title = "Comparación Anual: Déficit Fiscal vs Deuda Pública",
+         subtitle = "Australia - Porcentaje del PIB",
+         x = "Año", y = "Porcentaje del PIB") +
+    scale_fill_manual(values = c("Déficit_Fiscal" = "#E74C3C",
+                                 "Deuda_PIB" = "#3498DB"),
+                      labels = c("Déficit Fiscal", "Deuda/PIB")) +
+    theme_minimal() +
+    theme(plot.title = element_text(face = "bold"),
+          axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  print(p_barras)
+}
 
-Sin embargo, a partir de 2008, la crisis financiera global provocó un cambio estructural: la respuesta de política fiscal anticíclica generó déficits crecientes que impulsaron el aumento sostenido de la deuda pública.
+# 8. RESÚMEN ESTADÍSTICO
+# ---------------------------------------------------------
 
-Los mayores déficits se registraron tras la crisis de 2008-2009 (cercanos al -4% del PIB) y especialmente durante la pandemia de 2020 (hasta -7% del PIB), reflejando expansiones fiscales masivas. Como resultado, la deuda pública alcanzó su nivel histórico más alto, aproximándose al 50% del PIB hacia finales del período analizado.
+cat("RESUMEN ESTADÍSTICO - POLÍTICA FISCAL AUSTRALIA\n")
+cat("=============================================\n\n")
 
-Un factor clave en esta dinámica es la volatilidad de los ciclos económicos y los precios de materias primas, que afectan simultáneamente los ingresos y gastos públicos, determinando el saldo fiscal general."))
+# Estadísticas descriptivas
+estadisticas <- politica_fiscal %>%
+  select(-Fecha) %>%
+  map_df(~data.frame(
+    Media = mean(., na.rm = TRUE),
+    Mediana = median(., na.rm = TRUE),
+    Mínimo = min(., na.rm = TRUE),
+    Máximo = max(., na.rm = TRUE),
+    Desviación = sd(., na.rm = TRUE)
+  ), .id = "Variable")
+
+print(estadisticas)
+
+# GRÁFICO DE RELACIÓN MEJORADO
+p_relacion_mejorado <- ggplot(politica_fiscal, aes(x = Déficit_Fiscal, y = Deuda_PIB)) +
+  geom_point(aes(color = year(Fecha), size = abs(Déficit_Fiscal)), alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE, color = "#8E44AD", linetype = "dashed") +
+  geom_text(aes(label = ifelse(year(Fecha) %in% c(1990, 2000, 2010, 2020, 2023), 
+                               as.character(year(Fecha)), "")), 
+            hjust = -0.2, vjust = 0.5, size = 3) +
+  scale_color_gradient2(low = "#3498DB", mid = "#2ECC71", high = "#E74C3C", 
+                        midpoint = 2005, name = "Año") +
+  scale_size_continuous(name = "Magnitud del Déficit") +
+  labs(title = "RELACIÓN ENTRE DÉFICIT FISCAL Y DEUDA PÚBLICA: AUSTRALIA",
+       subtitle = "Cada punto representa un año | Línea morada: tendencia general",
+       x = "Déficit Fiscal (% PIB) →", 
+       y = "Deuda/PIB (% PIB) ↑",
+       caption = "Déficit negativo = Gastos > Ingresos\nDéficit positivo = Superávit") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", size = 14))
+
+print(p_relacion_mejorado)
+
