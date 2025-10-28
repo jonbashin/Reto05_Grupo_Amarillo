@@ -76,32 +76,6 @@ ggplot(balanza_pagos, aes(x = Fecha, y = Balanza_Cuenta_Corriente / 1e9)) +
     axis.text.x = element_text(angle = 45, hjust = 1)
   )
 
-# 3. GRÁFICO DE VARIACIÓN ANUAL
-ggplot(balanza_pagos %>% filter(!is.na(Variacion_Anual)), 
-       aes(x = Fecha, y = Variacion_Anual / 1e9)) +
-  geom_col(aes(fill = Variacion_Anual > 0), width = 200) +
-  geom_text(aes(label = round(Variacion_Anual / 1e9, 1)),
-            vjust = ifelse(balanza_pagos$Variacion_Anual > 0, -0.5, 1.5),
-            size = 3.5, fontface = "bold") +
-  scale_fill_manual(values = c("TRUE" = "#27ae60", "FALSE" = "#c0392b"),
-                    labels = c("Empeoramiento", "Mejora"),
-                    name = "Tendencia") +
-  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
-  labs(
-    title = "VARIACIÓN ANUAL DE LA BALANZA DE PAGOS",
-    subtitle = "Cambio respecto al año anterior (Miles de millones USD)",
-    x = "Año",
-    y = "Variación Anual (Miles de millones USD)",
-    caption = "Valores positivos = mejora (menos déficit o más superávit)"
-  ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5),
-    legend.position = "top",
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
-
 # 4. ANÁLISIS DE TENDENCIA
 ggplot(balanza_pagos, aes(x = year(Fecha), y = Balanza_Cuenta_Corriente / 1e9)) +
   geom_smooth(method = "lm", se = TRUE, color = "#e67e22", fill = "#e67e22", alpha = 0.2) +
@@ -187,7 +161,7 @@ cat("
    • Renta neta: Pagos de intereses y dividendos a inversores extranjeros
    • Precios commodities: Caída post-2019 afectó ingresos de exportación
    
-⚠️  RIESGOS IDENTIFICADOS:
+⚠  RIESGOS IDENTIFICADOS:
    • Déficit estructural: No es coyuntural, es persistente
    • Dependencia de capital extranjero para financiar el déficit
    • Sensibilidad a crisis financieras globales
@@ -565,7 +539,6 @@ cat(paste("\n📊 HALLAZGOS CLAVE:\n\n",
           "• 2008-2020: Ralentización por crisis y pandemia\n",
           "• 2020-2024: Recuperación fuerte ($462.7B → $626.1B)\n\n",
           "📈 TENDENCIA: Crecimiento exponencial a largo plazo\n",
-          "⚠️  2024: Máximo histórico ($626.1B)\n",
+          "⚠  2024: Máximo histórico ($626.1B)\n",
           "📊 Tasa promedio crecimiento anual:", round(tasa_promedio, 2), "%\n"))
 cat("═══════════════════════════════════════════════════════════\n")
-

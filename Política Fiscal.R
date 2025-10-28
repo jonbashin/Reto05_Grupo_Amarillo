@@ -22,17 +22,33 @@ colnames(politica_fiscal) <- c("Fecha", "Déficit_Fiscal", "Deuda_PIB", "Gasto_P
 
 #Convertir la fecha a formato fecha
 politica_fiscal$Fecha <- as.Date(politica_fiscal$Fecha)
+#Crear columna del Año
+politica_fiscal <- politica_fiscal %>%
+  mutate(Año = year(Fecha))
 
 #Evolución del Déficit Fiscal
-ggplot(politica_fiscal, aes(x = Fecha, y = Déficit_Fiscal)) +
-  geom_line(color = "#E20074", size = 1) +
-  geom_hline(yintercept = 0, color = "gray40", linetype = "dashed") +
+resumen_anual <- politica_fiscal %>%
+  group_by(Año) %>%
+  summarise(
+    Media_Deficit = mean(Déficit_Fiscal, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(resumen_anual, aes(x = Año, y = Media_Deficit)) +
+  geom_col(fill = ifelse(resumen_anual$Media_Deficit < 0, "#E20074", "#6DBC00"), 
+           alpha = 0.8) +
+  geom_hline(yintercept = 0, color = "black", size = 1) +
   labs(
-    title = "Evolución del déficit fiscal en Australia",
-    x = "Fecha",
-    y = "Déficit fiscal"
+    title = "Déficit Fiscal Promedio Anual de Australia",
+    x = "Año",
+    y = "% del PIB"
   ) +
-  theme_minimal(base_size = 14)
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  )
 
 #Evolución de la Deuda Pública (% de PIB) en Australia
 ggplot(politica_fiscal, aes(x = Fecha, y = Deuda_PIB)) +
@@ -92,36 +108,6 @@ g2 <- ggplot(politica_fiscal, aes(x = Déficit_Fiscal, y = Deuda_PIB)) +
   theme_minimal(base_size = 13)
 
 ggplotly(g2)
-
-
-# 5. GRÁFICOS DE BARRAS PARA COMPARACIÓN ENTRE AÑOS
-# ---------------------------------------------------------
-# Si tienes datos anuales, crear gráfico de barras comparativo
-if(length(unique(year(politica_fiscal$Fecha))) > 1) {
-  # Resumir por año (promedio o último valor)
-  anual_data <- politica_fiscal %>%
-    mutate(Año = year(Fecha)) %>%
-    group_by(Año) %>%
-    summarise(across(c(Déficit_Fiscal, Deuda_PIB), 
-                     mean, na.rm = TRUE)) %>%
-    pivot_longer(cols = c(Déficit_Fiscal, Deuda_PIB),
-                 names_to = "Variable", values_to = "Valor")
-  
-  p_barras <- ggplot(anual_data, aes(x = factor(Año), y = Valor, fill = Variable)) +
-    geom_col(position = "dodge") +
-    geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
-    labs(title = "Comparación Anual: Déficit Fiscal vs Deuda Pública",
-         subtitle = "Australia - Porcentaje del PIB",
-         x = "Año", y = "Porcentaje del PIB") +
-    scale_fill_manual(values = c("Déficit_Fiscal" = "#E74C3C",
-                                 "Deuda_PIB" = "#3498DB"),
-                      labels = c("Déficit Fiscal", "Deuda/PIB")) +
-    theme_minimal() +
-    theme(plot.title = element_text(face = "bold"),
-          axis.text.x = element_text(angle = 45, hjust = 1))
-  
-  print(p_barras)
-}
 
 # 8. RESÚMEN ESTADÍSTICO
 # ---------------------------------------------------------

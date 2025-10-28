@@ -157,57 +157,129 @@ cat("
 ##################################################################
 ##################################################################
 ##################################################################
+# ========================================
+# ANÁLISIS COMPLETO: POLÍTICA FISCAL AUSTRALIA
+# ========================================
 
-
-# 1️⃣ Cargar librerías si no las tienes ya
-library(readr)
-library(dplyr)
+# 1️⃣ CARGAR LIBRERÍAS
 library(ggplot2)
+library(dplyr)
+library(tidyr)
 library(lubridate)
 
-# 2️⃣ Cargar datos
-deficit <- read.csv("DATOS/Externos/FISCAL/Deficit_Fiscal.csv")
-deuda <- read.csv("DATOS/Externos/FISCAL/Deuda_PIB.csv")
-gasto <- read.csv("DATOS/Externos/FISCAL/Gasto_Publico.csv")
+# 2️⃣ CARGAR DATOS
+deficit_fiscal <- read.csv("DATOS/Externos/POLÍTICA FISCAL/DEFICIT FISCAL.csv")
+deuda <- read.csv("DATOS/Externos/POLÍTICA FISCAL/DEUDA EN % DE PIB.csv")
+gasto_publico <- read.csv("DATOS/Externos/POLÍTICA FISCAL/GASTO PÚBLICO.csv")
 
-# 3️⃣ Renombrar columnas para que sea más claro
-deficit <- deficit %>% rename(Fecha = observation_date, Deficit_PIB = Value)
-deuda <- deuda %>% rename(Fecha = observation_date, Deuda_PIB = Value)
-gasto <- gasto %>% rename(Fecha = observation_date, Gasto_Publico = Value)
+# 3️⃣ RENOMBRAR COLUMNAS
+deficit_fiscal <- deficit_fiscal %>% 
+  rename(Fecha = observation_date, Deficit_Fiscal = GGNLBAAUA188N)
 
-# Convertir fecha a Date y año
-deficit$Fecha <- as.Date(deficit$Fecha)
-deficit$Año <- year(deficit$Fecha)
+deuda <- deuda %>% 
+  rename(Fecha = observation_date, Deuda_PIB = GGGDTAAUA188N)
 
+gasto_publico <- gasto_publico %>% 
+  rename(Fecha = observation_date, Gasto_Publico = NAEXKP03AUQ189S)
+
+# 4️⃣ CONVERTIR FECHAS
+deficit_fiscal$Fecha <- as.Date(deficit_fiscal$Fecha)
 deuda$Fecha <- as.Date(deuda$Fecha)
-deuda$Año <- year(deuda$Fecha)
+gasto_publico$Fecha <- as.Date(gasto_publico$Fecha)
 
-gasto$Fecha <- as.Date(gasto$Fecha)
-gasto$Año <- year(gasto$Fecha)
+# 5️⃣ FUSIONAR DATASETS
+politica_fiscal <- deficit_fiscal %>%
+  full_join(deuda, by = "Fecha") %>%
+  full_join(gasto_publico, by = "Fecha") %>%
+  arrange(Fecha) %>%
+  # Filtrar solo período con datos completos (desde 1989)
+  filter(Fecha >= as.Date("1989-01-01"))
 
-# 4️⃣ Calcular algunas estadísticas (media, max, min)
-summary_deficit <- deficit %>% summarise(Media = mean(Deficit_PIB, na.rm=TRUE),
-                                         Maximo = max(Deficit_PIB, na.rm=TRUE),
-                                         Minimo = min(Deficit_PIB, na.rm=TRUE))
-summary_deuda <- deuda %>% summarise(Media = mean(Deuda_PIB, na.rm=TRUE),
-                                     Maximo = max(Deuda_PIB, na.rm=TRUE),
-                                     Minimo = min(Deuda_PIB, na.rm=TRUE))
-summary_gasto <- gasto %>% summarise(Media = mean(Gasto_Publico, na.rm=TRUE),
-                                     Maximo = max(Gasto_Publico, na.rm=TRUE),
-                                     Minimo = min(Gasto_Publico, na.rm=TRUE))
+politica_fiscal$Año <- year(politica_fiscal$Fecha)
 
-# 5️⃣ Graficar evolución de cada variable
-ggplot(deficit, aes(x=Año, y=Deficit_PIB)) +
-  geom_line(color="red", size=1) +
-  labs(title="Déficit Fiscal (% PIB)", x="Año", y="% del PIB") +
-  theme_minimal()
+# 6️⃣ ESTADÍSTICAS DESCRIPTIVAS
+cat("\n========== ESTADÍSTICAS DESCRIPTIVAS ==========\n")
+cat("\nDéficit Fiscal (% PIB):\n")
+print(summary(politica_fiscal$Deficit_Fiscal))
+cat("\nDeuda Pública (% PIB):\n")
+print(summary(politica_fiscal$Deuda_PIB))
 
-ggplot(deuda, aes(x=Año, y=Deuda_PIB)) +
-  geom_line(color="blue", size=1) +
-  labs(title="Deuda Pública (% PIB)", x="Año", y="% del PIB") +
-  theme_minimal()
 
-ggplot(gasto, aes(x=Año, y=Gasto_Publico)) +
-  geom_line(color="green", size=1) +
-  labs(title="Gasto Público", x="Año", y="Millones AUD") +
-  theme_minimal()
+
+
+# ========================================
+# GRÁFICO 4: RELACIÓN ENTRE DÉFICIT Y DEUDA (SCATTER)
+# ========================================
+ggplot(politica_fiscal, aes(x = Deficit_Fiscal, y = Deuda_PIB)) +
+  geom_point(size = 4, alpha = 0.6, color = "#8e44ad") +
+  geom_smooth(method = "lm", se = TRUE, color = "black", fill = "#cccccc", alpha = 0.2, size = 1) +
+  labs(
+    title = "Relación: Déficit Fiscal vs Deuda Pública",
+    x = "Déficit Fiscal (% PIB)",
+    y = "Deuda Pública (% PIB)"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    panel.grid.minor = element_blank()
+  )
+
+# ========================================
+# GRÁFICO 5: PROMEDIO ANUAL DE DÉFICIT
+# ========================================
+resumen_anual <- politica_fiscal %>%
+  group_by(Año) %>%
+  summarise(
+    Media_Deficit = mean(Deficit_Fiscal, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(resumen_anual, aes(x = Año, y = Media_Deficit)) +
+  geom_col(fill = ifelse(resumen_anual$Media_Deficit < 0, "#E20074", "#6DBC00"), 
+           alpha = 0.8) +
+  geom_hline(yintercept = 0, color = "black", size = 1) +
+  labs(
+    title = "Déficit Fiscal Promedio Anual de Australia",
+    x = "Año",
+    y = "% del PIB"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  )
+
+# ========================================
+# CORRELACIÓN Y RESUMEN
+# ========================================
+cat("\n========== CORRELACIÓN DÉFICIT-DEUDA ==========\n")
+correlacion <- cor(politica_fiscal$Deficit_Fiscal, politica_fiscal$Deuda_PIB, 
+                   use = "complete.obs")
+print(paste("Correlación:", round(correlacion, 3)))
+
+cat("\n========== AÑOS CLAVE ==========\n")
+cat("\nMáyor déficit:\n")
+print(politica_fiscal[which.min(politica_fiscal$Deficit_Fiscal), c("Año", "Deficit_Fiscal")])
+
+cat("\nMayor deuda:\n")
+print(politica_fiscal[which.max(politica_fiscal$Deuda_PIB), c("Año", "Deuda_PIB")])
+
+cat("\n========== CONTEXTO HISTÓRICO ==========\n")
+cat("
+1988-2007: Años de estabilidad y superávits fiscales
+  → Deuda pública baja (~10-20% PIB)
+
+2008-2009: Crisis Financiera Global
+  → Déficit alcanza -4% del PIB
+  → Comienzo del aumento de deuda pública
+
+2020: Pandemia COVID-19
+  → Déficit máximo: -7% del PIB
+  → Gasto público masivo en estímulo económico
+
+2020-2024: Recuperación parcial
+  → Deuda pública alcanza máximos históricos (~50% PIB)
+  → Déficit se modera pero permanece negativo
+")
+
