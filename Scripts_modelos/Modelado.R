@@ -1361,10 +1361,9 @@ PIB_estacionaria_arimax <- window(PIB_estacionaria, start=c(1999,2), end=c(2022,
 
 
 #Aplicamos el modelos osbre la series diferenciada
-modelo_final_arimax_arima_PIB <- auto.arima(
+modelo_final_arimax_arima_PIB <- Arima(
   PIB_estacionaria_arimax,
-  seasonal = FALSE,
-  d=0,
+  order= c(1,0,0),
   xreg = exogenas_estacionarias_todas
 )
 summary(modelo_final_arimax_arima_PIB)
@@ -1442,145 +1441,395 @@ ggplot(df_plot_Arimax_arima_PIB, aes(x = Fecha, y = PIB)) +
 
 
 
+# ###############################################################################################################################################
+# #############################################################################################################################################
+# ##################3             COMAPRACION PREDICCIONES EXPERTOS     ################33
+# 
+# #----------------   IPC (Expertos: del 2021 al 202 el IPC aumento 2,25%)
+# 
+# # Valores promedio por año
+# # Valores de 2021
+# IPC_2021 <- window(df_IPC_Completo, start=c(2021,1), end=c(2021,4))
+# IPC_2022 <- window(df_IPC_Completo, start=c(2022,1), end=c(2022,4))
+# 
+# # Media anual
+# mean_IPC_2021 <- mean(IPC_2021)
+# mean_IPC_2022 <- mean(IPC_2022)
+# 
+# # Variación porcentual anual
+# variacion_IPC <- (mean_IPC_2022 - mean_IPC_2021) / mean_IPC_2021 * 100
+# variacion_IPC
+# 
+# 
+# # Variación porcentual
+# variacion_IPC <- (IPC_2022 - IPC_2021) / IPC_2021 * 100
+# variacion_IPC
+# 
+# 
+# 
+# # Valores de 2021 y 2022
+# PIB_2021 <- window(df_PIB_Completo, start=c(2021,1), end=c(2021,4))
+# PIB_2022 <- window(df_PIB_Completo, start=c(2022,1), end=c(2022,4))
+# 
+# # Media anual
+# mean_PIB_2021 <- mean(PIB_2021)
+# mean_PIB_2022 <- mean(PIB_2022)
+# 
+# # Variación porcentual anual (media anual)
+# variacion_PIB_anual <- (mean_PIB_2022 - mean_PIB_2021) / mean_PIB_2021 * 100
+# 
+# # Variación porcentual trimestre a trimestre
+# variacion_PIB_trimestral <- (PIB_2022 - PIB_2021) / PIB_2021 * 100
+# # Extraer los valores como vectores
+# PIB_2021_vec <- as.numeric(window(df_PIB_Completo, start=c(2021,1), end=c(2021,4)))
+# PIB_2022_vec <- as.numeric(window(df_PIB_Completo, start=c(2022,1), end=c(2022,4)))
+# 
+# # Variación porcentaje trimestre a trimestre
+# variacion_PIB_trimestral <- (PIB_2022_vec - PIB_2021_vec) / PIB_2021_vec * 100
+# variacion_PIB_trimestral
+# 
+# 
+# # Resultados
+# mean_PIB_2021
+# mean_PIB_2022
+# variacion_PIB_anual
+# variacion_PIB_trimestral
+# 
+# 
+# # Extraer valores de 2021 y 2022 como vectores
+# IPC_2021_vec <- as.numeric(window(df_IPC_Completo, start=c(2021,1), end=c(2021,4)))
+# IPC_2022_vec <- as.numeric(window(df_IPC_Completo, start=c(2022,1), end=c(2022,4)))
+# 
+# # Variación porcentaje trimestre a trimestre
+# variacion_IPC_trimestral <- (IPC_2022_vec - IPC_2021_vec) / IPC_2021_vec * 100
+# variacion_IPC_trimestral
+# 
+# 
+# #IPC = 130,8
 
-###############################################################################################################################################
-#############################################################################################################################################
-##################3             COMAPRACION PREDICCIONES EXPERTOS     ################33
-
-#----------------   IPC (Expertos: del 2021 al 202 el IPC aumento 2,25%)
-
-# Valores promedio por año
-# Valores de 2021
-IPC_2021 <- window(df_IPC_Completo, start=c(2021,1), end=c(2021,4))
-IPC_2022 <- window(df_IPC_Completo, start=c(2022,1), end=c(2022,4))
-
-# Media anual
-mean_IPC_2021 <- mean(IPC_2021)
-mean_IPC_2022 <- mean(IPC_2022)
-
-# Variación porcentual anual
-variacion_IPC <- (mean_IPC_2022 - mean_IPC_2021) / mean_IPC_2021 * 100
-variacion_IPC
-
-
-# Variación porcentual
-variacion_IPC <- (IPC_2022 - IPC_2021) / IPC_2021 * 100
-variacion_IPC
 
 
 
-# Valores de 2021 y 2022
-PIB_2021 <- window(df_PIB_Completo, start=c(2021,1), end=c(2021,4))
-PIB_2022 <- window(df_PIB_Completo, start=c(2022,1), end=c(2022,4))
-
-# 1️⃣ Media anual
-mean_PIB_2021 <- mean(PIB_2021)
-mean_PIB_2022 <- mean(PIB_2022)
-
-# 2️⃣ Variación porcentual anual (media anual)
-variacion_PIB_anual <- (mean_PIB_2022 - mean_PIB_2021) / mean_PIB_2021 * 100
-
-# 3️⃣ Variación porcentual trimestre a trimestre
-variacion_PIB_trimestral <- (PIB_2022 - PIB_2021) / PIB_2021 * 100
-# Extraer los valores como vectores
-PIB_2021_vec <- as.numeric(window(df_PIB_Completo, start=c(2021,1), end=c(2021,4)))
-PIB_2022_vec <- as.numeric(window(df_PIB_Completo, start=c(2022,1), end=c(2022,4)))
-
-# Variación porcentaje trimestre a trimestre
-variacion_PIB_trimestral <- (PIB_2022_vec - PIB_2021_vec) / PIB_2021_vec * 100
-variacion_PIB_trimestral
-
-
-# Resultados
-mean_PIB_2021
-mean_PIB_2022
-variacion_PIB_anual
-variacion_PIB_trimestral
-
-
-# Extraer valores de 2021 y 2022 como vectores
-IPC_2021_vec <- as.numeric(window(df_IPC_Completo, start=c(2021,1), end=c(2021,4)))
-IPC_2022_vec <- as.numeric(window(df_IPC_Completo, start=c(2022,1), end=c(2022,4)))
-
-# Variación porcentaje trimestre a trimestre
-variacion_IPC_trimestral <- (IPC_2022_vec - IPC_2021_vec) / IPC_2021_vec * 100
-variacion_IPC_trimestral
-
-
-#IPC = 130,8
 # ###################################################################################################################################
 # #########################               VALIDACIÓN CRUZADA (tsCV) PARA IPC Y PIB                   ###############################
 # ###################################################################################################################################
-# 
-# # Función  para calcular RMSE desde tsCV
-# calc_rmse_tscv <- function(ts_data, f_model, h = 2, nombre = "Modelo") {
-#   errores <- forecast::tsCV(ts_data, f_model, h = h)
-#   rmse <- sqrt(colMeans(errores^2, na.rm = TRUE))  # RMSE correcto
-#   data.frame(Modelo = nombre,
-#              Horizonte = 1:h,
-#              RMSE = rmse)
-# }
-# 
-# #-------------------------------------------------------
-# # AUTOARIMA (sin estacionalidad)
-# #-------------------------------------------------------
-# f_autoarima <- function(x, h) {
-#   forecast(forecast::auto.arima(x, seasonal = FALSE, d = 0, D = 0), h = h)
-# }
-# 
-# #-------------------------------------------------------
-# # ARIMA manual
-# #-------------------------------------------------------
-# f_arima_ipc <- function(x, h) {
-#   forecast(forecast::arima(x, order = c(1, 0, 0)), h = h)
-# }
-# 
-# f_arima_pib <- function(x, h) {
-#   forecast(forecast::arima(x, order = c(2, 0, 2)), h = h)
-# }
-# 
-# #-------------------------------------------------------
-# # SARIMA 
-# #-------------------------------------------------------
-# f_sarima <- function(x, h) {
-#   forecast(forecast::auto.arima(x,
-#                                 stepwise = FALSE,
-#                                 approximation = FALSE,
-#                                 seasonal = TRUE), h = h)
-# }
-# 
-# # -- IPC
-# rmse_auto_ipc  <- calc_rmse_tscv(train_ipc_estacionaria, f_autoarima, h = 2, nombre = "AutoARIMA")
-# #rmse_arima_ipc <- calc_rmse_tscv(train_ipc_estacionaria, f_arima_ipc,  h = 2, nombre = "ARIMA")
-# rmse_sarima_ipc <- calc_rmse_tscv(train_ipc_estacionaria, f_sarima,   h = 2, nombre = "SARIMA")
-# 
-# rmse_total_ipc <- rbind(rmse_auto_ipc, rmse_sarima_ipc)
-# 
-# ggplot(rmse_total_ipc, aes(x = Horizonte, y = RMSE, color = Modelo)) +
-#   geom_line(size = 1) +
-#   geom_point(size = 2) +
-#   scale_color_manual(values = c(paleta[1], paleta[2], paleta[3])) +
-#   theme_minimal() +
-#   labs(title = "Validación cruzada (RMSE) - Modelos IPC",
-#        x = "Horizonte (h)",
-#        y = "RMSE")
-# 
-# 
-# # --- PIB
-# rmse_auto_pib  <- calc_rmse_tscv(train_pib_estacionaria, f_autoarima,  h = 2, nombre = "AutoARIMA")
-# rmse_arima_pib <- calc_rmse_tscv(train_pib_estacionaria, f_arima_pib,  h = 2, nombre = "ARIMA")
-# rmse_sarima_pib <- calc_rmse_tscv(train_pib_estacionaria, f_sarima,    h = 2, nombre = "SARIMA")
-# 
-# rmse_total_pib <- rbind(rmse_auto_pib, rmse_arima_pib, rmse_sarima_pib)
-# 
-# ggplot(rmse_total_pib, aes(x = Horizonte, y = RMSE, color = Modelo)) +
-#   geom_line(size = 1) +
-#   geom_point(size = 2) +
-#   scale_color_manual(values = c(paleta[1], paleta[2], paleta[3])) +
-#   theme_minimal() +
-#   labs(title = "Validación cruzada (RMSE) - Modelos PIB",
-#        x = "Horizonte (h)",
-#        y = "RMSE")
-# 
-# 
-# 
+##########################################################
+### CROSS-VALIDATION IPC (ARIMA, SARIMA y ARIMAX)
+##########################################################
+
+library(forecast)
+library(ggplot2)
+
+h <- 1
+train_size <- 20  # Ajusta según tus datos
+n <- length(ipc_ts)  # ipc_ts = serie original IPC
+
+ipc_ts<- ts(na.omit(as.numeric(datos_limpios_AUS$Consumer.Price.Index..CPI.)),
+                        start = c(1996,1), frequency = 4)
+
+# Vectores de predicciones
+pred_autoarima_ipc_cv    <- rep(NA, n - train_size)
+pred_arima_manual_ipc_cv <- rep(NA, n - train_size)
+pred_sarima_manual_ipc_cv<- rep(NA, n - train_size)
+pred_arimax_auto_ipc_cv  <- rep(NA, n - train_size)
+pred_arimax_manual_ipc_cv<- rep(NA, n - train_size)
+
+# Rolling forecast cross-validation
+for(i in train_size:(n-1)) {
+  
+  # --- Serie de entrenamiento ---
+  train_ipc_cv <- window(ipc_ts, end = time(ipc_ts)[i])
+  train_ipc_est_cv <- diff(train_ipc_cv, differences = 1)
+  last_val <- tail(train_ipc_cv, 1)
+  
+  ##############################
+  #  AUTOARIMA
+  ##############################
+  fit_autoarima <- auto.arima(train_ipc_est_cv, seasonal = FALSE, d = 0)
+  fc_autoarima <- forecast(fit_autoarima, h = h)
+  pred_autoarima_ipc_cv[i - train_size + 1] <- diffinv(fc_autoarima$mean, differences = 1, xi = last_val)[2]
+  
+  ##############################
+  # ARIMA MANUAL
+  ##############################
+  fit_arima_manual <- try(arima(train_ipc_est_cv, order = c(1,0,0)), silent = TRUE)
+  if(!inherits(fit_arima_manual, "try-error")) {
+    fc_arima_manual <- forecast(fit_arima_manual, h = h)
+    pred_arima_manual_ipc_cv[i - train_size + 1] <- diffinv(fc_arima_manual$mean, differences = 1, xi = last_val)[2]
+  }
+  
+  ##############################
+  # SARIMA MANUAL
+  ##############################
+  fit_sarima_manual <- try(arima(train_ipc_est_cv,
+                                 order = c(0,0,1),
+                                 seasonal = list(order = c(0,0,0), period = 4),
+                                 method = "ML"), silent = TRUE)
+  if(!inherits(fit_sarima_manual, "try-error")) {
+    fc_sarima_manual <- forecast(fit_sarima_manual, h = h)
+    pred_sarima_manual_ipc_cv[i - train_size + 1] <- diffinv(fc_sarima_manual$mean, differences = 1, xi = last_val)[2]
+  }
+  
+  ##############################
+  # ARIMAX AUTOARIMA
+  ##############################
+  # Alinear exógenas
+  len_train_est <- length(train_ipc_est_cv)
+  if(nrow(train_exogenas_estacionarias) >= len_train_est) {
+    X_train_cv <- train_exogenas_estacionarias[(nrow(train_exogenas_estacionarias) - len_train_est + 1):nrow(train_exogenas_estacionarias), , drop=FALSE]
+  } else { X_train_cv <- NULL }
+  
+  X_next_cv <- NULL
+  if(!is.null(X_train_cv) && nrow(test_exogenas_estacionarias) >= 1) {
+    X_next_cv <- test_exogenas_estacionarias[1, , drop=FALSE]
+  }
+  
+  fit_arimax_auto <- try(auto.arima(train_ipc_est_cv, xreg = X_train_cv, seasonal = FALSE, d = 0), silent = TRUE)
+  if(!inherits(fit_arimax_auto, "try-error") && !is.null(X_next_cv)) {
+    fc_arimax_auto <- forecast(fit_arimax_auto, xreg = X_next_cv, h = h)
+    pred_arimax_auto_ipc_cv[i - train_size + 1] <- diffinv(fc_arimax_auto$mean, differences = 1, xi = last_val)[2]
+  }
+  
+  ##############################
+  # ARIMAX MANUAL
+  ##############################
+  fit_arimax_manual <- try(Arima(train_ipc_est_cv, order = c(1,0,0), xreg = X_train_cv), silent = TRUE)
+  if(!inherits(fit_arimax_manual, "try-error") && !is.null(X_next_cv)) {
+    fc_arimax_manual <- forecast(fit_arimax_manual, xreg = X_next_cv, h = h)
+    pred_arimax_manual_ipc_cv[i - train_size + 1] <- diffinv(fc_arimax_manual$mean, differences = 1, xi = last_val)[2]
+  }
+  
+  # Remover la primera fila de test_exogenas para la siguiente iteración
+  if(!is.null(test_exogenas_estacionarias) && nrow(test_exogenas_estacionarias) > 1){
+    test_exogenas_estacionarias <- test_exogenas_estacionarias[-1, , drop=FALSE]
+  }
+}
+
+##########################################################
+# Calcular errores
+##########################################################
+actual_cv <- window(ipc_ts, start = time(ipc_ts)[train_size + 1])
+
+metrics <- function(errors, actual) {
+  rmse <- sqrt(mean(errors^2, na.rm = TRUE))
+  mae  <- mean(abs(errors), na.rm = TRUE)
+  mape <- mean(abs(errors / actual), na.rm = TRUE) * 100
+  return(c(RMSE = rmse, MAE = mae, MAPE = mape))
+}
+
+df_metrics_ipc_cv <- data.frame(
+  Modelo = c("AUTO.ARIMA_CV", "ARIMA_manual_CV", "SARIMA_manual_CV", "ARIMAX_auto_CV", "ARIMAX_manual_CV"),
+  RMSE = c(
+    metrics(actual_cv - pred_autoarima_ipc_cv, actual_cv)["RMSE"],
+    metrics(actual_cv - pred_arima_manual_ipc_cv, actual_cv)["RMSE"],
+    metrics(actual_cv - pred_sarima_manual_ipc_cv, actual_cv)["RMSE"],
+    metrics(actual_cv - pred_arimax_auto_ipc_cv, actual_cv)["RMSE"],
+    metrics(actual_cv - pred_arimax_manual_ipc_cv, actual_cv)["RMSE"]
+  ),
+  MAE = c(
+    metrics(actual_cv - pred_autoarima_ipc_cv, actual_cv)["MAE"],
+    metrics(actual_cv - pred_arima_manual_ipc_cv, actual_cv)["MAE"],
+    metrics(actual_cv - pred_sarima_manual_ipc_cv, actual_cv)["MAE"],
+    metrics(actual_cv - pred_arimax_auto_ipc_cv, actual_cv)["MAE"],
+    metrics(actual_cv - pred_arimax_manual_ipc_cv, actual_cv)["MAE"]
+  ),
+  MAPE = c(
+    metrics(actual_cv - pred_autoarima_ipc_cv, actual_cv)["MAPE"],
+    metrics(actual_cv - pred_arima_manual_ipc_cv, actual_cv)["MAPE"],
+    metrics(actual_cv - pred_sarima_manual_ipc_cv, actual_cv)["MAPE"],
+    metrics(actual_cv - pred_arimax_auto_ipc_cv, actual_cv)["MAPE"],
+    metrics(actual_cv - pred_arimax_manual_ipc_cv, actual_cv)["MAPE"]
+  )
+)
+
+print(df_metrics_ipc_cv)
+
+#El mejor es ARIMAX-Autoarima pero el arima manual tambien tiene muy buenos resutlados y es mas simple por ello se ha elegido ese.
+
+
+##########################################################
+###  CROSS-VALIDATION PIB -      ###
+##########################################################
+
+# Parámetros
+h <- 2         # pasos a predecir
+train_size <- 20 # tamaño inicial del train
+
+# Series originales (sin outliers, sin diferenciar)
+gdp_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$GDP.billion.currency.units)),
+                        start = c(1996,1), frequency = 4)
+money_supply_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$Money.supply.billion.currency.units)),
+                                 start = c(1996,1), frequency = 4)
+stock_market_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$Stock.market.index)),
+                                 start = c(1996,1), frequency = 4)
+unemployment_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$Unemployment.rate.percent)),
+                                 start = c(1996,1), frequency = 4)
+
+n <- length(gdp_ts_trimestral)
+
+# Crear vectores de predicciones
+pred_arima_manual_cv     <- rep(NA, n - train_size)
+pred_sarima_manual_cv    <- rep(NA, n - train_size)
+pred_autoarima_cv        <- rep(NA, n - train_size)
+pred_arimax_auto_cv      <- rep(NA, n - train_size)
+pred_arimax_manual_cv    <- rep(NA, n - train_size)
+
+##########################################################
+# Rolling forecast cross-validation
+##########################################################
+for(i in train_size:(n-1)) {
+  
+  # --- Series de entrenamiento hasta el punto i ---
+  train_PIB_cv <- window(gdp_ts_trimestral, end = time(gdp_ts_trimestral)[i])
+  
+  # Exógenas hasta ese punto
+  train_MS_cv  <- window(money_supply_ts_trimestral, end = time(money_supply_ts_trimestral)[i])
+  train_SM_cv  <- window(stock_market_ts_trimestral, end = time(stock_market_ts_trimestral)[i])
+  train_UR_cv  <- window(unemployment_ts_trimestral, end = time(unemployment_ts_trimestral)[i])
+  
+  # Exógenas para el siguiente paso
+  next_MS <- money_supply_ts_trimestral[i + 1]
+  next_SM <- stock_market_ts_trimestral[i + 1]
+  next_UR <- unemployment_ts_trimestral[i + 1]
+  
+  # Matriz de exógenas completas
+  X_train_cv <- as.matrix(cbind(train_MS_cv, train_SM_cv, train_UR_cv))
+  X_next_cv  <- matrix(c(next_MS, next_SM, next_UR), nrow = 1)
+  
+  ##############################
+  # 1️⃣ ARIMA MANUAL (2,0,2)
+  ##############################
+  fit_manual <- try(arima(diff(diff(log(train_PIB_cv), lag=4)), order = c(2,0,2)), silent = TRUE)
+  if(!inherits(fit_manual, "try-error")) {
+    fc_manual <- forecast(fit_manual, h = h)
+    
+    # Revertir diferencias
+    last_vals_lag4 <- tail(log(train_PIB_cv), 4)
+    last_val_diff1 <- tail(diff(log(train_PIB_cv), lag=4), 1)
+    pred_diff1_inv <- diffinv(fc_manual$mean, differences = 1, xi = last_val_diff1)
+    pred_inv <- diffinv(pred_diff1_inv, differences = 1, lag = 4, xi = last_vals_lag4)
+    
+    pred_arima_manual_cv[i - train_size + 1] <- exp(pred_inv[5])
+  }
+  
+  ##############################
+  # 2️⃣ SARIMA MANUAL (2,0,2)(0,0,0)[4]
+  ##############################
+  fit_sarima_manual_cv <- try(arima(log(train_PIB_cv),
+                                    order = c(2,0,2),
+                                    seasonal = list(order = c(0,0,0), period = 4)),
+                              silent = TRUE)
+  if(!inherits(fit_sarima_manual_cv, "try-error")) {
+    fc_sarima_manual_cv <- forecast(fit_sarima_manual_cv, h = h)
+    pred_sarima_manual_cv[i - train_size + 1] <- exp(as.numeric(fc_sarima_manual_cv$mean))
+  }
+  
+  ##############################
+  # 3️⃣ AUTO.ARIMA (sin exógenas)
+  ##############################
+  fit_auto <- auto.arima(log(train_PIB_cv), seasonal = FALSE)
+  pred_autoarima_cv[i - train_size + 1] <- exp(as.numeric(forecast(fit_auto, h = h)$mean))
+  
+  ##############################
+  # 4️⃣ ARIMAX AUTO (3 exógenas)
+  ##############################
+  fit_arimax_auto <- try(auto.arima(log(train_PIB_cv),
+                                    xreg = X_train_cv,
+                                    seasonal = FALSE,
+                                    stepwise = FALSE,
+                                    approximation = TRUE),
+                         silent = TRUE)
+  if(!inherits(fit_arimax_auto, "try-error")) {
+    fc_arimax_auto <- forecast(fit_arimax_auto, xreg = X_next_cv, h = h)
+    pred_arimax_auto_cv[i - train_size + 1] <- exp(as.numeric(fc_arimax_auto$mean))
+  }
+  
+  ##############################
+  # 5️⃣ ARIMAX MANUAL
+  ##############################
+  train_PIB_log_cv <- log(train_PIB_cv)
+  train_PIB_est_cv <- diff(diff(train_PIB_log_cv, lag = 4))
+  
+  # Exógenas diferenciadas
+  train_MS_est_cv <- diff(train_MS_cv, differences = 1)
+  train_SM_est_cv <- diff(train_SM_cv, differences = 1)
+  train_UR_est_cv <- diff(train_UR_cv, differences = 1)
+  
+  # Alinear longitudes
+  len_PIB <- length(train_PIB_est_cv)
+  train_MS_est_cv <- tail(train_MS_est_cv, len_PIB)
+  train_SM_est_cv <- tail(train_SM_est_cv, len_PIB)
+  train_UR_est_cv <- tail(train_UR_est_cv, len_PIB)
+  
+  X_train_est_cv <- as.matrix(cbind(train_MS_est_cv, train_SM_est_cv, train_UR_est_cv))
+  
+  # Para el siguiente paso
+  X_next_est_cv <- matrix(c(
+    tail(diff(train_MS_cv, differences=1),1),
+    tail(diff(train_SM_cv, differences=1),1),
+    tail(diff(train_UR_cv, differences=1),1)
+  ), nrow = 1)
+  
+  fit_arimax_manual <- try(arima(train_PIB_est_cv, order = c(2,0,2), xreg = X_train_est_cv), silent=TRUE)
+  
+  if(!inherits(fit_arimax_manual, "try-error")) {
+    fc_arimax_manual <- predict(fit_arimax_manual, n.ahead = h, newxreg = X_next_est_cv)
+    
+    # Revertir la diferencia simple
+    last_val_diff1 <- tail(diff(train_PIB_log_cv, lag=4), 1)
+    pred_diff1_inv <- diffinv(fc_arimax_manual$pred, differences = 1, xi = last_val_diff1)
+    
+    # Revertir la diferencia estacional
+    last_vals_lag4 <- tail(train_PIB_log_cv, 4)
+    pred_inv <- diffinv(pred_diff1_inv, differences = 1, lag = 4, xi = last_vals_lag4)
+    
+    # Guardar predicción
+    pred_arimax_manual_cv[i - train_size + 1] <- exp(pred_inv[5])
+  }
+}
+
+##########################################################
+# Cálculo de errores
+##########################################################
+actual_cv <- window(gdp_ts_trimestral, start = time(gdp_ts_trimestral)[train_size + 1])
+
+errors_arima_manual_cv   <- actual_cv - pred_arima_manual_cv
+errors_sarima_manual_cv  <- actual_cv - pred_sarima_manual_cv
+errors_autoarima_cv      <- actual_cv - pred_autoarima_cv
+errors_arimax_auto_cv    <- actual_cv - pred_arimax_auto_cv
+errors_arimax_manual_cv  <- actual_cv - pred_arimax_manual_cv
+
+# Función de métricas
+metrics <- function(errors, actual) {
+  rmse <- sqrt(mean(errors^2, na.rm = TRUE))
+  mae  <- mean(abs(errors), na.rm = TRUE)
+  mape <- mean(abs(errors / actual), na.rm = TRUE) * 100
+  return(c(RMSE = rmse, MAE = mae, MAPE = mape))
+}
+
+# Calcular métricas
+metrics_arima_manual_cv  <- metrics(errors_arima_manual_cv, actual_cv)
+metrics_sarima_manual_cv <- metrics(errors_sarima_manual_cv, actual_cv)
+metrics_autoarima_cv     <- metrics(errors_autoarima_cv, actual_cv)
+metrics_arimax_auto_cv   <- metrics(errors_arimax_auto_cv, actual_cv)
+metrics_arimax_manual_cv <- metrics(errors_arimax_manual_cv, actual_cv)
+
+# Tabla comparativa CV
+df_metrics_cv <- data.frame(
+  Modelo = c("ARIMA_manual_CV", "SARIMA_manual_CV", "AUTO.ARIMA_CV",
+             "ARIMAX_auto_CV", "ARIMAX_manual_CV"),
+  RMSE = c(metrics_arima_manual_cv["RMSE"], metrics_sarima_manual_cv["RMSE"],
+           metrics_autoarima_cv["RMSE"], metrics_arimax_auto_cv["RMSE"],
+           metrics_arimax_manual_cv["RMSE"]),
+  MAE = c(metrics_arima_manual_cv["MAE"], metrics_sarima_manual_cv["MAE"],
+          metrics_autoarima_cv["MAE"], metrics_arimax_auto_cv["MAE"],
+          metrics_arimax_manual_cv["MAE"]),
+  MAPE = c(metrics_arima_manual_cv["MAPE"], metrics_sarima_manual_cv["MAPE"],
+           metrics_autoarima_cv["MAPE"], metrics_arimax_auto_cv["MAPE"],
+           metrics_arimax_manual_cv["MAPE"])
+)
+
+print(df_metrics_cv)
+
+#Arima manual es el mejor, porque es el mas simple. cambiarlo .
+en la prediccion incluir el ultimo valor del anterior
