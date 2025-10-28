@@ -1869,9 +1869,11 @@ p_zoom_PIB <- ggplot() +
 #Combinar gráfico principal y zoom (zoom abajo a la derecha)
 final_plot_PIB <- ggdraw() +
   draw_plot(p_main_PIB) +
-  draw_plot(p_zoom_PIB, x = 0.58, y = 0.12, width = 0.4, height = 0.35)
+  draw_plot(p_zoom_PIB, x = 0.58, y = 0.06, width = 0.3, height = 0.35)
 
+#png("Prediccion_FINAL_PIB.png", width = 1200, height = 800, res = 150)
 final_plot_PIB
+#dev.off()
 
 
 
