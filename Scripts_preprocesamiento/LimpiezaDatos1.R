@@ -712,23 +712,23 @@ train_money_supply_estacionaria<- money_supply_diff2
 #png("Money_supply_Original_vs_Diferenciada.png", width = 900, height = 700)
 par(mfrow=c(2,1))  # dos gráficos en una ventana
 plot(train_money_supply, type="l", main="Money Supply (log) - Serie original", ylab="Nivel (log)")
-plot(train__money_supply_estacionaria, type="l", main="Money Supply (log) - Segunda diferencia (estacionaria)", ylab="Cambio trimestral")
+plot(train_money_supply_estacionaria, type="l", main="Money Supply (log) - Segunda diferencia (estacionaria)", ylab="Cambio trimestral")
 par(mfrow=c(1,1)) 
 #dev.off()
 
 #-------    ACF Y PACF
 #png("ACF_Money_Supply_Segunda_Diferencia.png", width=800, height=600)
-ggAcf(train__money_supply_estacionaria) + ggtitle("ACF de Money Supply (Segunda diferencia)") + theme_minimal()
+ggAcf(train_money_supply_estacionaria) + ggtitle("ACF de Money Supply (Segunda diferencia)") + theme_minimal()
 #dev.off()
 
 #png("PACF_Money_Supply_Segunda_Diferencia.png", width=800, height=600)
-ggPacf(train__money_supply_estacionaria) + ggtitle("PACF de Money Supply (Segunda diferencia)") + theme_minimal()
+ggPacf(train_money_supply_estacionaria) + ggtitle("PACF de Money Supply (Segunda diferencia)") + theme_minimal()
 #dev.off()  
 
 #-------   QQ-PLOT --> Sirve para evaluar si los residuos o valores transformados siguen una distribución normal.
 #png("QQ_money_supply.png", width=800, height=600)
-qqnorm(train__money_supply_estacionaria, main="QQ-plot - Money Supply (log, diff2)")
-qqline(train__money_supply_estacionaria, col="red")
+qqnorm(train_money_supply_estacionaria, main="QQ-plot - Money Supply (log, diff2)")
+qqline(train_money_supply_estacionaria, col="red")
 #dev.off()
 #La linea roja representa como se verian los datos si sigugieran una distribucion normal
 
