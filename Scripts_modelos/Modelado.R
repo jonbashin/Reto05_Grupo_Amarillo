@@ -16,6 +16,8 @@ library(gridExtra)
 library(astsa)
 library(Metrics)
 library(reshape2)
+library(cowplot)
+
 
 
 paleta <- c("#c88fb2",  "#8db41c",  "#93044e","#D1006F",  "#F5F0E6",  "#4D4D4D")
@@ -68,6 +70,11 @@ test_unemployment<- readRDS("Series_Temporales/Test_unemployment.rds")
 #--Modelo
 modelo_autoarima_ipc <- auto.arima(train_ipc_estacionaria, seasonal=FALSE, d=0) #D=0 para que no vuelva a diferenciar
 summary(modelo_autoarima_ipc)
+
+# Extraer AIC, AICc y BIC
+modelo_autoarima_ipc$aic    # AIC
+modelo_autoarima_ipc$aicc   # AICc
+modelo_autoarima_ipc$bic    # BIC
 
 # Justificación:
 # - d=0 → la serie ya fue diferenciada manualmente.
@@ -140,6 +147,15 @@ pacf(train_ipc_estacionaria, main="PACF IPC diferenciada")
 #----------   MODELOS
 modelo_arima_ipc <- arima(train_ipc_estacionaria, order=c(1,0,0))  # d=0 porque ya diferenciamos anteriormente. y no necesitamos diferenciarlo otra vez
 summary(modelo_arima_ipc)
+
+# Extraer AIC, AICc y BIC
+aic_arima_ipc <-modelo_arima_ipc$aic    # AIC
+k <- length(modelo_arima_ipc$coef)  # ar + intercept
+n <- length(train_ipc_estacionaria) # tamaño de la muestra
+aicc_arima_ipc <- aic_arima_ipc + (2 * k * (k + 1)) / (n - k - 1)
+aicc_arima_ipc
+bic_arima_ipc <- aic_arima_ipc + k * log(n)
+bic_arima_ipc
 
 # Validación de residuales
 hist(residuals(modelo_arima_ipc), main="Histograma de residuales ARIMA IPC", xlab="Residual", col=paleta[2])
@@ -221,9 +237,19 @@ tsdisplay(train_ipc_estacionaria)
 #-----------------      MODELO SARIMA IPC
 modelo_sarima_ipc <- arima(train_ipc_estacionaria,
                            order = c(0, 0, 1),
-                           seasonal = list(order = c(0, 0, 0), period = 4),
+                           seasonal = list(order = c(1, 0, 0), period = 4),
                            method = "ML")
 summary(modelo_sarima_ipc)
+#AIC, AICc, BIC
+aic_sarima_ipc <- modelo_sarima_ipc$aic
+k <- length(modelo_sarima_ipc$coef)
+n <- length(train_ipc_estacionaria)
+aicc_sarima_ipc <- aic_sarima_ipc + (2 * k * (k + 1)) / (n - k - 1)
+bic_sarima_ipc <- aic_sarima_ipc + k * log(n)
+aic_sarima_ipc
+aicc_sarima_ipc
+bic_sarima_ipc
+
 checkresiduals(modelo_sarima_ipc)
 
 boxtest_sarima_ipc <- Box.test(residuals(modelo_sarima_ipc), lag = round(log(length(train_ipc))), type="Ljung-Box")
@@ -289,6 +315,12 @@ ggplot(df_plot2, aes(x=Fecha, y=Valor, color=Tipo)) +
 #-------  MODELO
 modelo_autoarima_pib <- auto.arima(train_pib_estacionaria, seasonal = FALSE, d = 0)
 summary(modelo_autoarima_pib)
+
+#AIC, AICc, BIC
+modelo_autoarima_pib$aic
+modelo_autoarima_pib$aicc
+modelo_autoarima_pib$bic
+
 
 # Validación gráfica de residuales
 hist(residuals(modelo_autoarima_pib), main = "Histograma de residuales AutoARIMA PIB", xlab = "Residual", col = paleta[3])
@@ -372,6 +404,17 @@ tsdisplay(train_pib_estacionaria)
 modelo_arima_pib <- arima(train_pib_estacionaria, order=c(2,0,2))  # d=0 porque ya diferenciamos
 summary(modelo_arima_pib)
 
+
+#AIC, AICc, BIC
+aic_arima_pib <- modelo_arima_pib$aic
+k <- length(modelo_arima_pib$coef)
+n <- length(train_ipc_estacionaria)
+aicc_arima_pib  <- aic_arima_pib + (2 * k * (k + 1)) / (n - k - 1)
+bic_arima_pib  <- aic_arima_pib + k * log(n)
+aic_arima_pib 
+aicc_arima_pib 
+bic_arima_pib 
+
 # Validación de residuales
 hist(residuals(modelo_arima_pib), main="Histograma de residuales ARIMA PIB", xlab="Residual", col=paleta[3])
 checkresiduals(modelo_arima_pib)
@@ -413,7 +456,6 @@ acc_arima_pib
 
 
 #-----------------      GRAFICO FINAL
-#-----------------      GRAFICO FINAL 4
 train_ts4 <- ts(as.numeric(train_pib), start=c(1998,1), frequency=4)
 test_ts4  <- ts(as.numeric(test_pib),  start=c(2021,1), frequency=4)
 forecast_ts4 <- ts(forecast_arima_pib_revertida,
@@ -449,10 +491,23 @@ tsdisplay(train_pib_estacionaria)
 #----------   MODELO
 modelo_sarima_pib<- arima(train_pib_estacionaria,
                        order = c(2, 0, 2),
-                       seasonal = list(order = c(0, 0, 0), period = 4),
+                       seasonal = list(order = c(0, 0, 1), period = 4),
                        method = "ML")
 summary(modelo_sarima_pib)
 checkresiduals(modelo_sarima_pib)
+
+
+
+#AIC, AICc, BIC
+aic_sarima_pib <- modelo_sarima_pib$aic
+k <- length(modelo_sarima_pib$coef)
+n <- length(train_pib_estacionaria)
+aicc_sarima_pib  <- aic_sarima_pib + (2 * k * (k + 1)) / (n - k - 1)
+bic_sarima_pib  <- aic_sarima_pib + k * log(n)
+aic_sarima_pib 
+aicc_sarima_pib 
+bic_sarima_pib 
+
 
 #-----------------      VALIDACIÓN DE RESIDUALES
 hist(residuals(modelo_sarima_pib), main="Histograma de residuales SARIMA PIB", 
@@ -1241,291 +1296,24 @@ ggplot(df_arima_pib_long, aes(x = Métrica, y = Valor, fill = Métrica)) +
 
 
 
-           
 
-
-
-#######################################################################################################################################################################
-####################################            PREDICCION FINAL             ######################################################################
-
-
-#-------------------------                CPI (Modelo ARIMA)                   --------------------------------------------
-
-#Serie orginal 
-series_IPC_trimestrales <- readRDS("Series_Temporales/Trimestrales/cpi_ts_trimestral.rds")
-
-#Aplicaremos primera diferencia (Como hicimos anteriormente)
-IPC_estacionaria <- diff(series_IPC_trimestrales, differences = 1)
-tsdisplay(IPC_estacionaria)
-
-#Aplicamos el modelos osbre la series diferenciada
-modelo_final_arima_IPC <- arima(IPC_estacionaria, order=c(1,0,0))  # d=0 porque ya diferenciamos anteriormente. y no necesitamos diferenciarlo otra vez
-summary(modelo_final_arima_IPC)
-
-# Validación de residuales
-hist(residuals(modelo_final_arima_IPC), main="Histograma de residuales ARIMA IPC", xlab="Residual", col=paleta[2])
-#png("checkresiduals_IPC.png", width = 1800, height = 1400, res = 150)
-checkresiduals(modelo_final_arima_IPC)
-#dev.off()
-
-checkresiduals(modelo_final_arima_IPC)
-
-boxtest_arima_ipc <- Box.test(residuals(modelo_final_arima_IPC), lag = round(log(length(series_IPC_trimestrales))), type="Ljung-Box")
-if (boxtest_arima_ipc$p.value > 0.05) {
-  cat("Residuos ARIMA IPC parecen ruido blanco\n")
-} else {
-  cat("Residuos ARIMA IPC muestran autocorrelación\n")
-}
-#Residuos ARIMA IPC parecen ruido blanco
-
-#-----------------      PREDICCIONES
-prediccion_arima_IPC <- forecast(modelo_final_arima_IPC, h=2, level=90)
-autoplot(prediccion_arima_IPC) + ggtitle("Predicción IPC con ARIMA") + ylab("IPC") + xlab("Trimestre") + theme_minimal()
-
-#-----------------      REVERTIR
-# La serie original fue diferenciada 1 vez, usamos diffinv
-forecast_arima_ipc_revertida1 <- diffinv(prediccion_arima_IPC$mean, differences = 1, xi=tail(series_IPC_trimestrales, 1))
-forecast_arima_ipc_revertida1 <- forecast_arima_ipc_revertida1[-1]
-prediccion_final_Arima_IPC<- forecast_arima_ipc_revertida1
-
-
-# ---------------- JUNTAR DF (ORIGINAL + PREDICCION)
-# Obtener el tiempo final de la serie
-tiempo_final <- end(series_IPC_trimestrales)  # año y trimestre
-# Crear serie de predicciones como ts, frecuencia 4 (trimestral)
-predicciones_ts <- ts(prediccion_final_Arima_IPC, start = c(tiempo_final[1], tiempo_final[2]+1), frequency = 4)
-# Unir series históricas y predicciones
-df_IPC_Completo <- ts(c(series_IPC_trimestrales, predicciones_ts), start = start(series_IPC_trimestrales), frequency = 4)
-df_IPC_Completo
-
-
-#-----------------      GRAFICO FINAL
-# Convertir a vector y Convertir la serie ts a data.frame
-ipc_matrix <- as.matrix(df_IPC_Completo)   # convierte ts a matriz
-df_IPC <- as.data.frame(ipc_matrix)       # matriz a data.frame
-ipc <- df_IPC$V1
-n <- length(ipc)
-
-# Crear vector de años (asumiendo trimestral desde 1996)
-# Cada año tiene 4 trimestres, entonces repetimos años 4 veces
-años <- rep(1996:(1996 + ceiling(n/4) - 1), each=4)[1:n]
-
-# Crear data.frame para ggplot
-df_plot_Arima_IPC <- data.frame(Año = años,
-                                Trimestre = rep(1:4, length.out=n),
-                                IPC = ipc,
-                                Tipo = c(rep("Serie original", n-2), rep("Predicción", 2)))
-
-# Convertir Año+Trimestre a decimal para línea continua
-df_plot_Arima_IPC <- df_plot_Arima_IPC %>%
-  mutate(Fecha = Año + (Trimestre-1)/4)
-
-ggplot(df_plot_Arima_IPC, aes(x = Fecha, y = IPC)) +
-  geom_line(color=paleta[2], size=1.2) +  # línea histórica azul
-  geom_line(data = df_plot_Arima_IPC %>% filter(Tipo=="Predicción"), aes(x=Fecha, y=IPC), color=paleta[3], size=1.2) + # tramo final rojo
-  geom_point(aes(color=Tipo), size=2) +
-  scale_color_manual(values=c("Serie original"=paleta[2],"Predicción"=paleta[3])) +
-  labs(title="Predicción ARIMA IPC", x="Año", y="IPC", color="Leyenda") +
-  theme_minimal(base_size=13) +
-  theme(plot.title = element_text(hjust=0.5), legend.position="top")
-
-
-
-
-#-------------------------                PIB (Modelo ARIMAX - Arima)                   --------------------------------------------
-
-#Serie orginal 
-series_PIB_trimestrales <- readRDS("Series_Temporales/Trimestrales/gdp_ts_trimestral.rds")
-
-#Aplicaremos segunda diferencia y lag=4 (Como hicimos anteriormente)
-PIB_estacionaria_log<- log(series_PIB_trimestrales)
-PIB_log_diff_seasonal <- diff(PIB_estacionaria_log, lag = 4)
-PIB_estacionaria <- diff(PIB_log_diff_seasonal, differences = 1)
-tsdisplay(PIB_estacionaria)
-
-#Preparar la serie orginal de las exogenas y diferenciar
-serie_stock_market_trimestral <- readRDS("Series_Temporales/Trimestrales/stock_market_ts_trimestral.rds")
-serie_money_supply_market_trimestral <- readRDS("Series_Temporales/Trimestrales/money_supply_ts_trimestral.rds")
-serie_unemployment_market_trimestral <- readRDS("Series_Temporales/Trimestrales/unemployment_ts_trimestral.rds")
-
-#Diferenciarlas (Como anteriormente)
-STOCK_MARKET_estacionaria<- log(serie_stock_market_trimestral) #log
-STOCK_MARKET_estacionaria <- diff(STOCK_MARKET_estacionaria, differences = 1) # 1 diferencia
-MONEY_SUPPLY_estacionaria<- diff(serie_money_supply_market_trimestral, differences = 2) # 2 diferencia
-UNEMPLOYMENT_estacionaria <- diff(diff(serie_unemployment_market_trimestral, lag=4)) #2 diferencia y lag =4
-
-exogenas_estacionarias_todas<- cbind(STOCK_MARKET_estacionaria, MONEY_SUPPLY_estacionaria, UNEMPLOYMENT_estacionaria)
-exogenas_estacionarias_todas <- window(exogenas_estacionarias_todas, start=c(1999,2), end=c(2022,2))
-
-PIB_estacionaria_arimax <- window(PIB_estacionaria, start=c(1999,2), end=c(2022,2))
-
-
-#Aplicamos el modelos osbre la series diferenciada
-modelo_final_arimax_arima_PIB <- Arima(
-  PIB_estacionaria_arimax,
-  order= c(1,0,0),
-  xreg = exogenas_estacionarias_todas
-)
-summary(modelo_final_arimax_arima_PIB)
-
-# Validación de residuales
-hist(residuals(modelo_final_arimax_arima_PIB), main="Histograma de residuales Arimax-arima PIB", xlab="Residual", col=paleta[2])
-#png("checkresiduals_PIB.png", width = 1800, height = 1400, res = 150)
-checkresiduals(modelo_final_arimax_arima_PIB)
-#dev.off()
-
-boxtest_arima_pib<- Box.test(residuals(modelo_final_arimax_arima_PIB), lag = round(log(length(series_PIB_trimestrales))), type="Ljung-Box")
-if (boxtest_arima_pib$p.value > 0.05) {
-  cat("Residuos ARIMAx-Arima PIB parecen ruido blanco\n")
-} else {
-  cat("Residuos ARIMA IPC muestran autocorrelación\n")
-}
-#Residuos ARIMA IPC parecen ruido blanco
-
-#-----------------      PREDICCIONES
-prediccion_final_arimax_arima_PIB <- forecast(
-  modelo_final_arimax_arima_PIB,
-  xreg = exogenas_estacionarias_todas,
-  h = 2
-)
-
-# -------------------- REVERTIR DIFERENCIAS -----------------
-PIB_estacionaria_log
-# Predicción diferenciada (segunda diferencia con lag=4)
-pred <- prediccion_final_arimax_arima_PIB$mean
-revert_diff1 <- diffinv(pred, differences = 1, xi = tail(PIB_log_diff_seasonal, 1))
-revert_diff_seasonal <- diffinv(revert_diff1, differences = 1, lag = 4, xi = tail(PIB_estacionaria_log, 4))
-prediccion_final_Arimax_arima_PIB <- exp(revert_diff_seasonal)[c(6,7)]
-
-# ---------------- JUNTAR DF (ORIGINAL + PREDICCION)
-# Obtener el tiempo final de la serie
-tiempo_final1 <- end(series_PIB_trimestrales)  # año y trimestre
-# Crear serie de predicciones como ts, frecuencia 4 (trimestral)
-predicciones_ts1 <- ts(prediccion_final_Arimax_arima_PIB, start = c(tiempo_final1[1], tiempo_final1[2]+1), frequency = 4)
-# Unir series históricas y predicciones
-df_PIB_Completo <- ts(c(series_PIB_trimestrales, predicciones_ts1), start = start(series_PIB_trimestrales), frequency = 4)
-df_PIB_Completo
-
-
-#-----------------      GRAFICO FINAL
-# Convertir a vector y Convertir la serie ts a data.frame
-pib_matrix <- as.matrix(df_PIB_Completo)   # convierte ts a matriz
-df_PIB <- as.data.frame(pib_matrix)       # matriz a data.frame
-pib <- df_PIB$V1
-n <- length(pib)
-
-# Crear vector de años (asumiendo trimestral desde 1996)
-# Cada año tiene 4 trimestres, entonces repetimos años 4 veces
-años <- rep(1996:(1996 + ceiling(n/4) - 1), each=4)[1:n]
-
-# Crear data.frame para ggplot
-df_plot_Arimax_arima_PIB <- data.frame(Año = años,
-                                       Trimestre = rep(1:4, length.out=n),
-                                       PIB = pib,
-                                       Tipo = c(rep("Serie original", n-2), rep("Predicción", 2)))
-
-# Convertir Año+Trimestre a decimal para línea continua
-df_plot_Arimax_arima_PIB <- df_plot_Arimax_arima_PIB %>%
-  mutate(Fecha = Año + (Trimestre-1)/4)
-
-ggplot(df_plot_Arimax_arima_PIB, aes(x = Fecha, y = PIB)) +
-  geom_line(color=paleta[2], size=1.2) +  # línea histórica azul
-  geom_line(data = df_plot_Arimax_arima_PIB %>% filter(Tipo=="Predicción"), aes(x=Fecha, y=PIB), color=paleta[3], size=1.2) + # tramo final rojo
-  geom_point(aes(color=Tipo), size=2) +
-  scale_color_manual(values=c("Serie original"=paleta[2],"Predicción"=paleta[3])) +
-  labs(title="Predicción ARIMAX- Arima (Manual) PIB", x="Año", y="IPC", color="Leyenda") +
-  theme_minimal(base_size=13) +
-  theme(plot.title = element_text(hjust=0.5), legend.position="top")
-
-
-
-
-
-# ###############################################################################################################################################
-# #############################################################################################################################################
-# ##################3             COMAPRACION PREDICCIONES EXPERTOS     ################33
-# 
-# #----------------   IPC (Expertos: del 2021 al 202 el IPC aumento 2,25%)
-# 
-# # Valores promedio por año
-# # Valores de 2021
-# IPC_2021 <- window(df_IPC_Completo, start=c(2021,1), end=c(2021,4))
-# IPC_2022 <- window(df_IPC_Completo, start=c(2022,1), end=c(2022,4))
-# 
-# # Media anual
-# mean_IPC_2021 <- mean(IPC_2021)
-# mean_IPC_2022 <- mean(IPC_2022)
-# 
-# # Variación porcentual anual
-# variacion_IPC <- (mean_IPC_2022 - mean_IPC_2021) / mean_IPC_2021 * 100
-# variacion_IPC
-# 
-# 
-# # Variación porcentual
-# variacion_IPC <- (IPC_2022 - IPC_2021) / IPC_2021 * 100
-# variacion_IPC
-# 
-# 
-# 
-# # Valores de 2021 y 2022
-# PIB_2021 <- window(df_PIB_Completo, start=c(2021,1), end=c(2021,4))
-# PIB_2022 <- window(df_PIB_Completo, start=c(2022,1), end=c(2022,4))
-# 
-# # Media anual
-# mean_PIB_2021 <- mean(PIB_2021)
-# mean_PIB_2022 <- mean(PIB_2022)
-# 
-# # Variación porcentual anual (media anual)
-# variacion_PIB_anual <- (mean_PIB_2022 - mean_PIB_2021) / mean_PIB_2021 * 100
-# 
-# # Variación porcentual trimestre a trimestre
-# variacion_PIB_trimestral <- (PIB_2022 - PIB_2021) / PIB_2021 * 100
-# # Extraer los valores como vectores
-# PIB_2021_vec <- as.numeric(window(df_PIB_Completo, start=c(2021,1), end=c(2021,4)))
-# PIB_2022_vec <- as.numeric(window(df_PIB_Completo, start=c(2022,1), end=c(2022,4)))
-# 
-# # Variación porcentaje trimestre a trimestre
-# variacion_PIB_trimestral <- (PIB_2022_vec - PIB_2021_vec) / PIB_2021_vec * 100
-# variacion_PIB_trimestral
-# 
-# 
-# # Resultados
-# mean_PIB_2021
-# mean_PIB_2022
-# variacion_PIB_anual
-# variacion_PIB_trimestral
-# 
-# 
-# # Extraer valores de 2021 y 2022 como vectores
-# IPC_2021_vec <- as.numeric(window(df_IPC_Completo, start=c(2021,1), end=c(2021,4)))
-# IPC_2022_vec <- as.numeric(window(df_IPC_Completo, start=c(2022,1), end=c(2022,4)))
-# 
-# # Variación porcentaje trimestre a trimestre
-# variacion_IPC_trimestral <- (IPC_2022_vec - IPC_2021_vec) / IPC_2021_vec * 100
-# variacion_IPC_trimestral
-# 
-# 
-# #IPC = 130,8
-
-
+#=================================================================================================================================================================================
 
 
 # ###################################################################################################################################
-# #########################               VALIDACIÓN CRUZADA (tsCV) PARA IPC Y PIB                   ###############################
+# #########################               CROSS - VALIDATION PARA IPC Y PIB                   ###############################
 # ###################################################################################################################################
+
+
 ##########################################################
 ### CROSS-VALIDATION IPC (ARIMA, SARIMA y ARIMAX)
 ##########################################################
 
-library(forecast)
-library(ggplot2)
-
 h <- 1
 train_size <- 20  # Ajusta según tus datos
-n <- length(ipc_ts)  # ipc_ts = serie original IPC
-
 ipc_ts<- ts(na.omit(as.numeric(datos_limpios_AUS$Consumer.Price.Index..CPI.)),
-                        start = c(1996,1), frequency = 4)
+            start = c(1996,1), frequency = 4)
+n <- length(ipc_ts)  # ipc_ts = serie original IPC
 
 # Vectores de predicciones
 pred_autoarima_ipc_cv    <- rep(NA, n - train_size)
@@ -1563,7 +1351,7 @@ for(i in train_size:(n-1)) {
   ##############################
   fit_sarima_manual <- try(arima(train_ipc_est_cv,
                                  order = c(0,0,1),
-                                 seasonal = list(order = c(0,0,0), period = 4),
+                                 seasonal = list(order = c(1,0,0), period = 4),
                                  method = "ML"), silent = TRUE)
   if(!inherits(fit_sarima_manual, "try-error")) {
     fc_sarima_manual <- forecast(fit_sarima_manual, h = h)
@@ -1605,9 +1393,9 @@ for(i in train_size:(n-1)) {
   }
 }
 
-##########################################################
+
 # Calcular errores
-##########################################################
+###################
 actual_cv <- window(ipc_ts, start = time(ipc_ts)[train_size + 1])
 
 metrics <- function(errors, actual) {
@@ -1624,27 +1412,22 @@ df_metrics_ipc_cv <- data.frame(
     metrics(actual_cv - pred_arima_manual_ipc_cv, actual_cv)["RMSE"],
     metrics(actual_cv - pred_sarima_manual_ipc_cv, actual_cv)["RMSE"],
     metrics(actual_cv - pred_arimax_auto_ipc_cv, actual_cv)["RMSE"],
-    metrics(actual_cv - pred_arimax_manual_ipc_cv, actual_cv)["RMSE"]
-  ),
+    metrics(actual_cv - pred_arimax_manual_ipc_cv, actual_cv)["RMSE"] ),
   MAE = c(
     metrics(actual_cv - pred_autoarima_ipc_cv, actual_cv)["MAE"],
     metrics(actual_cv - pred_arima_manual_ipc_cv, actual_cv)["MAE"],
     metrics(actual_cv - pred_sarima_manual_ipc_cv, actual_cv)["MAE"],
     metrics(actual_cv - pred_arimax_auto_ipc_cv, actual_cv)["MAE"],
-    metrics(actual_cv - pred_arimax_manual_ipc_cv, actual_cv)["MAE"]
-  ),
+    metrics(actual_cv - pred_arimax_manual_ipc_cv, actual_cv)["MAE"] ),
   MAPE = c(
     metrics(actual_cv - pred_autoarima_ipc_cv, actual_cv)["MAPE"],
     metrics(actual_cv - pred_arima_manual_ipc_cv, actual_cv)["MAPE"],
     metrics(actual_cv - pred_sarima_manual_ipc_cv, actual_cv)["MAPE"],
     metrics(actual_cv - pred_arimax_auto_ipc_cv, actual_cv)["MAPE"],
-    metrics(actual_cv - pred_arimax_manual_ipc_cv, actual_cv)["MAPE"]
-  )
-)
+    metrics(actual_cv - pred_arimax_manual_ipc_cv, actual_cv)["MAPE"] ))
 
 print(df_metrics_ipc_cv)
 
-#El mejor es ARIMAX-Autoarima pero el arima manual tambien tiene muy buenos resutlados y es mas simple por ello se ha elegido ese.
 
 
 ##########################################################
@@ -1656,14 +1439,10 @@ h <- 2         # pasos a predecir
 train_size <- 20 # tamaño inicial del train
 
 # Series originales (sin outliers, sin diferenciar)
-gdp_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$GDP.billion.currency.units)),
-                        start = c(1996,1), frequency = 4)
-money_supply_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$Money.supply.billion.currency.units)),
-                                 start = c(1996,1), frequency = 4)
-stock_market_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$Stock.market.index)),
-                                 start = c(1996,1), frequency = 4)
-unemployment_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$Unemployment.rate.percent)),
-                                 start = c(1996,1), frequency = 4)
+gdp_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$GDP.billion.currency.units)),start = c(1996,1), frequency = 4)
+money_supply_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$Money.supply.billion.currency.units)),start = c(1996,1), frequency = 4)
+stock_market_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$Stock.market.index)),start = c(1996,1), frequency = 4)
+unemployment_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$Unemployment.rate.percent)),start = c(1996,1), frequency = 4)
 
 n <- length(gdp_ts_trimestral)
 
@@ -1697,7 +1476,7 @@ for(i in train_size:(n-1)) {
   X_next_cv  <- matrix(c(next_MS, next_SM, next_UR), nrow = 1)
   
   ##############################
-  # 1️⃣ ARIMA MANUAL (2,0,2)
+  # ARIMA MANUAL (2,0,2)
   ##############################
   fit_manual <- try(arima(diff(diff(log(train_PIB_cv), lag=4)), order = c(2,0,2)), silent = TRUE)
   if(!inherits(fit_manual, "try-error")) {
@@ -1713,11 +1492,11 @@ for(i in train_size:(n-1)) {
   }
   
   ##############################
-  # 2️⃣ SARIMA MANUAL (2,0,2)(0,0,0)[4]
+  # SARIMA MANUAL (2,0,2)(0,0,0)[4]
   ##############################
   fit_sarima_manual_cv <- try(arima(log(train_PIB_cv),
                                     order = c(2,0,2),
-                                    seasonal = list(order = c(0,0,0), period = 4)),
+                                    seasonal = list(order = c(0,0,1), period = 4)),
                               silent = TRUE)
   if(!inherits(fit_sarima_manual_cv, "try-error")) {
     fc_sarima_manual_cv <- forecast(fit_sarima_manual_cv, h = h)
@@ -1725,13 +1504,13 @@ for(i in train_size:(n-1)) {
   }
   
   ##############################
-  # 3️⃣ AUTO.ARIMA (sin exógenas)
+  # AUTO.ARIMA (sin exógenas)
   ##############################
   fit_auto <- auto.arima(log(train_PIB_cv), seasonal = FALSE)
   pred_autoarima_cv[i - train_size + 1] <- exp(as.numeric(forecast(fit_auto, h = h)$mean))
   
   ##############################
-  # 4️⃣ ARIMAX AUTO (3 exógenas)
+  # ARIMAX AUTO (3 exógenas)
   ##############################
   fit_arimax_auto <- try(auto.arima(log(train_PIB_cv),
                                     xreg = X_train_cv,
@@ -1745,7 +1524,7 @@ for(i in train_size:(n-1)) {
   }
   
   ##############################
-  # 5️⃣ ARIMAX MANUAL
+  # ARIMAX MANUAL
   ##############################
   train_PIB_log_cv <- log(train_PIB_cv)
   train_PIB_est_cv <- diff(diff(train_PIB_log_cv, lag = 4))
@@ -1831,5 +1610,296 @@ df_metrics_cv <- data.frame(
 
 print(df_metrics_cv)
 
-#Arima manual es el mejor, porque es el mas simple. cambiarlo .
-en la prediccion incluir el ultimo valor del anterior
+
+
+
+           
+#=========================================================================================================================================================================
+
+#######################################################################################################################################################################
+####################################            PREDICCION FINAL             ######################################################################
+
+
+#-------------------------                CPI (Modelo ARIMA)                   --------------------------------------------
+
+#Serie orginal 
+series_IPC_trimestrales <- readRDS("Series_Temporales/Trimestrales/cpi_ts_trimestral.rds")
+
+#Aplicaremos primera diferencia (Como hicimos anteriormente)
+IPC_estacionaria <- diff(series_IPC_trimestrales, differences = 1)
+tsdisplay(IPC_estacionaria)
+
+#Aplicamos el modelos osbre la series diferenciada
+modelo_final_arima_IPC <- arima(IPC_estacionaria, order=c(1,0,0))  # d=0 porque ya diferenciamos anteriormente. y no necesitamos diferenciarlo otra vez
+summary(modelo_final_arima_IPC)
+
+# Validación de residuales
+hist(residuals(modelo_final_arima_IPC), main="Histograma de residuales ARIMA IPC", xlab="Residual", col=paleta[2])
+#png("checkresiduals_IPC.png", width = 1800, height = 1400, res = 150)
+checkresiduals(modelo_final_arima_IPC)
+#dev.off()
+
+checkresiduals(modelo_final_arima_IPC)
+
+boxtest_arima_ipc <- Box.test(residuals(modelo_final_arima_IPC), lag = round(log(length(series_IPC_trimestrales))), type="Ljung-Box")
+if (boxtest_arima_ipc$p.value > 0.05) {
+  cat("Residuos ARIMA IPC parecen ruido blanco\n")
+} else {
+  cat("Residuos ARIMA IPC muestran autocorrelación\n")
+}
+#Residuos ARIMA IPC parecen ruido blanco
+
+#-----------------      PREDICCIONES
+prediccion_arima_IPC <- forecast(modelo_final_arima_IPC, h=2, level=90)
+autoplot(prediccion_arima_IPC) + ggtitle("Predicción IPC con ARIMA") + ylab("IPC") + xlab("Trimestre") + theme_minimal()
+
+#-----------------      REVERTIR
+# La serie original fue diferenciada 1 vez, usamos diffinv
+forecast_arima_ipc_revertida1 <- diffinv(prediccion_arima_IPC$mean, differences = 1, xi=tail(series_IPC_trimestrales, 1))
+forecast_arima_ipc_revertida1 <- forecast_arima_ipc_revertida1[-1]
+prediccion_final_Arima_IPC<- forecast_arima_ipc_revertida1
+
+
+# ---------------- JUNTAR DF (ORIGINAL + PREDICCION)
+# Obtener el tiempo final de la serie
+tiempo_final <- end(series_IPC_trimestrales)  # año y trimestre
+# Crear serie de predicciones como ts, frecuencia 4 (trimestral)
+predicciones_ts <- ts(prediccion_final_Arima_IPC, start = c(tiempo_final[1], tiempo_final[2]+1), frequency = 4)
+# Unir series históricas y predicciones
+df_IPC_Completo <- ts(c(series_IPC_trimestrales, predicciones_ts), start = start(series_IPC_trimestrales), frequency = 4)
+df_IPC_Completo
+
+
+#-----------------      GRAFICO FINAL
+h <- 2  # horizonte de predicción
+prediccion_arima_IPC <- forecast(modelo_final_arima_IPC, h = h, level = 90)
+
+df_total <- data.frame(
+  Trimestre = as.numeric(time(series_IPC_trimestrales)),
+  IPC = as.numeric(series_IPC_trimestrales))
+
+# Revertir la diferencia usando diffinv
+ultimo_valor <- tail(series_IPC_trimestrales,1)
+pred_revertida <- diffinv(prediccion_arima_IPC$mean, differences = 1, xi = ultimo_valor)[-1]
+
+# Revertir bandas de confianza
+lower_rev <- diffinv(prediccion_arima_IPC$lower[,1], differences = 1, xi = ultimo_valor)[-1]
+upper_rev <- diffinv(prediccion_arima_IPC$upper[,1], differences = 1, xi = ultimo_valor)[-1]
+
+tiempo_final <- end(series_IPC_trimestrales)
+
+# Crear serie de predicciones como ts
+predicciones_ts <- ts(pred_revertida,
+                      start = c(tiempo_final[1], tiempo_final[2]+1),
+                      frequency = 4)
+
+# Data frame de predicción
+df_pred <- data.frame(
+  Trimestre = time(predicciones_ts),
+  Pred = as.numeric(predicciones_ts),
+  Lower = as.numeric(diffinv(prediccion_arima_IPC$lower[,1], differences = 1, xi = tail(series_IPC_trimestrales,1))[-1]),
+  Upper = as.numeric(diffinv(prediccion_arima_IPC$upper[,1], differences = 1, xi = tail(series_IPC_trimestrales,1))[-1])
+)
+p_main <- ggplot(df_total, aes(x = Trimestre, y = IPC)) +
+  geom_line(color = "blue", linewidth = 1) +
+  geom_line(data = df_pred, aes(x = Trimestre, y = Pred), color = "red", linetype = "dashed", inherit.aes = FALSE) +
+  geom_ribbon(data = df_pred, aes(x = Trimestre, ymin = Lower, ymax = Upper), fill = "blue", alpha = 0.2, inherit.aes = FALSE) +
+  theme_minimal() +
+  labs(
+    title = "Predicción IPC con ARIMA (1,0,0)",  # Título general
+    y = "IPC",
+    x = "Trimestre")
+
+# Zoom últimos trimestres
+x_min <- 2021
+x_max <- 2023
+
+# Etiquetas trimestrales
+df_quarters <- expand.grid(year = 2021:2023, q = 1:4)
+df_quarters$pos <- df_quarters$year + (df_quarters$q-1)/4
+df_quarters <- df_quarters[order(df_quarters$pos), ]
+breaks_all <- df_quarters$pos
+labels_all <- paste0(df_quarters$year, " Q", df_quarters$q)
+
+p_zoom <- ggplot() +
+  geom_line(data = df_total, aes(x = Trimestre, y = IPC), color = "blue") +
+  geom_line(data = df_pred, aes(x = Trimestre, y = Pred), color = "red", linetype = "dashed", inherit.aes = FALSE) +
+  geom_ribbon(data = df_pred, aes(x = Trimestre, ymin = Lower, ymax = Upper), fill = "blue", alpha = 0.2, inherit.aes = FALSE) +
+  coord_cartesian(xlim = c(x_min, x_max)) +
+  scale_x_continuous(
+    breaks = breaks_all[breaks_all >= x_min & breaks_all <= x_max],
+    labels = labels_all[breaks_all >= x_min & breaks_all <= x_max]
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.background = element_rect(color = "black", linewidth = 0.5),
+        axis.title = element_blank(),
+        axis.text.y = element_text(size=8))
+
+# Combinar gráfico principal y zoom (zoom abajo a la derecha)
+final_plot <- ggdraw() +
+  draw_plot(p_main) +
+  draw_plot(p_zoom, x = 0.58, y = 0.12, width = 0.4, height = 0.35)
+
+final_plot
+
+
+######################################################################################################################################
+#-------------------------                PIB (Modelo  Arima)                   --------------------------------------------
+
+#Serie orginal 
+series_PIB_trimestrales <- readRDS("Series_Temporales/Trimestrales/gdp_ts_trimestral.rds")
+
+#Aplicaremos segunda diferencia y lag=4 (Como hicimos anteriormente)
+PIB_estacionaria_log<- log(series_PIB_trimestrales)
+PIB_log_diff_seasonal <- diff(PIB_estacionaria_log, lag = 4)
+PIB_estacionaria <- diff(PIB_log_diff_seasonal, differences = 1)
+tsdisplay(PIB_estacionaria)
+
+
+#Aplicamos el modelos osbre la series diferenciada
+modelo_final_arimax_arima_PIB <- arima(PIB_estacionaria, order=c(2,0,2))  # d=0 porque ya diferenciamos anteriormente. y no necesitamos diferenciarlo otra vez
+summary(modelo_final_arimax_arima_PIB)
+
+
+# Validación de residuales
+hist(residuals(modelo_final_arimax_arima_PIB), main="Histograma de residuales Arimax-arima PIB", xlab="Residual", col=paleta[2])
+#png("checkresiduals_PIB.png", width = 1800, height = 1400, res = 150)
+checkresiduals(modelo_final_arimax_arima_PIB)
+#dev.off()
+
+boxtest_arima_pib<- Box.test(residuals(modelo_final_arimax_arima_PIB), lag = round(log(length(series_PIB_trimestrales))), type="Ljung-Box")
+if (boxtest_arima_pib$p.value > 0.05) {
+  cat("Residuos ARIMAx-Arima PIB parecen ruido blanco\n")
+} else {
+  cat("Residuos ARIMA IPC muestran autocorrelación\n")
+}
+#Residuos ARIMA IPC parecen ruido blanco
+
+#-----------------      PREDICCIONES
+prediccion_final_arimax_arima_PIB <- forecast(modelo_final_arimax_arima_PIB, h=2, level=90)
+
+
+# -------------------- REVERTIR DIFERENCIAS -----------------
+PIB_estacionaria_log
+# Predicción diferenciada (segunda diferencia con lag=4)
+pred <- prediccion_final_arimax_arima_PIB$mean
+revert_diff1 <- diffinv(pred, differences = 1, xi = tail(PIB_log_diff_seasonal, 1))
+revert_diff_seasonal <- diffinv(revert_diff1, differences = 1, lag = 4, xi = tail(PIB_estacionaria_log, 4))
+prediccion_final_Arimax_arima_PIB <- exp(revert_diff_seasonal)[c(6,7)]
+
+# ---------------- JUNTAR DF (ORIGINAL + PREDICCION)
+# Obtener el tiempo final de la serie
+tiempo_final1 <- end(series_PIB_trimestrales)  # año y trimestre
+# Crear serie de predicciones como ts, frecuencia 4 (trimestral)
+predicciones_ts1 <- ts(prediccion_final_Arimax_arima_PIB, start = c(tiempo_final1[1], tiempo_final1[2]+1), frequency = 4)
+# Unir series históricas y predicciones
+df_PIB_Completo <- ts(c(series_PIB_trimestrales, predicciones_ts1), start = start(series_PIB_trimestrales), frequency = 4)
+df_PIB_Completo
+
+
+#-----------------      GRAFICO FINAL
+h <- 2  # horizonte de predicción
+df_total_PIB <- data.frame(
+  Trimestre = as.numeric(time(series_PIB_trimestrales)),
+  PIB = as.numeric(series_PIB_trimestrales)
+)
+
+# Revertir las diferencias para los intervalos de confianza
+ultimo_valor_PIB_log_diff <- tail(PIB_log_diff_seasonal, 1)
+ultimo_valor_PIB_log <- tail(PIB_estacionaria_log, 4)
+
+# Banda inferior y superior revertidas
+lower_rev1 <- diffinv(prediccion_final_arimax_arima_PIB$lower[,1], differences = 1, xi = ultimo_valor_PIB_log_diff)
+lower_rev2 <- diffinv(lower_rev1, differences = 1, lag = 4, xi = ultimo_valor_PIB_log)
+lower_rev_final <- exp(lower_rev2)[c(6,7)]
+
+upper_rev1 <- diffinv(prediccion_final_arimax_arima_PIB$upper[,1], differences = 1, xi = ultimo_valor_PIB_log_diff)
+upper_rev2 <- diffinv(upper_rev1, differences = 1, lag = 4, xi = ultimo_valor_PIB_log)
+upper_rev_final <- exp(upper_rev2)[c(6,7)]
+
+# Crear serie temporal de predicciones revertidas
+tiempo_final <- end(series_PIB_trimestrales)
+predicciones_ts_final <- ts(prediccion_final_Arimax_arima_PIB,
+                            start = c(tiempo_final[1], tiempo_final[2]+1),
+                            frequency = 4)
+
+df_pred_PIB <- data.frame(
+  Trimestre = time(predicciones_ts_final),
+  Pred = as.numeric(predicciones_ts_final),
+  Lower = as.numeric(lower_rev_final),
+  Upper = as.numeric(upper_rev_final))
+
+# Gráfico principal
+p_main_PIB <- ggplot(df_total_PIB, aes(x = Trimestre, y = PIB)) +
+  geom_line(color = "blue", linewidth = 1) +
+  geom_line(data = df_pred_PIB, aes(x = Trimestre, y = Pred), color = "red", linetype = "dashed", inherit.aes = FALSE) +
+  geom_ribbon(data = df_pred_PIB, aes(x = Trimestre, ymin = Lower, ymax = Upper), fill = "blue", alpha = 0.2, inherit.aes = FALSE) +
+  theme_minimal() +
+  labs(
+    title = "Predicción PIB con ARIMA (2,0,2)",
+    y = "PIB",
+    x = "Trimestre")
+
+#Zoom últimos trimestres
+x_min <- 2021
+x_max <- 2023
+
+# Etiquetas trimestrales
+df_quarters <- expand.grid(year = 2021:2023, q = 1:4)
+df_quarters$pos <- df_quarters$year + (df_quarters$q - 1) / 4
+df_quarters <- df_quarters[order(df_quarters$pos), ]
+breaks_all <- df_quarters$pos
+labels_all <- paste0(df_quarters$year, " Q", df_quarters$q)
+
+p_zoom_PIB <- ggplot() +
+  geom_line(data = df_total_PIB, aes(x = Trimestre, y = PIB), color = "blue") +
+  geom_line(data = df_pred_PIB, aes(x = Trimestre, y = Pred), color = "red", linetype = "dashed", inherit.aes = FALSE) +
+  geom_ribbon(data = df_pred_PIB, aes(x = Trimestre, ymin = Lower, ymax = Upper), fill = "blue", alpha = 0.2, inherit.aes = FALSE) +
+  coord_cartesian(xlim = c(x_min, x_max)) +
+  scale_x_continuous(
+    breaks = breaks_all[breaks_all >= x_min & breaks_all <= x_max],
+    labels = labels_all[breaks_all >= x_min & breaks_all <= x_max]) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.background = element_rect(color = "black", linewidth = 0.5),
+        axis.title = element_blank(),
+        axis.text.y = element_text(size = 8))
+
+#Combinar gráfico principal y zoom (zoom abajo a la derecha)
+final_plot_PIB <- ggdraw() +
+  draw_plot(p_main_PIB) +
+  draw_plot(p_zoom_PIB, x = 0.58, y = 0.12, width = 0.4, height = 0.35)
+
+final_plot_PIB
+
+
+
+
+##########################################################################################################################################################
+#####################         ----------  COMPARACION EXPERTOS       ------------               ############################################
+
+IPC_Q4_2021 <- as.numeric(window(df_IPC_Completo, start = c(2021, 4), end = c(2021, 4)))
+IPC_Q4_2022 <- as.numeric(window(df_IPC_Completo, start = c(2022, 4), end = c(2022, 4)))
+
+IPC_cambio_Q4 <- ((IPC_Q4_2022 - IPC_Q4_2021) / IPC_Q4_2021) * 100
+IPC_cambio_Q4
+
+PIB_Q4_2021 <- as.numeric(window(df_PIB_Completo, start = c(2021, 4), end = c(2021, 4)))
+PIB_Q4_2022 <- as.numeric(window(df_PIB_Completo, start = c(2022, 4), end = c(2022, 4)))
+
+PIB_cambio_Q4 <- ((PIB_Q4_2022 - PIB_Q4_2021) / PIB_Q4_2021) * 100
+PIB_cambio_Q4
+
+
+
+
+
+
+
+
+
+
+
+
+
