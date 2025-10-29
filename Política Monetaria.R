@@ -56,21 +56,66 @@ pal_laboral <- c(
 )
 
 #---------------
-#GRÁFICOS CON INTERÉS ANUAL Y TRIMESTRAL, Y TIPO DE CAMBIO JUNTOS
-#Tasa de interés anual
-ggplot(cambio_interes, aes(x = observation_date, y = interes_anual)) +
+#GRÁFICOS CON LOS DATASETS SEPARADOS
+#============================
+# 1️⃣ Reservas internacionales
+#============================
+reservas$observation_date <- as.Date(reservas$observation_date)
+ggplot(reservas, aes(x = observation_date, y = reservas)) +
   geom_line(color = pal_laboral["verde"], size = 1) +
+  labs(title = "Reservas internacionales de Australia",
+       x = "Fecha",
+       y = "Reservas (millones de USD)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.background = element_rect(fill = pal_laboral["gris_fondo"]),
+    panel.background = element_rect(fill = pal_laboral["gris_fondo"]),
+    plot.title = element_text(face = "bold", color = pal_laboral["gris_texto"]),
+    axis.text = element_text(color = pal_laboral["gris_texto"]),
+    axis.title = element_text(color = pal_laboral["gris_texto"])
+  )
+
+#============================
+# 2️⃣ Tipo de cambio AUD/USD
+#============================
+tipo_cambio$observation_date<-as.Date(tipo_cambio$observation_date)
+ggplot(tipo_cambio, aes(x = observation_date, y = tipo_cambio)) +
+  geom_line(color = pal_laboral["berenjena"], size = 1) +
+  labs(title = "Evolución del tipo de cambio AUD/USD",
+       x = "Fecha",
+       y = "Tipo de cambio (AUD/USD)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.background = element_rect(fill = pal_laboral["gris_fondo"]),
+    panel.background = element_rect(fill = pal_laboral["gris_fondo"]),
+    plot.title = element_text(face = "bold", color = pal_laboral["gris_texto"]),
+    axis.text = element_text(color = pal_laboral["gris_texto"]),
+    axis.title = element_text(color = pal_laboral["gris_texto"])
+  )
+
+#============================
+# 3️⃣ Tasa de interés anual
+#============================
+interes_anual$observation_date<-as.Date(interes_anual$observation_date)
+ggplot(interes_anual, aes(x = observation_date, y = interes_anual)) +
+  geom_line(color = pal_laboral["magenta"], size = 1) +
   labs(title = "Tasa de interés anual en Australia",
        x = "Fecha",
        y = "Tasa de interés anual (%)") +
   theme_minimal(base_size = 14) +
   theme(
     plot.background = element_rect(fill = pal_laboral["gris_fondo"]),
-    plot.title = element_text(color = pal_laboral["gris_texto"], face = "bold")
+    panel.background = element_rect(fill = pal_laboral["gris_fondo"]),
+    plot.title = element_text(face = "bold", color = pal_laboral["gris_texto"]),
+    axis.text = element_text(color = pal_laboral["gris_texto"]),
+    axis.title = element_text(color = pal_laboral["gris_texto"])
   )
 
-#Tasa de interés trimestral
-ggplot(cambio_interes, aes(x = observation_date, y = interes_trimestral)) +
+#============================
+# 4️⃣ Tasa de interés trimestral
+#============================
+interes_trimestral$observation_date<-as.Date(interes_trimestral$observation_date)
+ggplot(interes_trimestral, aes(x = observation_date, y = interes_trimestral)) +
   geom_line(color = pal_laboral["magenta"], size = 1) +
   labs(title = "Tasa de interés trimestral en Australia",
        x = "Fecha",
@@ -78,9 +123,13 @@ ggplot(cambio_interes, aes(x = observation_date, y = interes_trimestral)) +
   theme_minimal(base_size = 14) +
   theme(
     plot.background = element_rect(fill = pal_laboral["gris_fondo"]),
-    plot.title = element_text(color = pal_laboral["gris_texto"], face = "bold")
+    panel.background = element_rect(fill = pal_laboral["gris_fondo"]),
+    plot.title = element_text(face = "bold", color = pal_laboral["gris_texto"]),
+    axis.text = element_text(color = pal_laboral["gris_texto"]),
+    axis.title = element_text(color = pal_laboral["gris_texto"])
   )
 
+#GRÁFICOS CON INTERÉS ANUAL Y TRIMESTRAL, Y TIPO DE CAMBIO JUNTOS
 #Comparación entre los tipos de interés
 ggplot(cambio_interes) +
   geom_line(aes(x = observation_date, y = interes_anual, color = "Anual"), size = 1) +
@@ -109,18 +158,6 @@ ggplot(cambio_interes) +
     legend.background = element_rect(fill = pal_laboral[["beige"]], color = NA),
     legend.title = element_text(color = pal_laboral[["gris_texto"]]),
     legend.text = element_text(color = pal_laboral[["gris_texto"]])
-  )
-
-#Distribución anual de la tasa de interés
-ggplot(cambio_interes, aes(x = factor(Año), y = interes_anual)) +
-  geom_boxplot(fill = pal_laboral["berenjena"], color = pal_laboral["gris_texto"]) +
-  labs(title = "Distribución anual de la tasa de interés en Australia",
-       x = "Año",
-       y = "Tasa de interés anual (%)") +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.background = element_rect(fill = pal_laboral["gris_fondo"]),
-    plot.title = element_text(color = pal_laboral["gris_texto"], face = "bold")
   )
 
 #Relación entre tipo de cambio e interés anual
@@ -163,25 +200,4 @@ ggplot(df, aes(x = factor(Año), y = interes_promedio)) +
     plot.background = element_rect(fill = pal_laboral["gris_fondo"]),
     plot.title = element_text(color = pal_laboral["gris_texto"], face = "bold")
   )
-
-#Variación mensual del tipo de cambio (heatmap)
-ggplot(cambio_interes, aes(x = factor(Mes), y = factor(Año), fill = tipo_cambio)) +
-  geom_tile(color = "white") +
-  scale_fill_gradient(low = pal_laboral["verde"], high = pal_laboral["magenta"]) +
-  labs(title = "Variación mensual del tipo de cambio AUD/USD",
-       x = "Mes",
-       y = "Año",
-       fill = "Tipo de cambio") +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.background = element_rect(fill = pal_laboral["gris_fondo"]),
-    plot.title = element_text(color = pal_laboral["gris_texto"], face = "bold")
-  )
-
-plot_ly(cambio_interes, x = ~interes_trimestral, y = ~tipo_cambio,
-        color = ~Año, colors = c(pal_laboral["magenta"], pal_laboral["verde"], pal_laboral["berenjena"]),
-        type = "scatter", mode = "markers") %>%
-  layout(title = "Interés trimestral vs Tipo de cambio (interactivo)",
-         xaxis = list(title = "Tasa de interés trimestral (%)"),
-         yaxis = list(title = "Tipo de cambio (AUD/USD)"))
 

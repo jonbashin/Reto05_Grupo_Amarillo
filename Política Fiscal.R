@@ -77,7 +77,7 @@ ggplot(politica_fiscal, aes(x = Gasto_Público, y = Déficit_Fiscal)) +
   labs(
     title = "Relación entre gasto público y déficit fiscal",
     x = "Gasto público",
-    y = "Déficit fiscal (% del PIB)"
+    y = "Déficit fiscal"
   ) +
   theme_minimal(base_size = 14)
 
@@ -108,43 +108,3 @@ g2 <- ggplot(politica_fiscal, aes(x = Déficit_Fiscal, y = Deuda_PIB)) +
   theme_minimal(base_size = 13)
 
 ggplotly(g2)
-
-# 8. RESÚMEN ESTADÍSTICO
-# ---------------------------------------------------------
-
-cat("RESUMEN ESTADÍSTICO - POLÍTICA FISCAL AUSTRALIA\n")
-cat("=============================================\n\n")
-
-# Estadísticas descriptivas
-estadisticas <- politica_fiscal %>%
-  select(-Fecha) %>%
-  map_df(~data.frame(
-    Media = mean(., na.rm = TRUE),
-    Mediana = median(., na.rm = TRUE),
-    Mínimo = min(., na.rm = TRUE),
-    Máximo = max(., na.rm = TRUE),
-    Desviación = sd(., na.rm = TRUE)
-  ), .id = "Variable")
-
-print(estadisticas)
-
-# GRÁFICO DE RELACIÓN MEJORADO
-p_relacion_mejorado <- ggplot(politica_fiscal, aes(x = Déficit_Fiscal, y = Deuda_PIB)) +
-  geom_point(aes(color = year(Fecha), size = abs(Déficit_Fiscal)), alpha = 0.7) +
-  geom_smooth(method = "lm", se = TRUE, color = "#8E44AD", linetype = "dashed") +
-  geom_text(aes(label = ifelse(year(Fecha) %in% c(1990, 2000, 2010, 2020, 2023), 
-                               as.character(year(Fecha)), "")), 
-            hjust = -0.2, vjust = 0.5, size = 3) +
-  scale_color_gradient2(low = "#3498DB", mid = "#2ECC71", high = "#E74C3C", 
-                        midpoint = 2005, name = "Año") +
-  scale_size_continuous(name = "Magnitud del Déficit") +
-  labs(title = "RELACIÓN ENTRE DÉFICIT FISCAL Y DEUDA PÚBLICA: AUSTRALIA",
-       subtitle = "Cada punto representa un año | Línea morada: tendencia general",
-       x = "Déficit Fiscal (% PIB) →", 
-       y = "Deuda/PIB (% PIB) ↑",
-       caption = "Déficit negativo = Gastos > Ingresos\nDéficit positivo = Superávit") +
-  theme_minimal() +
-  theme(plot.title = element_text(face = "bold", size = 14))
-
-print(p_relacion_mejorado)
-
