@@ -57,45 +57,7 @@ pal_laboral <- c(
 
 #---------------
 #GRÁFICOS CON LOS DATASETS SEPARADOS
-#============================
-# 1️⃣ Reservas internacionales
-#============================
-reservas$observation_date <- as.Date(reservas$observation_date)
-ggplot(reservas, aes(x = observation_date, y = reservas)) +
-  geom_line(color = pal_laboral["verde"], size = 1) +
-  labs(title = "Reservas internacionales de Australia",
-       x = "Fecha",
-       y = "Reservas (millones de USD)") +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.background = element_rect(fill = pal_laboral["gris_fondo"]),
-    panel.background = element_rect(fill = pal_laboral["gris_fondo"]),
-    plot.title = element_text(face = "bold", color = pal_laboral["gris_texto"]),
-    axis.text = element_text(color = pal_laboral["gris_texto"]),
-    axis.title = element_text(color = pal_laboral["gris_texto"])
-  )
-
-#============================
-# 2️⃣ Tipo de cambio AUD/USD
-#============================
-tipo_cambio$observation_date<-as.Date(tipo_cambio$observation_date)
-ggplot(tipo_cambio, aes(x = observation_date, y = tipo_cambio)) +
-  geom_line(color = pal_laboral["berenjena"], size = 1) +
-  labs(title = "Evolución del tipo de cambio AUD/USD",
-       x = "Fecha",
-       y = "Tipo de cambio (AUD/USD)") +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.background = element_rect(fill = pal_laboral["gris_fondo"]),
-    panel.background = element_rect(fill = pal_laboral["gris_fondo"]),
-    plot.title = element_text(face = "bold", color = pal_laboral["gris_texto"]),
-    axis.text = element_text(color = pal_laboral["gris_texto"]),
-    axis.title = element_text(color = pal_laboral["gris_texto"])
-  )
-
-#============================
-# 3️⃣ Tasa de interés anual
-#============================
+#Tasa de interés anual
 interes_anual$observation_date<-as.Date(interes_anual$observation_date)
 ggplot(interes_anual, aes(x = observation_date, y = interes_anual)) +
   geom_line(color = pal_laboral["magenta"], size = 1) +
@@ -111,9 +73,7 @@ ggplot(interes_anual, aes(x = observation_date, y = interes_anual)) +
     axis.title = element_text(color = pal_laboral["gris_texto"])
   )
 
-#============================
-# 4️⃣ Tasa de interés trimestral
-#============================
+#Tasa de interés trimestral
 interes_trimestral$observation_date<-as.Date(interes_trimestral$observation_date)
 ggplot(interes_trimestral, aes(x = observation_date, y = interes_trimestral)) +
   geom_line(color = pal_laboral["magenta"], size = 1) +
@@ -158,19 +118,6 @@ ggplot(cambio_interes) +
     legend.background = element_rect(fill = pal_laboral[["beige"]], color = NA),
     legend.title = element_text(color = pal_laboral[["gris_texto"]]),
     legend.text = element_text(color = pal_laboral[["gris_texto"]])
-  )
-
-#Relación entre tipo de cambio e interés anual
-ggplot(cambio_interes, aes(x = interes_anual, y = tipo_cambio)) +
-  geom_point(color = pal_laboral["berenjena"], alpha = 0.7) +
-  geom_smooth(method = "lm", color = pal_laboral["verde"], se = FALSE) +
-  labs(title = "Relación entre tasa de interés anual y tipo de cambio (AUD/USD)",
-       x = "Tasa de interés anual (%)",
-       y = "Tipo de cambio (AUD/USD)") +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.background = element_rect(fill = pal_laboral["gris_fondo"]),
-    plot.title = element_text(color = pal_laboral["gris_texto"], face = "bold")
   )
 
 #Evolución del tipo de cambio
