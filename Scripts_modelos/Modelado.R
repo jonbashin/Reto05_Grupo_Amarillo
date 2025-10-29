@@ -417,7 +417,10 @@ bic_arima_pib
 
 # Validación de residuales
 hist(residuals(modelo_arima_pib), main="Histograma de residuales ARIMA PIB", xlab="Residual", col=paleta[3])
+
+#png("checkresiduals_PIB_arima.png", width = 1800, height = 1400, res= 150)
 checkresiduals(modelo_arima_pib)
+#dev.off()
 
 boxtest_arima_pib <- Box.test(residuals(modelo_arima_pib), lag = round(log(length(train_pib))), type="Ljung-Box")
 if (boxtest_arima_pib$p.value > 0.05) {
