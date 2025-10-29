@@ -54,7 +54,7 @@ st_gdp= readRDS("Series_Temporales/Trimestrales/gdp_ts_trimestral.rds")
 st_money_supply=readRDS("Series_Temporales/Trimestrales/money_supply_ts_trimestral.rds")
 st_stock_market=readRDS("Series_Temporales/Trimestrales/stock_market_ts_trimestral.rds")
 st_unemployment=readRDS("Series_Temporales/Trimestrales/unemployment_ts_trimestral.rds")
-<<<<<<< HEAD
+
 #Pasar a datos trimestrales
 df_datos_buscado<- data.frame(Año= 1996:2022,
                               Tipo_de_cambio_AUD=,
@@ -70,8 +70,6 @@ df_datos_buscado<- data.frame(Año= 1996:2022,
                               Pobalcion_activa_AUS=,
                               Poblacion_total=)
 
-=======
->>>>>>> 363ed48ef67142982d154a6a0c0b8baf5ba2dd88
 
 
 #============
@@ -85,7 +83,7 @@ paleta_colores <- c(
   gris_texto = "#333333",
   gris_fondo = "#E0E0E0"
 )
-<<<<<<< HEAD
+
 
 
 #
@@ -96,7 +94,7 @@ plot(st_cpi,
      main = "Evolución del IPC por trimestre",
      ylab = "Índice de Precios al Consumo",
      xlab = "Año")
-=======
+
 #==================
 #Funcion
 #================
@@ -325,4 +323,4 @@ gg_macro_facet <- ggplot(df_macro_long, aes(x = Date, y = Valor)) +
   tema_economico()
 
 gg_macro_facet
->>>>>>> 363ed48ef67142982d154a6a0c0b8baf5ba2dd88
+
