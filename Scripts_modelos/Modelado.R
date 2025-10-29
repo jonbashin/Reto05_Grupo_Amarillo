@@ -664,7 +664,7 @@ modelo_arimax_autoarima_ipc <- auto.arima(
   seasonal = FALSE,
   d = 0,
   xreg = train_exogenas_estacionarias,)
-
+summary(modelo_arimax_autoarima_ipc)
 # Calcular criterios
 aic_arimax_autoarima_IPC <- AIC(modelo_arimax_autoarima_ipc)
 bic_arimax_autoarima_IPC <- BIC(modelo_arimax_autoarima_ipc)
@@ -1311,8 +1311,8 @@ ggplot(df_arima_pib_long, aes(x = Métrica, y = Valor, fill = Métrica)) +
 
 h <- 1
 train_size <- 20  # Ajusta según tus datos
-ipc_ts<- ts(na.omit(as.numeric(datos_limpios_AUS$Consumer.Price.Index..CPI.)),
-            start = c(1996,1), frequency = 4)
+ipc_ts <- ts(na.omit(as.numeric(datos_limpios_AUS$Consumer.Price.Index..CPI.)),
+             start = c(1996,1), frequency = 4)
 n <- length(ipc_ts)  # ipc_ts = serie original IPC
 
 # Vectores de predicciones
@@ -1321,6 +1321,13 @@ pred_arima_manual_ipc_cv <- rep(NA, n - train_size)
 pred_sarima_manual_ipc_cv<- rep(NA, n - train_size)
 pred_arimax_auto_ipc_cv  <- rep(NA, n - train_size)
 pred_arimax_manual_ipc_cv<- rep(NA, n - train_size)
+
+# Vectores para guardar AIC
+aic_autoarima_ipc_cv    <- rep(NA, n - train_size)
+aic_arima_manual_ipc_cv <- rep(NA, n - train_size)
+aic_sarima_manual_ipc_cv<- rep(NA, n - train_size)
+aic_arimax_auto_ipc_cv  <- rep(NA, n - train_size)
+aic_arimax_manual_ipc_cv<- rep(NA, n - train_size)
 
 # Rolling forecast cross-validation
 for(i in train_size:(n-1)) {
@@ -1334,6 +1341,7 @@ for(i in train_size:(n-1)) {
   #  AUTOARIMA
   ##############################
   fit_autoarima <- auto.arima(train_ipc_est_cv, seasonal = FALSE, d = 0)
+  aic_autoarima_ipc_cv[i - train_size + 1] <- fit_autoarima$aic
   fc_autoarima <- forecast(fit_autoarima, h = h)
   pred_autoarima_ipc_cv[i - train_size + 1] <- diffinv(fc_autoarima$mean, differences = 1, xi = last_val)[2]
   
@@ -1342,6 +1350,7 @@ for(i in train_size:(n-1)) {
   ##############################
   fit_arima_manual <- try(arima(train_ipc_est_cv, order = c(1,0,0)), silent = TRUE)
   if(!inherits(fit_arima_manual, "try-error")) {
+    aic_arima_manual_ipc_cv[i - train_size + 1] <- fit_arima_manual$aic
     fc_arima_manual <- forecast(fit_arima_manual, h = h)
     pred_arima_manual_ipc_cv[i - train_size + 1] <- diffinv(fc_arima_manual$mean, differences = 1, xi = last_val)[2]
   }
@@ -1354,6 +1363,7 @@ for(i in train_size:(n-1)) {
                                  seasonal = list(order = c(1,0,0), period = 4),
                                  method = "ML"), silent = TRUE)
   if(!inherits(fit_sarima_manual, "try-error")) {
+    aic_sarima_manual_ipc_cv[i - train_size + 1] <- fit_sarima_manual$aic
     fc_sarima_manual <- forecast(fit_sarima_manual, h = h)
     pred_sarima_manual_ipc_cv[i - train_size + 1] <- diffinv(fc_sarima_manual$mean, differences = 1, xi = last_val)[2]
   }
@@ -1361,7 +1371,6 @@ for(i in train_size:(n-1)) {
   ##############################
   # ARIMAX AUTOARIMA
   ##############################
-  # Alinear exógenas
   len_train_est <- length(train_ipc_est_cv)
   if(nrow(train_exogenas_estacionarias) >= len_train_est) {
     X_train_cv <- train_exogenas_estacionarias[(nrow(train_exogenas_estacionarias) - len_train_est + 1):nrow(train_exogenas_estacionarias), , drop=FALSE]
@@ -1373,18 +1382,24 @@ for(i in train_size:(n-1)) {
   }
   
   fit_arimax_auto <- try(auto.arima(train_ipc_est_cv, xreg = X_train_cv, seasonal = FALSE, d = 0), silent = TRUE)
-  if(!inherits(fit_arimax_auto, "try-error") && !is.null(X_next_cv)) {
-    fc_arimax_auto <- forecast(fit_arimax_auto, xreg = X_next_cv, h = h)
-    pred_arimax_auto_ipc_cv[i - train_size + 1] <- diffinv(fc_arimax_auto$mean, differences = 1, xi = last_val)[2]
+  if(!inherits(fit_arimax_auto, "try-error")) {
+    aic_arimax_auto_ipc_cv[i - train_size + 1] <- fit_arimax_auto$aic
+    if(!is.null(X_next_cv)) {
+      fc_arimax_auto <- forecast(fit_arimax_auto, xreg = X_next_cv, h = h)
+      pred_arimax_auto_ipc_cv[i - train_size + 1] <- diffinv(fc_arimax_auto$mean, differences = 1, xi = last_val)[2]
+    }
   }
   
   ##############################
   # ARIMAX MANUAL
   ##############################
   fit_arimax_manual <- try(Arima(train_ipc_est_cv, order = c(1,0,0), xreg = X_train_cv), silent = TRUE)
-  if(!inherits(fit_arimax_manual, "try-error") && !is.null(X_next_cv)) {
-    fc_arimax_manual <- forecast(fit_arimax_manual, xreg = X_next_cv, h = h)
-    pred_arimax_manual_ipc_cv[i - train_size + 1] <- diffinv(fc_arimax_manual$mean, differences = 1, xi = last_val)[2]
+  if(!inherits(fit_arimax_manual, "try-error")) {
+    aic_arimax_manual_ipc_cv[i - train_size + 1] <- fit_arimax_manual$aic
+    if(!is.null(X_next_cv)) {
+      fc_arimax_manual <- forecast(fit_arimax_manual, xreg = X_next_cv, h = h)
+      pred_arimax_manual_ipc_cv[i - train_size + 1] <- diffinv(fc_arimax_manual$mean, differences = 1, xi = last_val)[2]
+    }
   }
   
   # Remover la primera fila de test_exogenas para la siguiente iteración
@@ -1392,7 +1407,6 @@ for(i in train_size:(n-1)) {
     test_exogenas_estacionarias <- test_exogenas_estacionarias[-1, , drop=FALSE]
   }
 }
-
 
 # Calcular errores
 ###################
@@ -1424,14 +1438,22 @@ df_metrics_ipc_cv <- data.frame(
     metrics(actual_cv - pred_arima_manual_ipc_cv, actual_cv)["MAPE"],
     metrics(actual_cv - pred_sarima_manual_ipc_cv, actual_cv)["MAPE"],
     metrics(actual_cv - pred_arimax_auto_ipc_cv, actual_cv)["MAPE"],
-    metrics(actual_cv - pred_arimax_manual_ipc_cv, actual_cv)["MAPE"] ))
+    metrics(actual_cv - pred_arimax_manual_ipc_cv, actual_cv)["MAPE"] ),
+  AIC = c(
+    mean(aic_autoarima_ipc_cv, na.rm = TRUE),
+    mean(aic_arima_manual_ipc_cv, na.rm = TRUE),
+    mean(aic_sarima_manual_ipc_cv, na.rm = TRUE),
+    mean(aic_arimax_auto_ipc_cv, na.rm = TRUE),
+    mean(aic_arimax_manual_ipc_cv, na.rm = TRUE))
+)
 
 print(df_metrics_ipc_cv)
 
 
 
+
 ##########################################################
-###  CROSS-VALIDATION PIB -      ###
+###  CROSS-VALIDATION PIB  (ARIMA, SARIMA, ARIMAX)
 ##########################################################
 
 # Parámetros
@@ -1439,10 +1461,10 @@ h <- 2         # pasos a predecir
 train_size <- 20 # tamaño inicial del train
 
 # Series originales (sin outliers, sin diferenciar)
-gdp_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$GDP.billion.currency.units)),start = c(1996,1), frequency = 4)
-money_supply_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$Money.supply.billion.currency.units)),start = c(1996,1), frequency = 4)
-stock_market_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$Stock.market.index)),start = c(1996,1), frequency = 4)
-unemployment_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$Unemployment.rate.percent)),start = c(1996,1), frequency = 4)
+gdp_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$GDP.billion.currency.units)), start = c(1996,1), frequency = 4)
+money_supply_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$Money.supply.billion.currency.units)), start = c(1996,1), frequency = 4)
+stock_market_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$Stock.market.index)), start = c(1996,1), frequency = 4)
+unemployment_ts_trimestral <- ts(na.omit(as.numeric(datos_limpios_AUS$Unemployment.rate.percent)), start = c(1996,1), frequency = 4)
 
 n <- length(gdp_ts_trimestral)
 
@@ -1452,6 +1474,13 @@ pred_sarima_manual_cv    <- rep(NA, n - train_size)
 pred_autoarima_cv        <- rep(NA, n - train_size)
 pred_arimax_auto_cv      <- rep(NA, n - train_size)
 pred_arimax_manual_cv    <- rep(NA, n - train_size)
+
+# Crear vectores para AIC
+aic_arima_manual_cv     <- rep(NA, n - train_size)
+aic_sarima_manual_cv    <- rep(NA, n - train_size)
+aic_autoarima_cv        <- rep(NA, n - train_size)
+aic_arimax_auto_cv      <- rep(NA, n - train_size)
+aic_arimax_manual_cv    <- rep(NA, n - train_size)
 
 ##########################################################
 # Rolling forecast cross-validation
@@ -1480,6 +1509,7 @@ for(i in train_size:(n-1)) {
   ##############################
   fit_manual <- try(arima(diff(diff(log(train_PIB_cv), lag=4)), order = c(2,0,2)), silent = TRUE)
   if(!inherits(fit_manual, "try-error")) {
+    aic_arima_manual_cv[i - train_size + 1] <- fit_manual$aic
     fc_manual <- forecast(fit_manual, h = h)
     
     # Revertir diferencias
@@ -1492,13 +1522,14 @@ for(i in train_size:(n-1)) {
   }
   
   ##############################
-  # SARIMA MANUAL (2,0,2)(0,0,0)[4]
+  # SARIMA MANUAL (2,0,2)(0,0,1)[4]
   ##############################
   fit_sarima_manual_cv <- try(arima(log(train_PIB_cv),
                                     order = c(2,0,2),
                                     seasonal = list(order = c(0,0,1), period = 4)),
                               silent = TRUE)
   if(!inherits(fit_sarima_manual_cv, "try-error")) {
+    aic_sarima_manual_cv[i - train_size + 1] <- fit_sarima_manual_cv$aic
     fc_sarima_manual_cv <- forecast(fit_sarima_manual_cv, h = h)
     pred_sarima_manual_cv[i - train_size + 1] <- exp(as.numeric(fc_sarima_manual_cv$mean))
   }
@@ -1507,6 +1538,7 @@ for(i in train_size:(n-1)) {
   # AUTO.ARIMA (sin exógenas)
   ##############################
   fit_auto <- auto.arima(log(train_PIB_cv), seasonal = FALSE)
+  aic_autoarima_cv[i - train_size + 1] <- fit_auto$aic
   pred_autoarima_cv[i - train_size + 1] <- exp(as.numeric(forecast(fit_auto, h = h)$mean))
   
   ##############################
@@ -1519,6 +1551,7 @@ for(i in train_size:(n-1)) {
                                     approximation = TRUE),
                          silent = TRUE)
   if(!inherits(fit_arimax_auto, "try-error")) {
+    aic_arimax_auto_cv[i - train_size + 1] <- fit_arimax_auto$aic
     fc_arimax_auto <- forecast(fit_arimax_auto, xreg = X_next_cv, h = h)
     pred_arimax_auto_cv[i - train_size + 1] <- exp(as.numeric(fc_arimax_auto$mean))
   }
@@ -1550,8 +1583,8 @@ for(i in train_size:(n-1)) {
   ), nrow = 1)
   
   fit_arimax_manual <- try(arima(train_PIB_est_cv, order = c(2,0,2), xreg = X_train_est_cv), silent=TRUE)
-  
   if(!inherits(fit_arimax_manual, "try-error")) {
+    aic_arimax_manual_cv[i - train_size + 1] <- fit_arimax_manual$aic
     fc_arimax_manual <- predict(fit_arimax_manual, n.ahead = h, newxreg = X_next_est_cv)
     
     # Revertir la diferencia simple
@@ -1568,17 +1601,10 @@ for(i in train_size:(n-1)) {
 }
 
 ##########################################################
-# Cálculo de errores
+# Cálculo de errores y métricas
 ##########################################################
 actual_cv <- window(gdp_ts_trimestral, start = time(gdp_ts_trimestral)[train_size + 1])
 
-errors_arima_manual_cv   <- actual_cv - pred_arima_manual_cv
-errors_sarima_manual_cv  <- actual_cv - pred_sarima_manual_cv
-errors_autoarima_cv      <- actual_cv - pred_autoarima_cv
-errors_arimax_auto_cv    <- actual_cv - pred_arimax_auto_cv
-errors_arimax_manual_cv  <- actual_cv - pred_arimax_manual_cv
-
-# Función de métricas
 metrics <- function(errors, actual) {
   rmse <- sqrt(mean(errors^2, na.rm = TRUE))
   mae  <- mean(abs(errors), na.rm = TRUE)
@@ -1586,29 +1612,37 @@ metrics <- function(errors, actual) {
   return(c(RMSE = rmse, MAE = mae, MAPE = mape))
 }
 
-# Calcular métricas
-metrics_arima_manual_cv  <- metrics(errors_arima_manual_cv, actual_cv)
-metrics_sarima_manual_cv <- metrics(errors_sarima_manual_cv, actual_cv)
-metrics_autoarima_cv     <- metrics(errors_autoarima_cv, actual_cv)
-metrics_arimax_auto_cv   <- metrics(errors_arimax_auto_cv, actual_cv)
-metrics_arimax_manual_cv <- metrics(errors_arimax_manual_cv, actual_cv)
-
-# Tabla comparativa CV
 df_metrics_cv <- data.frame(
   Modelo = c("ARIMA_manual_CV", "SARIMA_manual_CV", "AUTO.ARIMA_CV",
              "ARIMAX_auto_CV", "ARIMAX_manual_CV"),
-  RMSE = c(metrics_arima_manual_cv["RMSE"], metrics_sarima_manual_cv["RMSE"],
-           metrics_autoarima_cv["RMSE"], metrics_arimax_auto_cv["RMSE"],
-           metrics_arimax_manual_cv["RMSE"]),
-  MAE = c(metrics_arima_manual_cv["MAE"], metrics_sarima_manual_cv["MAE"],
-          metrics_autoarima_cv["MAE"], metrics_arimax_auto_cv["MAE"],
-          metrics_arimax_manual_cv["MAE"]),
-  MAPE = c(metrics_arima_manual_cv["MAPE"], metrics_sarima_manual_cv["MAPE"],
-           metrics_autoarima_cv["MAPE"], metrics_arimax_auto_cv["MAPE"],
-           metrics_arimax_manual_cv["MAPE"])
+  RMSE = c(
+    metrics(actual_cv - pred_arima_manual_cv, actual_cv)["RMSE"],
+    metrics(actual_cv - pred_sarima_manual_cv, actual_cv)["RMSE"],
+    metrics(actual_cv - pred_autoarima_cv, actual_cv)["RMSE"],
+    metrics(actual_cv - pred_arimax_auto_cv, actual_cv)["RMSE"],
+    metrics(actual_cv - pred_arimax_manual_cv, actual_cv)["RMSE"]),
+  MAE = c(
+    metrics(actual_cv - pred_arima_manual_cv, actual_cv)["MAE"],
+    metrics(actual_cv - pred_sarima_manual_cv, actual_cv)["MAE"],
+    metrics(actual_cv - pred_autoarima_cv, actual_cv)["MAE"],
+    metrics(actual_cv - pred_arimax_auto_cv, actual_cv)["MAE"],
+    metrics(actual_cv - pred_arimax_manual_cv, actual_cv)["MAE"]),
+  MAPE = c(
+    metrics(actual_cv - pred_arima_manual_cv, actual_cv)["MAPE"],
+    metrics(actual_cv - pred_sarima_manual_cv, actual_cv)["MAPE"],
+    metrics(actual_cv - pred_autoarima_cv, actual_cv)["MAPE"],
+    metrics(actual_cv - pred_arimax_auto_cv, actual_cv)["MAPE"],
+    metrics(actual_cv - pred_arimax_manual_cv, actual_cv)["MAPE"]),
+  AIC = c(
+    mean(aic_arima_manual_cv, na.rm = TRUE),
+    mean(aic_sarima_manual_cv, na.rm = TRUE),
+    mean(aic_autoarima_cv, na.rm = TRUE),
+    mean(aic_arimax_auto_cv, na.rm = TRUE),
+    mean(aic_arimax_manual_cv, na.rm = TRUE))
 )
 
 print(df_metrics_cv)
+
 
 
 
@@ -1632,6 +1666,16 @@ tsdisplay(IPC_estacionaria)
 #Aplicamos el modelos osbre la series diferenciada
 modelo_final_arima_IPC <- arima(IPC_estacionaria, order=c(1,0,0))  # d=0 porque ya diferenciamos anteriormente. y no necesitamos diferenciarlo otra vez
 summary(modelo_final_arima_IPC)
+# Extraer AIC, AICc y BIC
+aic_final_IPC <-modelo_final_arima_IPC$aic    # AIC
+aic_final_IPC
+k <- length(modelo_final_arima_IPC$coef)  # ar + intercept
+n <- length(series_IPC_trimestrales) # tamaño de la muestra
+aicc_final_IPC <- aic_final_IPC + (2 * k * (k + 1)) / (n - k - 1)
+aicc_final_IPC
+bic_final_IPC <- aicc_final_IPC + k * log(n)
+bic_final_IPC
+
 
 # Validación de residuales
 hist(residuals(modelo_final_arima_IPC), main="Histograma de residuales ARIMA IPC", xlab="Residual", col=paleta[2])
@@ -1893,6 +1937,12 @@ PIB_Q4_2022 <- as.numeric(window(df_PIB_Completo, start = c(2022, 4), end = c(20
 
 PIB_cambio_Q4 <- ((PIB_Q4_2022 - PIB_Q4_2021) / PIB_Q4_2021) * 100
 PIB_cambio_Q4
+
+#Valores porcentuales Expertos
+#IPC : 2,5%
+#PIB: 5,5%
+
+
 
 
 
