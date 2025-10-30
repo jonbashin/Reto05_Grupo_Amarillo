@@ -53,7 +53,7 @@ paleta<-c("#c88fb2",  "#8db41c",  "#93044e","#D1006F",  "#F5F0E6","#4D4D4D")
 #GRÁFICOS CON LOS DATASETS SEPARADOS
 #Tasa de interés anual
 interes_anual$observation_date <- as.Date(interes_anual$observation_date)
-png("Tasa Interés Anual.png", width = 1800, height = 1400, res = 100)
+png("Tasa Interés Anual.png", width = 800, height = 600, res = 100)
 ggplot(interes_anual, aes(x = observation_date, y = interes_anual)) +
   geom_line(color = paleta[2], size = 1) +  # Verde de la nueva paleta
   labs(title = "Tasa de interés anual en Australia",
@@ -71,7 +71,7 @@ dev.off()
 
 #Tasa de interés trimestral
 interes_trimestral$observation_date<-as.Date(interes_trimestral$observation_date)
-png("tasa_interes_trimestral.png", width = 1800, height = 1400, res = 100)
+png("Tasa Interés Trimestral.png", width = 800, height = 600, res = 100)
 ggplot(interes_trimestral, aes(x = observation_date, y = interes_trimestral)) +
   geom_line(color = paleta[4], size = 1) +  # Rosa/magenta
   labs(title = "Tasa de interés trimestral en Australia",
@@ -87,11 +87,9 @@ ggplot(interes_trimestral, aes(x = observation_date, y = interes_trimestral)) +
   )
 dev.off()
 
-
 #GRÁFICOS CON INTERÉS ANUAL Y TRIMESTRAL, Y TIPO DE CAMBIO JUNTOS
-
 #Comparación entre los tipos de interés
-png("comparacion_tasas_interes.png", width = 1800, height = 1400, res = 100)
+png("Comparación Tasas Interés.png", width = 800, height = 600, res = 100)
 ggplot(cambio_interes) +
   geom_line(aes(x = observation_date, y = interes_anual, color = "Anual"), size = 1) +
   geom_line(aes(x = observation_date, y = interes_trimestral, color = "Trimestral"), size = 1) +
@@ -119,7 +117,7 @@ ggplot(cambio_interes) +
 dev.off()
 
 #Evolución del tipo de cambio
-png("tipo_cambio_aud_usd.png", width = 1800, height = 1400, res = 100)
+png("Evolución del tipo de cambio.png", width = 800, height = 600, res = 100)
 ggplot(cambio_interes, aes(x = observation_date, y = tipo_cambio)) +
   geom_line(color = paleta[3], size = 1) +  # Morado intenso
   labs(title = "Evolución del tipo de cambio AUD/USD",
@@ -139,7 +137,7 @@ dev.off()
 df<-cambio_interes %>%
   group_by(Año) %>%
   summarise(interes_promedio = mean(interes_anual, na.rm = TRUE))
-png("promedio_anual_interes.png", width = 1800, height = 1400, res = 100)
+png("Promedio Anual Interés.png", width = 800, height = 600, res = 100)
 ggplot(df, aes(x = factor(Año), y = interes_promedio)) +
   geom_col(fill = paleta[2]) +  # Verde
   geom_text(aes(label = round(interes_promedio, 2)),
