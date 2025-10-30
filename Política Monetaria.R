@@ -138,10 +138,12 @@ df<-cambio_interes %>%
   summarise(interes_promedio = mean(interes_anual, na.rm = TRUE))
 ggplot(df, aes(x = factor(Año), y = interes_promedio)) +
   geom_col(fill = pal_laboral["verde"]) +
-  geom_text(aes(label = round(interes_promedio, 2)), vjust = -0.5, color = pal_laboral["gris_texto"]) +
-  labs(title = "Promedio anual de la tasa de interés en Australia",
+  geom_text(aes(label = round(interes_promedio, 2)),
+            vjust = -0.5, color = pal_laboral["gris_texto"]) +
+  labs(title = "Promedio anual de la tasa de interés",
        x = "Año",
        y = "Tasa de interés promedio (%)") +
+  expand_limits(y = max(df$interes_promedio) * 1.1) +
   theme_minimal(base_size = 14) +
   theme(
     plot.background = element_rect(fill = pal_laboral["gris_fondo"]),
