@@ -1941,9 +1941,21 @@ PIB_Q4_2022 <- as.numeric(window(df_PIB_Completo, start = c(2022, 4), end = c(20
 PIB_cambio_Q4 <- ((PIB_Q4_2022 - PIB_Q4_2021) / PIB_Q4_2021) * 100
 PIB_cambio_Q4
 
+series_IPC_trimestrales
+
 #Valores porcentuales Expertos
-#IPC : 2,5%
-#PIB: 5,5%
+#IPC : 2,5% ---> 124.33
+#PIB: 5,5% --> 614,03
+
+#no TIENE SENTIDO PORQUE EL Q2 DE 2022 ES 126 Y LOS EXPERTOS PARA Q4 2022 PREDIJIERON 127.
+
+#VALORES PORCETUALES NUESTROS:
+#IPC: 5.2% 
+#PIB: 12 %
+
+#Valor real :
+#IPC: 
+#PIB: 
 
 
 
