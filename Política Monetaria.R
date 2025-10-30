@@ -1,3 +1,4 @@
+#POLÍTICA MONETARIA
 #Cargar librerías
 library(ggplot2)
 library(plotly)
@@ -48,10 +49,11 @@ cambio_interes<-cambio_interes %>%
 #Paleta de colores personalizada
 paleta<-c("#c88fb2",  "#8db41c",  "#93044e","#D1006F",  "#F5F0E6","#4D4D4D")
 
-#---------------
+
 #GRÁFICOS CON LOS DATASETS SEPARADOS
 #Tasa de interés anual
 interes_anual$observation_date <- as.Date(interes_anual$observation_date)
+png("Tasa Interés Anual.png", width = 1800, height = 1400, res = 100)
 ggplot(interes_anual, aes(x = observation_date, y = interes_anual)) +
   geom_line(color = paleta[2], size = 1) +  # Verde de la nueva paleta
   labs(title = "Tasa de interés anual en Australia",
@@ -65,9 +67,11 @@ ggplot(interes_anual, aes(x = observation_date, y = interes_anual)) +
     axis.text = element_text(color = paleta[6]),
     axis.title = element_text(color = paleta[6])
   )
+dev.off()
 
 #Tasa de interés trimestral
 interes_trimestral$observation_date<-as.Date(interes_trimestral$observation_date)
+png("tasa_interes_trimestral.png", width = 1800, height = 1400, res = 100)
 ggplot(interes_trimestral, aes(x = observation_date, y = interes_trimestral)) +
   geom_line(color = paleta[4], size = 1) +  # Rosa/magenta
   labs(title = "Tasa de interés trimestral en Australia",
@@ -81,10 +85,13 @@ ggplot(interes_trimestral, aes(x = observation_date, y = interes_trimestral)) +
     axis.text = element_text(color = paleta[6]),
     axis.title = element_text(color = paleta[6])
   )
+dev.off()
 
 
 #GRÁFICOS CON INTERÉS ANUAL Y TRIMESTRAL, Y TIPO DE CAMBIO JUNTOS
+
 #Comparación entre los tipos de interés
+png("comparacion_tasas_interes.png", width = 1800, height = 1400, res = 100)
 ggplot(cambio_interes) +
   geom_line(aes(x = observation_date, y = interes_anual, color = "Anual"), size = 1) +
   geom_line(aes(x = observation_date, y = interes_trimestral, color = "Trimestral"), size = 1) +
@@ -109,8 +116,10 @@ ggplot(cambio_interes) +
     legend.title = element_text(color = paleta[6]),
     legend.text = element_text(color = paleta[6])
   )
+dev.off()
 
 #Evolución del tipo de cambio
+png("tipo_cambio_aud_usd.png", width = 1800, height = 1400, res = 100)
 ggplot(cambio_interes, aes(x = observation_date, y = tipo_cambio)) +
   geom_line(color = paleta[3], size = 1) +  # Morado intenso
   labs(title = "Evolución del tipo de cambio AUD/USD",
@@ -124,11 +133,13 @@ ggplot(cambio_interes, aes(x = observation_date, y = tipo_cambio)) +
     axis.text = element_text(color = paleta[6]),
     axis.title = element_text(color = paleta[6])
   )
+dev.off()
 
 #Promedio de interés anual por año
 df<-cambio_interes %>%
   group_by(Año) %>%
   summarise(interes_promedio = mean(interes_anual, na.rm = TRUE))
+png("promedio_anual_interes.png", width = 1800, height = 1400, res = 100)
 ggplot(df, aes(x = factor(Año), y = interes_promedio)) +
   geom_col(fill = paleta[2]) +  # Verde
   geom_text(aes(label = round(interes_promedio, 2)),
@@ -145,3 +156,6 @@ ggplot(df, aes(x = factor(Año), y = interes_promedio)) +
     axis.text = element_text(color = paleta[6]),
     axis.title = element_text(color = paleta[6])
   )
+dev.off()
+
+cat("Todos los gráficos se han exportado exitosamente como PNG\n")
