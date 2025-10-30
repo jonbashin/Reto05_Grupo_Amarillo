@@ -1,4 +1,4 @@
-#ANÁLISIS DE POLÍTICA FISCAL - AUSTRALIA
+#POLÍTICA FISCAL
 #Cargar librerías
 library(ggplot2)
 library(plotly)
