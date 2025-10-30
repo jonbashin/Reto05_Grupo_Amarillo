@@ -1944,7 +1944,7 @@ PIB_cambio_Q4
 series_IPC_trimestrales
 
 #Valores porcentuales Expertos
-#IPC : 2,5% ---> 124.33
+#IPC : 4,25% ---> 126.
 #PIB: 5,5% --> 614,03
 
 #no TIENE SENTIDO PORQUE EL Q2 DE 2022 ES 126 Y LOS EXPERTOS PARA Q4 2022 PREDIJIERON 127.
@@ -1956,6 +1956,258 @@ series_IPC_trimestrales
 #Valor real :
 #IPC: 
 #PIB: 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+library(ggplot2)
+library(dplyr)
+
+# Extraer la serie temporal (ajusta el nombre según donde esté tu serie)
+# Asumiendo que está en df_PIB_Completo como una serie temporal directa
+pib_ts <- df_PIB_Completo
+
+# Convertir la serie temporal a dataframe
+pib_clean <- data.frame(
+  PIB = as.numeric(pib_ts),
+  tiempo_index = time(pib_ts)
+)
+
+# Calcular año y trimestre a partir del índice de tiempo
+pib_clean$Año <- floor(pib_clean$tiempo_index)
+pib_clean$trimestre_num <- round((pib_clean$tiempo_index - pib_clean$Año) * 4) + 1
+pib_clean$Trimestre <- paste0("Qtr", pib_clean$trimestre_num)
+
+# Crear tiempo decimal para el eje X
+pib_clean$tiempo <- pib_clean$Año + (pib_clean$trimestre_num - 1) / 4
+
+# FILTRAR desde 2012
+pib_clean <- pib_clean %>% filter(Año >= 2012)
+
+# Identificar los dos últimos valores como predicciones
+pib_clean$tipo <- "Observado"
+n <- nrow(pib_clean)
+pib_clean$tipo[(n-1):n] <- "Predicción"
+
+# Valores reales de los dos últimos trimestres
+valores_reales <- c(636.381, 640.751)
+
+# Crear dataframe con valores reales
+df_reales <- data.frame(
+  tiempo = pib_clean$tiempo[(n-1):n],
+  PIB = valores_reales,
+  tipo = "Real",
+  Año = pib_clean$Año[(n-1):n],
+  Trimestre = pib_clean$Trimestre[(n-1):n]
+)
+
+# Dataframe para las etiquetas de predicciones
+df_pred_labels <- pib_clean %>% 
+  filter(tipo == "Predicción") %>%
+  mutate(label = sprintf("%.2f", PIB))
+
+# Dataframe para las etiquetas de valores reales
+df_real_labels <- df_reales %>%
+  mutate(label = sprintf("%.2f", PIB))
+
+# Crear el gráfico
+ggplot() +
+  # Línea completa de la serie
+  geom_line(data = pib_clean, 
+            aes(x = tiempo, y = PIB, color = tipo), 
+            linewidth = 0.9) +
+  # Puntos para las predicciones
+  geom_point(data = filter(pib_clean, tipo == "Predicción"),
+             aes(x = tiempo, y = PIB, color = tipo), 
+             size = 4.5, shape = 17) +  # Triángulos
+  # Puntos para valores reales
+  geom_point(data = df_reales,
+             aes(x = tiempo, y = PIB, color = tipo), 
+             size = 4.5, shape = 16) +  # Círculos
+  # Línea conectando valores reales
+  geom_line(data = df_reales,
+            aes(x = tiempo, y = PIB, color = tipo), 
+            linewidth = 1.2, linetype = "dashed") +
+  # Etiquetas para predicciones
+  geom_text(data = df_pred_labels,
+            aes(x = tiempo, y = PIB, label = label),
+            vjust = -1, hjust = 0.5, size = 3.5, color = "#F77F00", fontface = "bold") +
+  # Etiquetas para valores reales
+  geom_text(data = df_real_labels,
+            aes(x = tiempo, y = PIB, label = label),
+            vjust = 2, hjust = 0.5, size = 3.5, color = "#06A77D", fontface = "bold") +
+  # Colores personalizados
+  scale_color_manual(
+    values = c("Observado" = "#2E86AB", 
+               "Predicción" = "#F77F00", 
+               "Real" = "#06A77D"),
+    name = "Tipo de dato"
+  ) +
+  # Eje X con años
+  scale_x_continuous(
+    breaks = seq(2012, 2023, by = 1),
+    labels = seq(2012, 2023, by = 1)
+  ) +
+  # Etiquetas y título
+  labs(
+    title = "Serie Temporal del PIB: Predicciones vs Valores Reales",
+    subtitle = "Trimestres 2012-2023 (últimos dos trimestres predichos)",
+    x = "Año",
+    y = "PIB (millones de €)",
+    caption = "Nota: Triángulos naranjas = predicciones, Círculos verdes = valores reales"
+  ) +
+  # Tema
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11, color = "gray40"),
+    legend.position = "bottom",
+    panel.grid.minor = element_blank(),
+    axis.text = element_text(size = 10)
+  )
+
+
+
+
+
+
+library(ggplot2)
+library(dplyr)
+
+# Extraer la serie temporal del IPC
+ipc_ts <- df_IPC_completo
+
+# Convertir la serie temporal a dataframe
+ipc_clean <- data.frame(
+  IPC = as.numeric(ipc_ts),
+  tiempo_index = time(ipc_ts)
+)
+
+# Calcular año y trimestre a partir del índice de tiempo
+ipc_clean$Año <- floor(ipc_clean$tiempo_index)
+ipc_clean$trimestre_num <- round((ipc_clean$tiempo_index - ipc_clean$Año) * 4) + 1
+ipc_clean$Trimestre <- paste0("Qtr", ipc_clean$trimestre_num)
+
+# Crear tiempo decimal para el eje X
+ipc_clean$tiempo <- ipc_clean$Año + (ipc_clean$trimestre_num - 1) / 4
+
+# FILTRAR desde 2012
+ipc_clean <- ipc_clean %>% filter(Año >= 2012)
+
+# Identificar los dos últimos valores como predicciones
+ipc_clean$tipo <- "Observado"
+n <- nrow(ipc_clean)
+ipc_clean$tipo[(n-1):n] <- "Predicción"
+
+# Valores reales de los dos últimos trimestres
+valores_reales <- c(128.4, 130.8)
+
+# Crear dataframe con valores reales
+df_reales <- data.frame(
+  tiempo = ipc_clean$tiempo[(n-1):n],
+  IPC = valores_reales,
+  tipo = "Real",
+  Año = ipc_clean$Año[(n-1):n],
+  Trimestre = ipc_clean$Trimestre[(n-1):n]
+)
+
+# Dataframe para las etiquetas de predicciones
+df_pred_labels <- ipc_clean %>% 
+  filter(tipo == "Predicción") %>%
+  mutate(label = sprintf("%.2f", IPC))
+
+# Dataframe para las etiquetas de valores reales
+df_real_labels <- df_reales %>%
+  mutate(label = sprintf("%.2f", IPC))
+
+# Crear el gráfico
+ggplot() +
+  # Línea completa de la serie
+  geom_line(data = ipc_clean, 
+            aes(x = tiempo, y = IPC, color = tipo), 
+            linewidth = 0.9) +
+  # Puntos para las predicciones
+  geom_point(data = filter(ipc_clean, tipo == "Predicción"),
+             aes(x = tiempo, y = IPC, color = tipo), 
+             size = 4.5, shape = 17) +  # Triángulos
+  # Puntos para valores reales
+  geom_point(data = df_reales,
+             aes(x = tiempo, y = IPC, color = tipo), 
+             size = 4.5, shape = 16) +  # Círculos
+  # Línea conectando valores reales
+  geom_line(data = df_reales,
+            aes(x = tiempo, y = IPC, color = tipo), 
+            linewidth = 1.2, linetype = "dashed") +
+  # Etiquetas para predicciones
+  geom_text(data = df_pred_labels,
+            aes(x = tiempo, y = IPC, label = label),
+            vjust = -1, hjust = 0.5, size = 3.5, color = "#F77F00", fontface = "bold") +
+  # Etiquetas para valores reales
+  geom_text(data = df_real_labels,
+            aes(x = tiempo, y = IPC, label = label),
+            vjust = 2, hjust = 0.5, size = 3.5, color = "#06A77D", fontface = "bold") +
+  # Colores personalizados
+  scale_color_manual(
+    values = c("Observado" = "#2E86AB", 
+               "Predicción" = "#F77F00", 
+               "Real" = "#06A77D"),
+    name = "Tipo de dato"
+  ) +
+  # Eje X con años
+  scale_x_continuous(
+    breaks = seq(2012, 2023, by = 1),
+    labels = seq(2012, 2023, by = 1)
+  ) +
+  # Etiquetas y título
+  labs(
+    title = "Serie Temporal del IPC: Predicciones vs Valores Reales",
+    subtitle = "Trimestres 2012-2023 (últimos dos trimestres predichos)",
+    x = "Año",
+    y = "IPC",
+    caption = "Nota: Triángulos naranjas = predicciones, Círculos verdes = valores reales"
+  ) +
+  # Tema
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11, color = "gray40"),
+    legend.position = "bottom",
+    panel.grid.minor = element_blank(),
+    axis.text = element_text(size = 10)
+  )
+
+# Guardar el gráfico (opcional)
+# ggsave("IPC_predicciones_vs_reales_2012-2023.png", width = 12, height = 6, dpi = 300)
 
 
 
