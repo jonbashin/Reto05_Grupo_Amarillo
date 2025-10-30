@@ -157,5 +157,3 @@ ggplot(df, aes(x = factor(Año), y = interes_promedio)) +
     axis.title = element_text(color = paleta[6])
   )
 dev.off()
-
-cat("Todos los gráficos se han exportado exitosamente como PNG\n")
