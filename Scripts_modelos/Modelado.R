@@ -17,6 +17,8 @@ library(astsa)
 library(Metrics)
 library(reshape2)
 library(cowplot)
+library(ggrepel)
+
 
 
 
@@ -472,13 +474,15 @@ df_plot4 <- data.frame(
             rep("Test", length(test_ts4))))
 
 # Graficar
+png("PIB_Train_prediccion_test_ARIMA.png", width = 2500, height = 1800, res = 200)
 ggplot(df_plot4, aes(x=Fecha, y=Valor, color=Tipo)) +
   geom_line(size=1.2) +
   geom_point(size=2) +
   scale_color_manual(values=c("Train"=paleta[3], "Predicción"=paleta[4], "Test"=paleta[2])) +
-  labs(title="Predicción PIB ARIMA Manual", x="Año", y="PIB") +
+  labs(title="Predicción PIB ARIMA Manual (2,0,2)", x="Año", y="PIB") +
   theme_minimal(base_size=13) +
   theme(plot.title=element_text(hjust=0.5), legend.position="top")
+dev.off()
 
 
 #-----------------      SARIMA MANUAL ---- PIB       ----------------------
@@ -1748,9 +1752,9 @@ df_pred <- data.frame(
   Upper = as.numeric(diffinv(prediccion_arima_IPC$upper[,1], differences = 1, xi = tail(series_IPC_trimestrales,1))[-1])
 )
 p_main <- ggplot(df_total, aes(x = Trimestre, y = IPC)) +
-  geom_line(color = "blue", linewidth = 1) +
-  geom_line(data = df_pred, aes(x = Trimestre, y = Pred), color = "red", linetype = "dashed", inherit.aes = FALSE) +
-  geom_ribbon(data = df_pred, aes(x = Trimestre, ymin = Lower, ymax = Upper), fill = "blue", alpha = 0.2, inherit.aes = FALSE) +
+  geom_line(color = paleta[2], linewidth = 1) +
+  geom_line(data = df_pred, aes(x = Trimestre, y = Pred), color = paleta[4], linetype = "dashed", inherit.aes = FALSE) +
+  geom_ribbon(data = df_pred, aes(x = Trimestre, ymin = Lower, ymax = Upper), fill = paleta[2], alpha = 0.2, inherit.aes = FALSE) +
   theme_minimal() +
   labs(
     title = "Predicción IPC con ARIMA (1,0,0)",  # Título general
@@ -1769,9 +1773,9 @@ breaks_all <- df_quarters$pos
 labels_all <- paste0(df_quarters$year, " Q", df_quarters$q)
 
 p_zoom <- ggplot() +
-  geom_line(data = df_total, aes(x = Trimestre, y = IPC), color = "blue") +
-  geom_line(data = df_pred, aes(x = Trimestre, y = Pred), color = "red", linetype = "dashed", inherit.aes = FALSE) +
-  geom_ribbon(data = df_pred, aes(x = Trimestre, ymin = Lower, ymax = Upper), fill = "blue", alpha = 0.2, inherit.aes = FALSE) +
+  geom_line(data = df_total, aes(x = Trimestre, y = IPC), color = paleta[2]) +
+  geom_line(data = df_pred, aes(x = Trimestre, y = Pred), color = paleta[4], linetype = "dashed", inherit.aes = FALSE) +
+  geom_ribbon(data = df_pred, aes(x = Trimestre, ymin = Lower, ymax = Upper), fill = paleta[2], alpha = 0.2, inherit.aes = FALSE) +
   coord_cartesian(xlim = c(x_min, x_max)) +
   scale_x_continuous(
     breaks = breaks_all[breaks_all >= x_min & breaks_all <= x_max],
@@ -1880,9 +1884,9 @@ df_pred_PIB <- data.frame(
 
 # Gráfico principal
 p_main_PIB <- ggplot(df_total_PIB, aes(x = Trimestre, y = PIB)) +
-  geom_line(color = "blue", linewidth = 1) +
-  geom_line(data = df_pred_PIB, aes(x = Trimestre, y = Pred), color = "red", linetype = "dashed", inherit.aes = FALSE) +
-  geom_ribbon(data = df_pred_PIB, aes(x = Trimestre, ymin = Lower, ymax = Upper), fill = "blue", alpha = 0.2, inherit.aes = FALSE) +
+  geom_line(color = paleta[2], linewidth = 1) +
+  geom_line(data = df_pred_PIB, aes(x = Trimestre, y = Pred), color = paleta[4], linetype = "dashed", inherit.aes = FALSE) +
+  geom_ribbon(data = df_pred_PIB, aes(x = Trimestre, ymin = Lower, ymax = Upper), fill =paleta[2], alpha = 0.2, inherit.aes = FALSE) +
   theme_minimal() +
   labs(
     title = "Predicción PIB con ARIMA (2,0,2)",
@@ -1901,9 +1905,9 @@ breaks_all <- df_quarters$pos
 labels_all <- paste0(df_quarters$year, " Q", df_quarters$q)
 
 p_zoom_PIB <- ggplot() +
-  geom_line(data = df_total_PIB, aes(x = Trimestre, y = PIB), color = "blue") +
-  geom_line(data = df_pred_PIB, aes(x = Trimestre, y = Pred), color = "red", linetype = "dashed", inherit.aes = FALSE) +
-  geom_ribbon(data = df_pred_PIB, aes(x = Trimestre, ymin = Lower, ymax = Upper), fill = "blue", alpha = 0.2, inherit.aes = FALSE) +
+  geom_line(data = df_total_PIB, aes(x = Trimestre, y = PIB), color = paleta[2]) +
+  geom_line(data = df_pred_PIB, aes(x = Trimestre, y = Pred), color = paleta[4], linetype = "dashed", inherit.aes = FALSE) +
+  geom_ribbon(data = df_pred_PIB, aes(x = Trimestre, ymin = Lower, ymax = Upper), fill = paleta[2], alpha = 0.2, inherit.aes = FALSE) +
   coord_cartesian(xlim = c(x_min, x_max)) +
   scale_x_continuous(
     breaks = breaks_all[breaks_all >= x_min & breaks_all <= x_max],
@@ -1941,7 +1945,6 @@ PIB_Q4_2022 <- as.numeric(window(df_PIB_Completo, start = c(2022, 4), end = c(20
 PIB_cambio_Q4 <- ((PIB_Q4_2022 - PIB_Q4_2021) / PIB_Q4_2021) * 100
 PIB_cambio_Q4
 
-series_IPC_trimestrales
 
 #Valores porcentuales Expertos
 #IPC : 4,25% ---> 126.
@@ -1960,58 +1963,33 @@ series_IPC_trimestrales
 
 
 
+###############################################################################################################################################################
+######################################################################################################################################################################
+##############################       GRAFICOS  EXPERTOS Y DATOS REALES          ######################################################################################
 
 
+########## -------------------------------               PIB                ------------------------------------------ #################
+
+#png("Nuestra_Prediccion_vs_Reales_PIB1.png", width = 1800, height = 1400, res= 150)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-library(ggplot2)
-library(dplyr)
-
-# Extraer la serie temporal (ajusta el nombre según donde esté tu serie)
-# Asumiendo que está en df_PIB_Completo como una serie temporal directa
+# Extraer la serie temporal (ajusta según tu dataframe)
 pib_ts <- df_PIB_Completo
 
 # Convertir la serie temporal a dataframe
 pib_clean <- data.frame(
   PIB = as.numeric(pib_ts),
-  tiempo_index = time(pib_ts)
-)
+  tiempo_index = time(pib_ts))
 
-# Calcular año y trimestre a partir del índice de tiempo
+# Calcular año y trimestre
 pib_clean$Año <- floor(pib_clean$tiempo_index)
 pib_clean$trimestre_num <- round((pib_clean$tiempo_index - pib_clean$Año) * 4) + 1
 pib_clean$Trimestre <- paste0("Qtr", pib_clean$trimestre_num)
 
-# Crear tiempo decimal para el eje X
-pib_clean$tiempo <- pib_clean$Año + (pib_clean$trimestre_num - 1) / 4
+# Tiempo decimal para el eje X
+pib_clean$tiempo <- pib_clean$Año + (pib_clean$trimestre_num - 1)/4
 
-# FILTRAR desde 2012
+# Filtrar desde 2012
 pib_clean <- pib_clean %>% filter(Año >= 2012)
 
 # Identificar los dos últimos valores como predicciones
@@ -2031,46 +2009,52 @@ df_reales <- data.frame(
   Trimestre = pib_clean$Trimestre[(n-1):n]
 )
 
-# Dataframe para las etiquetas de predicciones
+# Dataframe para etiquetas de predicciones
 df_pred_labels <- pib_clean %>% 
   filter(tipo == "Predicción") %>%
   mutate(label = sprintf("%.2f", PIB))
 
-# Dataframe para las etiquetas de valores reales
+# Dataframe para etiquetas de valores reales
 df_real_labels <- df_reales %>%
   mutate(label = sprintf("%.2f", PIB))
 
-# Crear el gráfico
+# Ajustes de desplazamiento vertical para etiquetas
+df_pred_labels$desplazamiento <- 10  # hacia arriba
+df_real_labels$desplazamiento <- -10 # hacia abajo
+
+# Crear gráfico
 ggplot() +
   # Línea completa de la serie
   geom_line(data = pib_clean, 
             aes(x = tiempo, y = PIB, color = tipo), 
             linewidth = 0.9) +
-  # Puntos para las predicciones
+  # Puntos para predicciones
   geom_point(data = filter(pib_clean, tipo == "Predicción"),
              aes(x = tiempo, y = PIB, color = tipo), 
-             size = 4.5, shape = 17) +  # Triángulos
+             size = 4.5, shape = 17) +
   # Puntos para valores reales
   geom_point(data = df_reales,
              aes(x = tiempo, y = PIB, color = tipo), 
-             size = 4.5, shape = 16) +  # Círculos
-  # Línea conectando valores reales
+             size = 4.5, shape = 16) +
+  # Línea continua para valores reales
   geom_line(data = df_reales,
             aes(x = tiempo, y = PIB, color = tipo), 
-            linewidth = 1.2, linetype = "dashed") +
+            linewidth = 1.2) +
   # Etiquetas para predicciones
-  geom_text(data = df_pred_labels,
-            aes(x = tiempo, y = PIB, label = label),
-            vjust = -1, hjust = 0.5, size = 3.5, color = "#F77F00", fontface = "bold") +
+  geom_text_repel(data = df_pred_labels,
+                  aes(x = tiempo, y = PIB, label = label),
+                  nudge_y = 14,
+                  size = 2.8, color = paleta[3], fontface = "bold") +
   # Etiquetas para valores reales
-  geom_text(data = df_real_labels,
-            aes(x = tiempo, y = PIB, label = label),
-            vjust = 2, hjust = 0.5, size = 3.5, color = "#06A77D", fontface = "bold") +
+  geom_text_repel(data = df_real_labels,
+                  aes(x = tiempo, y = PIB, label = label),
+                  nudge_y = -10,
+                  size = 2.8, color = paleta[2], fontface = "bold") +
   # Colores personalizados
   scale_color_manual(
-    values = c("Observado" = "#2E86AB", 
-               "Predicción" = "#F77F00", 
-               "Real" = "#06A77D"),
+    values = c("Observado" = paleta[6], 
+               "Predicción" = paleta[3], 
+               "Real" = paleta[2]),
     name = "Tipo de dato"
   ) +
   # Eje X con años
@@ -2081,31 +2065,36 @@ ggplot() +
   # Etiquetas y título
   labs(
     title = "Serie Temporal del PIB: Predicciones vs Valores Reales",
-    subtitle = "Trimestres 2012-2023 (últimos dos trimestres predichos)",
+    subtitle = "Series Trimetrales (Últimos dos trimestres predichos del 2022)",
     x = "Año",
     y = "PIB (millones de €)",
     caption = "Nota: Triángulos naranjas = predicciones, Círculos verdes = valores reales"
   ) +
-  # Tema
+  # Tema con leyenda arriba y más grande
   theme_minimal() +
   theme(
-    plot.title = element_text(face = "bold", size = 14),
-    plot.subtitle = element_text(size = 11, color = "gray40"),
-    legend.position = "bottom",
+    plot.title = element_text(face = "bold", size = 20),
+    plot.subtitle = element_text(size = 11, color =paleta[6]),
+    legend.position = "top",             # Leyenda arriba
+    legend.text = element_text(size = 12),
+    legend.title = element_text(size = 13, face = "bold"),
     panel.grid.minor = element_blank(),
-    axis.text = element_text(size = 10)
+    axis.text = element_text(size = 10),
+    plot.caption = element_text(hjust = 0.5),          
+    plot.caption.position = "panel"
   )
+#dev.off()
 
 
 
 
+########## -------------------------------               IPC               ------------------------------------------ #################
 
 
-library(ggplot2)
-library(dplyr)
+#png("Nuestra_Prediccion_vs_Reales_IPC1.png", width = 1800, height = 1400, res= 150)
 
 # Extraer la serie temporal del IPC
-ipc_ts <- df_IPC_completo
+ipc_ts <- df_IPC_Completo
 
 # Convertir la serie temporal a dataframe
 ipc_clean <- data.frame(
@@ -2113,15 +2102,15 @@ ipc_clean <- data.frame(
   tiempo_index = time(ipc_ts)
 )
 
-# Calcular año y trimestre a partir del índice de tiempo
+# Calcular año y trimestre
 ipc_clean$Año <- floor(ipc_clean$tiempo_index)
 ipc_clean$trimestre_num <- round((ipc_clean$tiempo_index - ipc_clean$Año) * 4) + 1
 ipc_clean$Trimestre <- paste0("Qtr", ipc_clean$trimestre_num)
 
-# Crear tiempo decimal para el eje X
+# Tiempo decimal para el eje X
 ipc_clean$tiempo <- ipc_clean$Año + (ipc_clean$trimestre_num - 1) / 4
 
-# FILTRAR desde 2012
+# Filtrar desde 2012
 ipc_clean <- ipc_clean %>% filter(Año >= 2012)
 
 # Identificar los dos últimos valores como predicciones
@@ -2141,46 +2130,52 @@ df_reales <- data.frame(
   Trimestre = ipc_clean$Trimestre[(n-1):n]
 )
 
-# Dataframe para las etiquetas de predicciones
+# Dataframe para etiquetas de predicciones
 df_pred_labels <- ipc_clean %>% 
   filter(tipo == "Predicción") %>%
   mutate(label = sprintf("%.2f", IPC))
 
-# Dataframe para las etiquetas de valores reales
+# Dataframe para etiquetas de valores reales
 df_real_labels <- df_reales %>%
   mutate(label = sprintf("%.2f", IPC))
 
-# Crear el gráfico
+# Ajustes de desplazamiento vertical para etiquetas
+df_pred_labels$desplazamiento <- 5
+df_real_labels$desplazamiento <- -5
+
+# Crear gráfico
 ggplot() +
   # Línea completa de la serie
   geom_line(data = ipc_clean, 
             aes(x = tiempo, y = IPC, color = tipo), 
             linewidth = 0.9) +
-  # Puntos para las predicciones
+  # Puntos para predicciones
   geom_point(data = filter(ipc_clean, tipo == "Predicción"),
              aes(x = tiempo, y = IPC, color = tipo), 
-             size = 4.5, shape = 17) +  # Triángulos
+             size = 4.5, shape = 17) +
   # Puntos para valores reales
   geom_point(data = df_reales,
              aes(x = tiempo, y = IPC, color = tipo), 
-             size = 4.5, shape = 16) +  # Círculos
-  # Línea conectando valores reales
+             size = 4.5, shape = 16) +
+  # Línea continua para valores reales
   geom_line(data = df_reales,
             aes(x = tiempo, y = IPC, color = tipo), 
-            linewidth = 1.2, linetype = "dashed") +
+            linewidth = 1.2) +
   # Etiquetas para predicciones
-  geom_text(data = df_pred_labels,
-            aes(x = tiempo, y = IPC, label = label),
-            vjust = -1, hjust = 0.5, size = 3.5, color = "#F77F00", fontface = "bold") +
+  geom_text_repel(data = df_pred_labels,
+                  aes(x = tiempo, y = IPC, label = label),
+                  nudge_y = -2,
+                  size = 2.8, color = paleta[3], fontface = "bold") +
   # Etiquetas para valores reales
-  geom_text(data = df_real_labels,
-            aes(x = tiempo, y = IPC, label = label),
-            vjust = 2, hjust = 0.5, size = 3.5, color = "#06A77D", fontface = "bold") +
+  geom_text_repel(data = df_real_labels,
+                  aes(x = tiempo, y = IPC, label = label),
+                  nudge_y = 2,
+                  size = 2.8, color = paleta[2], fontface = "bold") +
   # Colores personalizados
   scale_color_manual(
-    values = c("Observado" = "#2E86AB", 
-               "Predicción" = "#F77F00", 
-               "Real" = "#06A77D"),
+    values = c("Observado" = paleta[6], 
+               "Predicción" = paleta[3], 
+               "Real" = paleta[2]),
     name = "Tipo de dato"
   ) +
   # Eje X con años
@@ -2196,21 +2191,20 @@ ggplot() +
     y = "IPC",
     caption = "Nota: Triángulos naranjas = predicciones, Círculos verdes = valores reales"
   ) +
-  # Tema
+  # Tema con leyenda arriba y más grande
   theme_minimal() +
   theme(
-    plot.title = element_text(face = "bold", size = 14),
-    plot.subtitle = element_text(size = 11, color = "gray40"),
-    legend.position = "bottom",
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 13, color = paleta[6]),
+    legend.position = "top",
+    legend.text = element_text(size = 12),
+    legend.title = element_text(size = 13, face = "bold"),
     panel.grid.minor = element_blank(),
-    axis.text = element_text(size = 10)
+    axis.text = element_text(size = 10),
+    plot.caption = element_text(hjust = 0.5),          
+    plot.caption.position = "panel" 
   )
-
-# Guardar el gráfico (opcional)
-# ggsave("IPC_predicciones_vs_reales_2012-2023.png", width = 12, height = 6, dpi = 300)
-
-
-
+#dev.off()
 
 
 
