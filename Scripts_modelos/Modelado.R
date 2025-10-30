@@ -1971,36 +1971,33 @@ PIB_cambio_Q4
 ########## -------------------------------               PIB                ------------------------------------------ #################
 
 #png("Nuestra_Prediccion_vs_Reales_PIB1.png", width = 1800, height = 1400, res= 150)
-
-
-# Extraer la serie temporal (ajusta según tu dataframe)
+# Serie temporal del PIB
 pib_ts <- df_PIB_Completo
 
-# Convertir la serie temporal a dataframe
+# Convertir a dataframe
 pib_clean <- data.frame(
   PIB = as.numeric(pib_ts),
-  tiempo_index = time(pib_ts))
+  tiempo_index = time(pib_ts)
+)
 
-# Calcular año y trimestre
+# Año y trimestre
 pib_clean$Año <- floor(pib_clean$tiempo_index)
 pib_clean$trimestre_num <- round((pib_clean$tiempo_index - pib_clean$Año) * 4) + 1
 pib_clean$Trimestre <- paste0("Qtr", pib_clean$trimestre_num)
 
-# Tiempo decimal para el eje X
+# Tiempo decimal para eje X
 pib_clean$tiempo <- pib_clean$Año + (pib_clean$trimestre_num - 1)/4
 
 # Filtrar desde 2012
 pib_clean <- pib_clean %>% filter(Año >= 2012)
 
-# Identificar los dos últimos valores como predicciones
+# Marcar últimos 2 como predicción
 pib_clean$tipo <- "Observado"
 n <- nrow(pib_clean)
 pib_clean$tipo[(n-1):n] <- "Predicción"
 
-# Valores reales de los dos últimos trimestres
+# Valores reales últimos 2
 valores_reales <- c(636.381, 640.751)
-
-# Crear dataframe con valores reales
 df_reales <- data.frame(
   tiempo = pib_clean$tiempo[(n-1):n],
   PIB = valores_reales,
@@ -2009,78 +2006,57 @@ df_reales <- data.frame(
   Trimestre = pib_clean$Trimestre[(n-1):n]
 )
 
-# Dataframe para etiquetas de predicciones
+# Etiquetas predicción
 df_pred_labels <- pib_clean %>% 
   filter(tipo == "Predicción") %>%
   mutate(label = sprintf("%.2f", PIB))
 
-# Dataframe para etiquetas de valores reales
+# Etiquetas reales
 df_real_labels <- df_reales %>%
   mutate(label = sprintf("%.2f", PIB))
 
-# Ajustes de desplazamiento vertical para etiquetas
-df_pred_labels$desplazamiento <- 10  # hacia arriba
-df_real_labels$desplazamiento <- -10 # hacia abajo
+# Desplazamiento etiquetas
+df_pred_labels$desplazamiento <- 22.5  # arriba
+df_real_labels$desplazamiento <- -14   # abajo
 
-# Crear gráfico
+# Gráfico
 ggplot() +
-  # Línea completa de la serie
-  geom_line(data = pib_clean, 
-            aes(x = tiempo, y = PIB, color = tipo), 
-            linewidth = 0.9) +
-  # Puntos para predicciones
+  geom_line(data = pib_clean, aes(x = tiempo, y = PIB, color = tipo), linewidth = 0.9) + # línea serie
   geom_point(data = filter(pib_clean, tipo == "Predicción"),
-             aes(x = tiempo, y = PIB, color = tipo), 
-             size = 4.5, shape = 17) +
-  # Puntos para valores reales
+             aes(x = tiempo, y = PIB, color = tipo), size = 4.5, shape = 17) + # puntos predicción
   geom_point(data = df_reales,
-             aes(x = tiempo, y = PIB, color = tipo), 
-             size = 4.5, shape = 16) +
-  # Línea continua para valores reales
-  geom_line(data = df_reales,
-            aes(x = tiempo, y = PIB, color = tipo), 
-            linewidth = 1.2) +
-  # Etiquetas para predicciones
+             aes(x = tiempo, y = PIB, color = tipo), size = 4.5, shape = 16) + # puntos reales
+  geom_line(data = df_reales, aes(x = tiempo, y = PIB, color = tipo), linewidth = 1.2) + # línea reales
   geom_text_repel(data = df_pred_labels,
                   aes(x = tiempo, y = PIB, label = label),
-                  nudge_y = 14,
-                  size = 2.8, color = paleta[3], fontface = "bold") +
-  # Etiquetas para valores reales
+                  nudge_y = df_pred_labels$desplazamiento,
+                  size = 4, color = paleta[3], fontface = "bold") + # etiquetas predicción
   geom_text_repel(data = df_real_labels,
                   aes(x = tiempo, y = PIB, label = label),
-                  nudge_y = -10,
-                  size = 2.8, color = paleta[2], fontface = "bold") +
-  # Colores personalizados
+                  nudge_y = df_real_labels$desplazamiento,
+                  size = 4, color = paleta[2], fontface = "bold") + # etiquetas reales
   scale_color_manual(
-    values = c("Observado" = paleta[6], 
-               "Predicción" = paleta[3], 
-               "Real" = paleta[2]),
-    name = "Tipo de dato"
+    values = c("Observado" = paleta[6], "Predicción" = paleta[3], "Real" = paleta[2]),
+    name = "Tipo de dato" # leyenda
   ) +
-  # Eje X con años
-  scale_x_continuous(
-    breaks = seq(2012, 2023, by = 1),
-    labels = seq(2012, 2023, by = 1)
-  ) +
-  # Etiquetas y título
+  scale_x_continuous(breaks = seq(2012, 2023, by = 1), labels = seq(2012, 2023, by = 1)) + # eje X
   labs(
-    title = "Serie Temporal del PIB: Predicciones vs Valores Reales",
-    subtitle = "Series Trimetrales (Últimos dos trimestres predichos del 2022)",
-    x = "Año",
-    y = "PIB (millones de €)",
-    caption = "Nota: Triángulos naranjas = predicciones, Círculos verdes = valores reales"
+    title = "Serie Temporal del PIB: Predicciones vs Valores Reales", # título
+    subtitle = "Series Trimestrales (Últimos dos trimestres predichos del 2022)", # subtítulo
+    x = "Año", # eje X
+    y = "PIB (millones de €)", # eje Y
+    caption = "Nota: Triángulos naranjas = predicciones, Círculos verdes = valores reales" # nota
   ) +
-  # Tema con leyenda arriba y más grande
   theme_minimal() +
   theme(
-    plot.title = element_text(face = "bold", size = 20),
-    plot.subtitle = element_text(size = 11, color =paleta[6]),
-    legend.position = "top",             # Leyenda arriba
-    legend.text = element_text(size = 12),
-    legend.title = element_text(size = 13, face = "bold"),
+    plot.title = element_text(face = "bold", size = 28), # título grande
+    plot.subtitle = element_text(size = 20, color = paleta[6], face = "bold"), # subtítulo grande
+    legend.position = "top", # leyenda arriba
+    legend.text = element_text(size = 18), # tamaño leyenda
+    legend.title = element_text(size = 20, face = "bold"), # título leyenda
     panel.grid.minor = element_blank(),
-    axis.text = element_text(size = 10),
-    plot.caption = element_text(hjust = 0.5),          
+    axis.text = element_text(size = 14), # tamaño eje
+    plot.caption = element_text(hjust = 0.5, size = 16), # nota centrada
     plot.caption.position = "panel"
   )
 #dev.off()
@@ -2092,36 +2068,33 @@ ggplot() +
 
 
 #png("Nuestra_Prediccion_vs_Reales_IPC1.png", width = 1800, height = 1400, res= 150)
-
-# Extraer la serie temporal del IPC
+# Serie temporal del IPC
 ipc_ts <- df_IPC_Completo
 
-# Convertir la serie temporal a dataframe
+# Convertir a dataframe
 ipc_clean <- data.frame(
   IPC = as.numeric(ipc_ts),
   tiempo_index = time(ipc_ts)
 )
 
-# Calcular año y trimestre
+# Año y trimestre
 ipc_clean$Año <- floor(ipc_clean$tiempo_index)
 ipc_clean$trimestre_num <- round((ipc_clean$tiempo_index - ipc_clean$Año) * 4) + 1
 ipc_clean$Trimestre <- paste0("Qtr", ipc_clean$trimestre_num)
 
-# Tiempo decimal para el eje X
-ipc_clean$tiempo <- ipc_clean$Año + (ipc_clean$trimestre_num - 1) / 4
+# Tiempo decimal para eje X
+ipc_clean$tiempo <- ipc_clean$Año + (ipc_clean$trimestre_num - 1)/4
 
 # Filtrar desde 2012
 ipc_clean <- ipc_clean %>% filter(Año >= 2012)
 
-# Identificar los dos últimos valores como predicciones
+# Marcar últimos 2 como predicción
 ipc_clean$tipo <- "Observado"
 n <- nrow(ipc_clean)
 ipc_clean$tipo[(n-1):n] <- "Predicción"
 
-# Valores reales de los dos últimos trimestres
+# Valores reales últimos 2
 valores_reales <- c(128.4, 130.8)
-
-# Crear dataframe con valores reales
 df_reales <- data.frame(
   tiempo = ipc_clean$tiempo[(n-1):n],
   IPC = valores_reales,
@@ -2130,80 +2103,60 @@ df_reales <- data.frame(
   Trimestre = ipc_clean$Trimestre[(n-1):n]
 )
 
-# Dataframe para etiquetas de predicciones
+# Etiquetas predicción
 df_pred_labels <- ipc_clean %>% 
   filter(tipo == "Predicción") %>%
   mutate(label = sprintf("%.2f", IPC))
 
-# Dataframe para etiquetas de valores reales
+# Etiquetas reales
 df_real_labels <- df_reales %>%
   mutate(label = sprintf("%.2f", IPC))
 
-# Ajustes de desplazamiento vertical para etiquetas
-df_pred_labels$desplazamiento <- 5
-df_real_labels$desplazamiento <- -5
+# Desplazamiento etiquetas
+df_pred_labels$desplazamiento <- 5   # arriba
+df_real_labels$desplazamiento <- -5  # abajo
 
-# Crear gráfico
+# Gráfico
 ggplot() +
-  # Línea completa de la serie
-  geom_line(data = ipc_clean, 
-            aes(x = tiempo, y = IPC, color = tipo), 
-            linewidth = 0.9) +
-  # Puntos para predicciones
+  geom_line(data = ipc_clean, aes(x = tiempo, y = IPC, color = tipo), linewidth = 0.9) + # línea serie
   geom_point(data = filter(ipc_clean, tipo == "Predicción"),
-             aes(x = tiempo, y = IPC, color = tipo), 
-             size = 4.5, shape = 17) +
-  # Puntos para valores reales
+             aes(x = tiempo, y = IPC, color = tipo), size = 4.5, shape = 17) + # puntos predicción
   geom_point(data = df_reales,
-             aes(x = tiempo, y = IPC, color = tipo), 
-             size = 4.5, shape = 16) +
-  # Línea continua para valores reales
-  geom_line(data = df_reales,
-            aes(x = tiempo, y = IPC, color = tipo), 
-            linewidth = 1.2) +
-  # Etiquetas para predicciones
+             aes(x = tiempo, y = IPC, color = tipo), size = 4.5, shape = 16) + # puntos reales
+  geom_line(data = df_reales, aes(x = tiempo, y = IPC, color = tipo), linewidth = 1.2) + # línea reales
   geom_text_repel(data = df_pred_labels,
                   aes(x = tiempo, y = IPC, label = label),
-                  nudge_y = -2,
-                  size = 2.8, color = paleta[3], fontface = "bold") +
-  # Etiquetas para valores reales
+                  nudge_y = -3,
+                  size = 4, color = paleta[3], fontface = "bold") + # etiquetas predicción
   geom_text_repel(data = df_real_labels,
                   aes(x = tiempo, y = IPC, label = label),
-                  nudge_y = 2,
-                  size = 2.8, color = paleta[2], fontface = "bold") +
-  # Colores personalizados
+                  nudge_y = 3,
+                  size = 4, color = paleta[2], fontface = "bold") + # etiquetas reales
   scale_color_manual(
-    values = c("Observado" = paleta[6], 
-               "Predicción" = paleta[3], 
-               "Real" = paleta[2]),
-    name = "Tipo de dato"
+    values = c("Observado" = paleta[6], "Predicción" = paleta[3], "Real" = paleta[2]),
+    name = "Tipo de dato" # leyenda
   ) +
-  # Eje X con años
-  scale_x_continuous(
-    breaks = seq(2012, 2023, by = 1),
-    labels = seq(2012, 2023, by = 1)
-  ) +
-  # Etiquetas y título
+  scale_x_continuous(breaks = seq(2012, 2023, by = 1), labels = seq(2012, 2023, by = 1)) + # eje X
   labs(
-    title = "Serie Temporal del IPC: Predicciones vs Valores Reales",
-    subtitle = "Trimestres 2012-2023 (últimos dos trimestres predichos)",
-    x = "Año",
-    y = "IPC",
-    caption = "Nota: Triángulos naranjas = predicciones, Círculos verdes = valores reales"
+    title = "Serie Temporal del IPC: Predicciones vs Valores Reales", # título
+    subtitle = "Series Trimestrales (Últimos dos trimestres predichos)", # subtítulo
+    x = "Año", # eje X
+    y = "IPC", # eje Y
+    caption = "Nota: Triángulos naranjas = predicciones, Círculos verdes = valores reales" # nota
   ) +
-  # Tema con leyenda arriba y más grande
   theme_minimal() +
   theme(
-    plot.title = element_text(face = "bold", size = 16),
-    plot.subtitle = element_text(size = 13, color = paleta[6]),
-    legend.position = "top",
-    legend.text = element_text(size = 12),
-    legend.title = element_text(size = 13, face = "bold"),
+    plot.title = element_text(face = "bold", size = 28), # título grande
+    plot.subtitle = element_text(size = 20, color = paleta[6], face = "bold"), # subtítulo grande
+    legend.position = "top", # leyenda arriba
+    legend.text = element_text(size = 18), # tamaño leyenda
+    legend.title = element_text(size = 20, face = "bold"), # título leyenda
     panel.grid.minor = element_blank(),
-    axis.text = element_text(size = 10),
-    plot.caption = element_text(hjust = 0.5),          
-    plot.caption.position = "panel" 
+    axis.text = element_text(size = 14), # tamaño eje
+    plot.caption = element_text(hjust = 0.5, size = 16), # nota centrada
+    plot.caption.position = "panel"
   )
+
 #dev.off()
 
 
