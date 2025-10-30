@@ -9,6 +9,11 @@ library(lubridate)
 library(scales)
 
 # ============================================================
+# PALETA DE COLORES PERSONALIZADA
+# ============================================================
+paleta <- c("#c88fb2", "#8db41c", "#93044e", "#D1006F", "#F5F0E6", "#4D4D4D")
+
+# ============================================================
 # Cargar datos
 # ============================================================
 pib_nominal <- read.csv("DATOS/Externos/PIB/PIB NOMINAL.csv")
@@ -62,7 +67,7 @@ ipc <- ipc %>% mutate(Año = year(Fecha))
 ggplot(df, aes(x = Fecha)) +
   geom_line(aes(y = PIB_nominal / 1e9, color = "PIB Nominal"), linewidth = 1.2) +
   geom_line(aes(y = PIB_real / 1e9, color = "PIB Real"), linewidth = 1.2, linetype = "dashed") +
-  scale_color_manual(values = c("PIB Nominal" = "#e74c3c", "PIB Real" = "#3498db")) +
+  scale_color_manual(values = c("PIB Nominal" = paleta[4], "PIB Real" = paleta[2])) +
   scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
   scale_y_continuous(labels = label_number(suffix = "B")) +
   labs(
@@ -86,8 +91,8 @@ ggplot(df, aes(x = Fecha)) +
 # ============================================================
 ggplot(df, aes(x = Fecha, y = Crecimiento_Anual)) +
   geom_col(aes(fill = Crecimiento_Anual > 0), width = 150) +
-  geom_hline(yintercept = 0, linetype = "solid", color = "gray40", linewidth = 0.5) +
-  scale_fill_manual(values = c("TRUE" = "#27ae60", "FALSE" = "#e74c3c"),
+  geom_hline(yintercept = 0, linetype = "solid", color = paleta[6], linewidth = 0.5) +
+  scale_fill_manual(values = c("TRUE" = paleta[2], "FALSE" = paleta[3]),
                     labels = c("Contracción", "Crecimiento"),
                     name = "Tipo") +
   scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
@@ -111,14 +116,14 @@ ggplot(df, aes(x = Fecha, y = Crecimiento_Anual)) +
 # GRÁFICO 2.1: PIB PER CÁPITA
 # ============================================================
 ggplot(pib_percapita, aes(x = Fecha, y = PIB_percapita)) +
-  geom_line(color = "#f39c12", linewidth = 1.2) +
-  geom_point(color = "#e67e22", size = 2) +
-  geom_smooth(method = "loess", se = TRUE, color = "#e74c3c", fill = "#e74c3c", alpha = 0.2) +
+  geom_line(color = paleta[1], linewidth = 1.2) +
+  geom_point(color = paleta[1], size = 2, alpha = 0.7) +
+  geom_smooth(method = "loess", se = TRUE, color = paleta[4], fill = paleta[4], alpha = 0.2) +
   scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
   scale_y_continuous(labels = label_number(suffix = "$")) +
   labs(
     title = "PIB PER CÁPITA - AUSTRALIA",
-    subtitle = "Ingreso promedio por habitante en USD (línea roja: tendencia)",
+    subtitle = "Ingreso promedio por habitante en USD (línea rosa: tendencia)",
     x = "Año",
     y = "PIB per cápita (USD)",
     caption = "Fuente: FRED"
@@ -134,9 +139,9 @@ ggplot(pib_percapita, aes(x = Fecha, y = PIB_percapita)) +
 # GRÁFICO 2.2: CRECIMIENTO DEL PIB PER CÁPITA
 # ============================================================
 ggplot(pib_percapita, aes(x = Fecha, y = Crecimiento_percapita)) +
-  geom_line(color = "#9b59b6", linewidth = 1) +
-  geom_point(color = "#8e44ad", size = 2, alpha = 0.6) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray40", linewidth = 0.5) +
+  geom_line(color = paleta[4], linewidth = 1) +
+  geom_point(color = paleta[3], size = 2, alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = paleta[6], linewidth = 0.5) +
   scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
   scale_y_continuous(labels = label_number(suffix = "%")) +
   labs(
@@ -157,15 +162,15 @@ ggplot(pib_percapita, aes(x = Fecha, y = Crecimiento_percapita)) +
 # GRÁFICO 3.1: INFLACIÓN ANUAL
 # ============================================================
 ggplot(ipc, aes(x = Fecha, y = Inflacion_Anual)) +
-  geom_line(color = "#e74c3c", linewidth = 1.2) +
-  geom_point(color = "#c0392b", size = 2, alpha = 0.6) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray40", linewidth = 0.5) +
-  geom_hline(yintercept = 2, linetype = "dotted", color = "#3498db", linewidth = 0.8) +
+  geom_line(color = paleta[3], linewidth = 1.2) +
+  geom_point(color = paleta[4], size = 2, alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = paleta[6], linewidth = 0.5) +
+  geom_hline(yintercept = 2, linetype = "dotted", color = paleta[2], linewidth = 0.8) +
   scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
   scale_y_continuous(labels = label_number(suffix = "%")) +
   labs(
     title = "INFLACIÓN ANUAL - AUSTRALIA",
-    subtitle = "Variación porcentual de precios año a año (línea azul: meta 2%)",
+    subtitle = "Variación porcentual de precios año a año (línea verde: meta 2%)",
     x = "Año",
     y = "Inflación (%)",
     caption = "Fuente: FRED"
@@ -191,7 +196,7 @@ ggplot(df_comparacion, aes(x = Año)) +
   geom_line(aes(y = Inflacion_Anual, color = "Inflación"), linewidth = 1.2) +
   geom_point(aes(y = Crecimiento_PIB, color = "Crecimiento PIB Real"), size = 2, alpha = 0.6) +
   geom_point(aes(y = Inflacion_Anual, color = "Inflación"), size = 2, alpha = 0.6) +
-  scale_color_manual(values = c("Crecimiento PIB Real" = "#3498db", "Inflación" = "#e74c3c")) +
+  scale_color_manual(values = c("Crecimiento PIB Real" = paleta[2], "Inflación" = paleta[3])) +
   scale_x_continuous(breaks = seq(1960, 2024, 5)) +
   scale_y_continuous(labels = label_number(suffix = "%")) +
   labs(

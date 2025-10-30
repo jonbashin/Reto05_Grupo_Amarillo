@@ -9,6 +9,11 @@ library(lubridate)
 library(scales)
 
 # ============================================================
+# PALETA DE COLORES PERSONALIZADA
+# ============================================================
+paleta <- c("#c88fb2", "#8db41c", "#93044e", "#D1006F", "#F5F0E6", "#4D4D4D")
+
+# ============================================================
 # 1. BALANZA DE PAGOS
 # ============================================================
 
@@ -27,7 +32,7 @@ ggplot(balanza_pagos, aes(x = Fecha, y = Balanza_Cuenta_Corriente / 1e9)) +
   geom_text(aes(label = round(Balanza_Cuenta_Corriente / 1e9, 1)), 
             vjust = ifelse(balanza_pagos$Balanza_Cuenta_Corriente < 0, 1.5, -0.5),
             size = 3.5, fontface = "bold") +
-  scale_fill_manual(values = c("TRUE" = "#e74c3c", "FALSE" = "#2ecc71"),
+  scale_fill_manual(values = c("TRUE" = paleta[3], "FALSE" = paleta[2]),
                     labels = c("Déficit", "Superávit"), name = "Saldo") +
   scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
   labs(
@@ -47,15 +52,15 @@ ggplot(balanza_pagos, aes(x = Fecha, y = Balanza_Cuenta_Corriente / 1e9)) +
 
 # GRÁFICO 1.2: LÍNEA DE TENDENCIA CON SUAVIZADO
 ggplot(balanza_pagos, aes(x = Fecha, y = Balanza_Cuenta_Corriente / 1e9)) +
-  geom_line(color = "#3498db", linewidth = 1.2) +
-  geom_point(color = "#2980b9", size = 4) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red", linewidth = 0.8) +
-  geom_smooth(method = "loess", se = TRUE, color = "#e67e22", fill = "#f39c12", alpha = 0.2) +
+  geom_line(color = paleta[4], linewidth = 1.2) +
+  geom_point(color = paleta[3], size = 4) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = paleta[3], linewidth = 0.8) +
+  geom_smooth(method = "loess", se = TRUE, color = paleta[1], fill = paleta[1], alpha = 0.2) +
   scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
   scale_y_continuous(labels = label_number(suffix = "B")) +
   labs(
     title = "EVOLUCIÓN DE LA BALANZA DE PAGOS",
-    subtitle = "Tendencia 2016-2024 (línea naranja: suavizado)",
+    subtitle = "Tendencia 2016-2024 (línea rosa: suavizado)",
     x = "Año",
     y = "Miles de millones USD",
     caption = "Fuente: FRED"
@@ -102,12 +107,12 @@ netexp <- netexp %>%
 
 # GRÁFICO 2.1: EVOLUCIÓN HISTÓRICA COMPLETA
 ggplot(netexp, aes(x = Fecha, y = Exportaciones_Netas / 1e9)) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50", size = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = paleta[6], size = 0.5) +
   geom_ribbon(aes(ymin = 0, ymax = ifelse(Exportaciones_Netas > 0, Exportaciones_Netas / 1e9, 0)), 
-              fill = "#27ae60", alpha = 0.3) +
+              fill = paleta[2], alpha = 0.3) +
   geom_ribbon(aes(ymin = ifelse(Exportaciones_Netas < 0, Exportaciones_Netas / 1e9, 0), ymax = 0), 
-              fill = "#e74c3c", alpha = 0.3) +
-  geom_line(color = "#34495e", size = 0.8) +
+              fill = paleta[3], alpha = 0.3) +
+  geom_line(color = paleta[6], size = 0.8) +
   scale_x_date(date_breaks = "15 years", date_labels = "%Y") +
   scale_y_continuous(labels = label_number(suffix = "B")) +
   labs(
@@ -115,7 +120,7 @@ ggplot(netexp, aes(x = Fecha, y = Exportaciones_Netas / 1e9)) +
     subtitle = "1947-2025: Transición de superávit a déficit estructural (Miles de millones USD)",
     x = "Año",
     y = "Exportaciones Netas",
-    caption = "Fuente: FRED | Verde: Superávit | Rojo: Déficit"
+    caption = "Fuente: FRED | Verde: Superávit | Burdeos: Déficit"
   ) +
   theme_minimal() +
   theme(
@@ -130,8 +135,8 @@ netexp_reciente <- netexp %>% filter(Fecha >= "1995-01-01")
 
 ggplot(netexp_reciente, aes(x = Fecha, y = Exportaciones_Netas / 1e9, fill = Saldo)) +
   geom_col(alpha = 0.8, width = 80) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
-  scale_fill_manual(values = c("Déficit" = "#e74c3c", "Superávit" = "#27ae60")) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = paleta[6]) +
+  scale_fill_manual(values = c("Déficit" = paleta[3], "Superávit" = paleta[2])) +
   scale_x_date(date_breaks = "3 years", date_labels = "%Y") +
   scale_y_continuous(labels = label_number(suffix = "B")) +
   labs(
@@ -195,9 +200,9 @@ importaciones <- importaciones %>%
 
 # GRÁFICO 3.1: EVOLUCIÓN COMPLETA CON TENDENCIA
 ggplot(importaciones, aes(x = Fecha, y = Importaciones / 1e9)) +
-  geom_line(color = "#e74c3c", linewidth = 1) +
-  geom_point(color = "#c0392b", size = 2.5) +
-  geom_smooth(method = "loess", se = TRUE, color = "#f39c12", fill = "#f39c12", alpha = 0.2, linewidth = 1) +
+  geom_line(color = paleta[4], linewidth = 1) +
+  geom_point(color = paleta[3], size = 2.5) +
+  geom_smooth(method = "loess", se = TRUE, color = paleta[1], fill = paleta[1], alpha = 0.2, linewidth = 1) +
   scale_x_date(date_breaks = "10 years", date_labels = "%Y") +
   scale_y_continuous(labels = label_number(suffix = "B")) +
   labs(
@@ -205,7 +210,7 @@ ggplot(importaciones, aes(x = Fecha, y = Importaciones / 1e9)) +
     subtitle = "1960-2024: Crecimiento exponencial (Miles de millones USD)",
     x = "Año",
     y = "Importaciones",
-    caption = "Fuente: FRED | Línea naranja: tendencia suavizada"
+    caption = "Fuente: FRED | Línea rosa: tendencia suavizada"
   ) +
   theme_minimal() +
   theme(
@@ -220,8 +225,8 @@ importaciones_var <- importaciones %>%
 
 ggplot(importaciones_var, aes(x = Fecha, y = Variacion_Anual / 1e9, fill = Variacion_Anual > 0)) +
   geom_col(width = 200) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
-  scale_fill_manual(values = c("TRUE" = "#27ae60", "FALSE" = "#e74c3c"),
+  geom_hline(yintercept = 0, linetype = "dashed", color = paleta[6]) +
+  scale_fill_manual(values = c("TRUE" = paleta[2], "FALSE" = paleta[3]),
                     labels = c("Disminución", "Aumento"),
                     name = "Cambio") +
   scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
