@@ -58,7 +58,7 @@ pal_laboral <- c(
 #---------------
 #GRÁFICOS CON LOS DATASETS SEPARADOS
 #Tasa de interés anual
-interes_anual$observation_date<-as.Date(interes_anual$observation_date)
+interes_anual$observation_date <- as.Date(interes_anual$observation_date)
 ggplot(interes_anual, aes(x = observation_date, y = interes_anual)) +
   geom_line(color = pal_laboral["magenta"], size = 1) +
   labs(title = "Tasa de interés anual en Australia",
@@ -66,13 +66,12 @@ ggplot(interes_anual, aes(x = observation_date, y = interes_anual)) +
        y = "Tasa de interés anual (%)") +
   theme_minimal(base_size = 14) +
   theme(
-    plot.background = element_rect(fill = pal_laboral["gris_fondo"]),
-    panel.background = element_rect(fill = pal_laboral["gris_fondo"]),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
     plot.title = element_text(face = "bold", color = pal_laboral["gris_texto"]),
     axis.text = element_text(color = pal_laboral["gris_texto"]),
     axis.title = element_text(color = pal_laboral["gris_texto"])
   )
-
 #Tasa de interés trimestral
 interes_trimestral$observation_date<-as.Date(interes_trimestral$observation_date)
 ggplot(interes_trimestral, aes(x = observation_date, y = interes_trimestral)) +
@@ -82,8 +81,8 @@ ggplot(interes_trimestral, aes(x = observation_date, y = interes_trimestral)) +
        y = "Tasa de interés trimestral (%)") +
   theme_minimal(base_size = 14) +
   theme(
-    plot.background = element_rect(fill = pal_laboral["gris_fondo"]),
-    panel.background = element_rect(fill = pal_laboral["gris_fondo"]),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
     plot.title = element_text(face = "bold", color = pal_laboral["gris_texto"]),
     axis.text = element_text(color = pal_laboral["gris_texto"]),
     axis.title = element_text(color = pal_laboral["gris_texto"])
@@ -95,10 +94,8 @@ ggplot(cambio_interes) +
   geom_line(aes(x = observation_date, y = interes_anual, color = "Anual"), size = 1) +
   geom_line(aes(x = observation_date, y = interes_trimestral, color = "Trimestral"), size = 1) +
   scale_color_manual(
-    values = c(
-      "Anual" = pal_laboral[["verde"]],
-      "Trimestral" = pal_laboral[["magenta"]]
-    ),
+    values = c("Anual" = pal_laboral[["verde"]],
+               "Trimestral" = pal_laboral[["magenta"]]),
     name = "Tipo de interés"
   ) +
   labs(
@@ -108,14 +105,14 @@ ggplot(cambio_interes) +
   ) +
   theme_minimal(base_size = 14) +
   theme(
-    plot.background = element_rect(fill = pal_laboral[["gris_fondo"]], color = NA),
-    panel.background = element_rect(fill = pal_laboral[["gris_fondo"]], color = NA),
-    panel.grid.major = element_line(color = "white"),
-    panel.grid.minor = element_line(color = "white"),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    panel.grid.major = element_line(color = "#E0E0E0"),
+    panel.grid.minor = element_line(color = "#F5F5F5"),
     plot.title = element_text(color = pal_laboral[["gris_texto"]], face = "bold"),
     axis.text = element_text(color = pal_laboral[["gris_texto"]]),
     axis.title = element_text(color = pal_laboral[["gris_texto"]]),
-    legend.background = element_rect(fill = pal_laboral[["beige"]], color = NA),
+    legend.background = element_rect(fill = "white", color = NA),
     legend.title = element_text(color = pal_laboral[["gris_texto"]]),
     legend.text = element_text(color = pal_laboral[["gris_texto"]])
   )
@@ -128,8 +125,11 @@ ggplot(cambio_interes, aes(x = observation_date, y = tipo_cambio)) +
        y = "Tipo de cambio") +
   theme_minimal(base_size = 14) +
   theme(
-    plot.background = element_rect(fill = pal_laboral["gris_fondo"]),
-    plot.title = element_text(color = pal_laboral["gris_texto"], face = "bold")
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.title = element_text(color = pal_laboral["gris_texto"], face = "bold"),
+    axis.text = element_text(color = pal_laboral["gris_texto"]),
+    axis.title = element_text(color = pal_laboral["gris_texto"])
   )
 
 #Promedio de interés anual por año
@@ -146,7 +146,10 @@ ggplot(df, aes(x = factor(Año), y = interes_promedio)) +
   expand_limits(y = max(df$interes_promedio) * 1.1) +
   theme_minimal(base_size = 14) +
   theme(
-    plot.background = element_rect(fill = pal_laboral["gris_fondo"]),
-    plot.title = element_text(color = pal_laboral["gris_texto"], face = "bold")
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.title = element_text(color = pal_laboral["gris_texto"], face = "bold"),
+    axis.text = element_text(color = pal_laboral["gris_texto"]),
+    axis.title = element_text(color = pal_laboral["gris_texto"])
   )
 
