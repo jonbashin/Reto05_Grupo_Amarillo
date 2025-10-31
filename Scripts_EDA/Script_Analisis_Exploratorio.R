@@ -140,11 +140,16 @@ gg_cpi <- ggplot(st_cpi, aes(x = Date, y = CPI)) +
     subtitle = "Índice de Precios al Consumo (CPI)",
     x = "Año",
     y = "Índice del IPC"
-  ) + theme_classic()
+  ) + theme_minimal()
 
 gg_cpi
 
-ggsave("Graficos Analisis/IPC_trimestre.png", gg_cpi, width = 10, height = 6, dpi = 300)
+
+png("Graficos Analisis/IPC.png", width = 800, height = 600, res = 100)
+
+print(gg_cpi)
+
+dev.off()
 
 # =========================
 #PIB (GDP) - Evolución trimestral
@@ -161,7 +166,7 @@ gg_gdp <- ggplot(st_gdp, aes(x = Date, y = GDP)) +
     title = "Evolución del PIB trimestral en Australia",
     subtitle = "Producto Interno Bruto (GDP)",
     x = "Año", y = "PIB (índice o millones AUD)"
-  ) + theme_classic()
+  ) + theme_minimal()
 
 ggplotly(gg_gdp)
 
@@ -172,19 +177,36 @@ ggplotly(gg_gdp)
 st_money_supply_df$Date <- as.yearqtr(st_money_supply_df$Date)
 
 gg_money <- ggplot(st_money_supply_df, aes(x = Date, y = Money_Supply)) +
-  geom_line(color = "#c88fb2", size = 1.3) +
+  geom_line(color = "#8db41c", size = 1.3) +
+  
+  # Eje X con etiquetas cada 2 años
   scale_x_yearqtr(
-    breaks = seq(from = min(st_money_supply_df$Date), to = max(st_money_supply_df$Date), by = 2),
+    breaks = seq(from = min(st_money_supply_df$Date), 
+                 to = max(st_money_supply_df$Date), 
+                 by = 2),
     format = "%Y"
   ) +
+  
+  # Eje Y con más divisiones y formato de número limpio
+  scale_y_continuous(
+    breaks = pretty(st_money_supply_df$Money_Supply, n = 15),  # ← más marcas
+    labels = scales::number_format(accuracy = 1, decimal.mark = ","),
+    expand = expansion(mult = c(0, 0.05))  # espacio arriba para que no se corte
+  ) +
+  
   labs(
     title = "Serie temporal de la masa monetaria (Money Supply) en Australia",
-    x = "Año", y = "Masa monetaria (índice)"
-  ) + theme_classic()
+    subtitle = "Datos trimestrales, 1996–2022",
+    x = "Año", 
+    y = "Masa monetaria (índice)"
+  ) +
+  theme_minimal()
 
-ggplotly(gg_money)
+png("Graficos Analisis/money.png", width = 800, height = 600, res = 100)
 
-ggsave("Graficos Analisis/Money_supply.png", gg_money, width = 10, height = 6, dpi = 300)
+print(gg_money)
+
+dev.off()
 
 # =========================
 #Índice bursátil (Stock Market)
@@ -200,11 +222,15 @@ gg_stock <- ggplot(st_stock_market_df, aes(x = Date, y = Stock_Market)) +
   labs(
     title = "Serie temporal del índice bursátil en Australia",
     x = "Año", y = "Índice bursátil"
-  ) + theme_classic()
+  ) + theme_minimal()
 
 ggplotly(gg_stock)
 
-ggsave("Graficos Analisis/stock.png", gg_stock, width = 10, height = 6, dpi = 300)
+png("Graficos Analisis/stock.png", width = 800, height = 600, res = 100)
+
+print(gg_stock)
+
+dev.off()
 
 
 # =========================
@@ -255,11 +281,15 @@ gg_okun <- ggplot(df_okun, aes(x = Date)) +
     x = "Año",
     y = "Escala estandarizada",
     color = "Variable"
-  ) + theme_classic()
+  ) + theme_minimal()
 
 gg_okun
 
-ggsave("Graficos Analisis/PIB-Desempleo.png", gg_okun, width = 10, height = 6, dpi = 300)
+png("Graficos Analisis/Pib-desempleo.png", width = 800, height = 600, res = 100)
+
+print(gg_okun)
+
+dev.off()
 
 #==============
 #UNIR LOS DATAFRAMES
