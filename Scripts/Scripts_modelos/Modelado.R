@@ -474,7 +474,7 @@ df_plot4 <- data.frame(
             rep("Test", length(test_ts4))))
 
 # Graficar
-png("PIB_Train_prediccion_test_ARIMA.png", width = 2500, height = 1800, res = 200)
+#png("PIB_Train_prediccion_test_ARIMA.png", width = 2500, height = 1800, res = 200)
 ggplot(df_plot4, aes(x=Fecha, y=Valor, color=Tipo)) +
   geom_line(size=1.2) +
   geom_point(size=2) +
@@ -482,7 +482,7 @@ ggplot(df_plot4, aes(x=Fecha, y=Valor, color=Tipo)) +
   labs(title="Predicción PIB ARIMA Manual (2,0,2)", x="Año", y="PIB") +
   theme_minimal(base_size=13) +
   theme(plot.title=element_text(hjust=0.5), legend.position="top")
-dev.off()
+#dev.off()
 
 
 #-----------------      SARIMA MANUAL ---- PIB       ----------------------

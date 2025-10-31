@@ -1166,10 +1166,10 @@ ggPacf(train_ipc_estacionaria) +
 
 
 #-------   QQ-PLOT 
-png("IPC_QQ.png",  width = 1800, height = 1400, res= 150)
+#png("IPC_QQ.png",  width = 1800, height = 1400, res= 150)
 qqnorm(train_ipc_estacionaria, main="QQ-plot - IPC (diff1)")
 qqline(train_ipc_estacionaria, col="red")
-dev.off()
+#dev.off()
 
 
 
