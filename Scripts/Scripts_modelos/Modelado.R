@@ -1664,7 +1664,7 @@ print(df_metrics_cv)
 #-------------------------                CPI (Modelo ARIMA)                   --------------------------------------------
 
 #Serie orginal 
-series_IPC_trimestrales <- readRDS("Series_Temporales/Trimestrales/cpi_ts_trimestral.rds")
+series_IPC_trimestrales <- readRDS("DATOS/Series_Temporales/Trimestrales/cpi_ts_trimestral.rds")
 
 #Aplicaremos primera diferencia (Como hicimos anteriormente)
 IPC_estacionaria <- diff(series_IPC_trimestrales, differences = 1)
@@ -1800,7 +1800,7 @@ final_plot
 #-------------------------                PIB (Modelo  Arima)                   --------------------------------------------
 
 #Serie orginal 
-series_PIB_trimestrales <- readRDS("Series_Temporales/Trimestrales/gdp_ts_trimestral.rds")
+series_PIB_trimestrales <- readRDS("DATOS/Series_Temporales/Trimestrales/gdp_ts_trimestral.rds")
 
 #Aplicaremos segunda diferencia y lag=4 (Como hicimos anteriormente)
 PIB_estacionaria_log<- log(series_PIB_trimestrales)
@@ -2158,15 +2158,4 @@ ggplot() +
   )
 
 #dev.off()
-
-
-
-
-
-
-
-
-
-
-
 
