@@ -33,27 +33,27 @@ datos_limpios_AUS<- read.csv("DATOS/limpios/Datos_Limpios_Australia.csv")
 
 
 #Cargar series temporales ESTACIONARIAS:
-train_money_supply_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Train_Money_Supply_ts_ESTACIONARIA.rds")
-train_unemployment_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Train_Unemployment_ts_ESTACIONARIA.rds")
-train_pib_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/PIB_Train_ts_ESTACIONARIA.rds")
-train_ipc_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/IPC_Train_ts_ESTACIONARIA.rds")
-train_stock_market_estacionaria <- readRDS("Series_Temporales_ESTACIONARIAS/Train_Stock_Market_ts_ESTACIONARIA.rds")
-train_ipc<- readRDS("Series_Temporales/IPC_Train_ts.rds")
-test_ipc<- readRDS("Series_Temporales/IPC_Test_ts.rds")
-train_pib<- readRDS("Series_Temporales/PIB_Train_ts.rds")
-test_pib<- readRDS("Series_Temporales/PIB_Test_ts.rds")
-train_pib_log<- readRDS("Series_Temporales/Train_PIB_log")
+train_money_supply_estacionaria <- readRDS("DATOS/Series_Temporales_ESTACIONARIAS/Train_Money_Supply_ts_ESTACIONARIA.rds")
+train_unemployment_estacionaria <- readRDS("DATOS/Series_Temporales_ESTACIONARIAS/Train_Unemployment_ts_ESTACIONARIA.rds")
+train_pib_estacionaria <- readRDS("DATOS/Series_Temporales_ESTACIONARIAS/PIB_Train_ts_ESTACIONARIA.rds")
+train_ipc_estacionaria <- readRDS("DATOS/Series_Temporales_ESTACIONARIAS/IPC_Train_ts_ESTACIONARIA.rds")
+train_stock_market_estacionaria <- readRDS("DATOS/Series_Temporales_ESTACIONARIAS/Train_Stock_Market_ts_ESTACIONARIA.rds")
+train_ipc<- readRDS("DATOS/Series_Temporales/Train_Test_Series/IPC_Train_ts.rds")
+test_ipc<- readRDS("DATOS/Series_Temporales/Train_Test_Series/IPC_Test_ts.rds")
+train_pib<- readRDS("DATOS/Series_Temporales/Train_Test_Series/PIB_Train_ts.rds")
+test_pib<- readRDS("DATOS/Series_Temporales/Train_Test_Series/PIB_Test_ts.rds")
+train_pib_log<- readRDS("DATOS/Series_Temporales/Train_Test_Series/Train_PIB_log")
 
 
 #Cargar series originales (Sin diferencias):
 
-train_stock_market <- readRDS("Series_Temporales/Train_stock_market.rds")
-train_money_supply <- readRDS("Series_Temporales/Train_money_supply.rds")
-train_unemployment<- readRDS("Series_Temporales/Train_unemployment.rds")
+train_stock_market <- readRDS("DATOS/Series_Temporales/Train_Test_Series/Train_stock_market.rds")
+train_money_supply <- readRDS("DATOS/Series_Temporales/Train_Test_Series/Train_money_supply.rds")
+train_unemployment<- readRDS("DATOS/Series_Temporales/Train_Test_Series/Train_unemployment.rds")
 
-test_stock_market <- readRDS("Series_Temporales/Test_stock_market.rds")
-test_money_supply <- readRDS("Series_Temporales/Test_money_supply.rds")
-test_unemployment<- readRDS("Series_Temporales/Test_unemployment.rds")
+test_stock_market <- readRDS("DATOS/Series_Temporales/Train_Test_Series/Test_stock_market.rds")
+test_money_supply <- readRDS("DATOS/Series_Temporales/Train_Test_Series/Test_money_supply.rds")
+test_unemployment<- readRDS("DATOS/Series_Temporales/Train_Test_Series/Test_unemployment.rds")
 
 
 ############################################################
