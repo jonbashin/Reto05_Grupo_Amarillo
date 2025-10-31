@@ -280,8 +280,7 @@ gg_macro_facet <- ggplot(df_macro_long, aes(x = Date, y = Valor)) +
   labs(
     title = "Evolución de indicadores macroeconómicos en Australia",
     x = "Año", y = "Valor"
-  ) +
-  tema_economico()
+  ) + theme_classic()
 
 gg_macro_facet
 
