@@ -8,7 +8,6 @@ library(plotly)
 library(lubridate)
 library(tidyr)
 library(naniar)
-
 library(zoo)
 
 
@@ -55,34 +54,11 @@ st_money_supply=readRDS("Series_Temporales/Trimestrales/money_supply_ts_trimestr
 st_stock_market=readRDS("Series_Temporales/Trimestrales/stock_market_ts_trimestral.rds")
 st_unemployment=readRDS("Series_Temporales/Trimestrales/unemployment_ts_trimestral.rds")
 
-#Pasar a datos trimestrales
-df_datos_buscado<- data.frame(Año= 1996:2022,
-                              Tipo_de_cambio_AUD=,
-                              Tipo_de_cambio_SD=,
-                              Tipo_de_Interes=,
-                              Consumo=,
-                              Invesion_Bruta_privada=,
-                              Exportaciones=,
-                              Importaciones=,
-                              PIB_per_capital=,
-                              Deflactor=,
-                              Desempleo_por_sector=,
-                              Pobalcion_activa_AUS=,
-                              Poblacion_total=)
-
-
 
 #============
 #Paletas de colores
 #============
-paleta_colores <- c(
-  verde = "#6DBC00",
-  magenta = "#E20074", 
-  berenjena = "#7A1E5A",
-  beige = "#F4EDE4",
-  gris_texto = "#333333",
-  gris_fondo = "#E0E0E0"
-)
+paleta <- c("#c88fb2",  "#8db41c",  "#93044e","#D1006F",  "#F5F0E6",  "#4D4D4D")
 
 
 
@@ -98,34 +74,6 @@ plot(st_cpi,
 #==================
 #Funcion
 #================
-# Tema personalizado
-tema_economico <- function() {
-  theme_minimal(base_size = 14) +
-    theme(
-      text = element_text(color = paleta_colores["gris_texto"], family = "sans"),
-      plot.title = element_text(
-        hjust = 0.5, 
-        face = "bold",
-        color = paleta_colores["gris_texto"],
-        size = 16,
-        margin = margin(b = 15)
-      ),
-      plot.subtitle = element_text(
-        hjust = 0.5,
-        color = paleta_colores["gris_texto"],
-        size = 12,
-        margin = margin(b = 20)
-      ),
-      axis.title = element_text(color = paleta_colores["gris_texto"], face = "bold"),
-      axis.text = element_text(color = paleta_colores["gris_texto"]),
-      plot.background = element_rect(fill = paleta_colores["beige"], color = NA),
-      panel.background = element_rect(fill = paleta_colores["beige"], color = NA),
-      panel.grid.major = element_line(color = alpha(paleta_colores["gris_fondo"], 0.6)),
-      panel.grid.minor = element_line(color = alpha(paleta_colores["gris_fondo"], 0.3)),
-      plot.margin = margin(20, 20, 20, 20)
-    )
-}
-
 # Convertir series a data.frames
 st_gdp <- data.frame(
   Date = as.yearqtr(time(st_gdp)),
@@ -161,31 +109,42 @@ st_stock_market_df <- data.frame(
 st_cpi$Date <- as.yearqtr(st_cpi$Date)
 
 gg_cpi <- ggplot(st_cpi, aes(x = Date, y = CPI)) +
-  geom_line(color = paleta_colores["magenta"], size = 1.3) +  # línea principal
-  # añadir el punto del pico que cae
-  geom_point(data = subset(st_cpi, Date == "2020 Q4"), 
-             aes(x = Date, y = CPI), 
-             color = "#333333", size = 3) +
+  geom_line(color = "#D1006F", size = 1.3) +
+  
+  # Punto destacado en 2020 Q4
+  geom_point(
+    data = subset(st_cpi, Date == "2020 Q4"),
+    aes(x = Date, y = CPI),
+    color = "#333333", size = 3
+  ) +
   geom_text(
     data = subset(st_cpi, Date == "2020 Q4"),
     aes(label = "2020 Q4"),
-    vjust = 2, color = "#333333", size = 3.5, fontface = "bold"
+    vjust = -1.2, color = "#333333", size = 3.5, fontface = "bold"
   ) +
+  
+  # Ejes
   scale_x_yearqtr(
-    breaks = seq(from = min(st_cpi$Date), 
-                 to = max(st_cpi$Date), 
-                 by = 2),   # cada 2 años
+    breaks = seq(from = min(st_cpi$Date), to = max(st_cpi$Date), by = 2),
     format = "%Y"
   ) +
+  scale_y_continuous(
+    breaks = pretty(st_cpi$CPI, n = 15),
+    labels = scales::number_format(accuracy = 0.1, decimal.mark = ","),
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  
+  # Títulos
   labs(
     title = "Evolución del IPC por trimestre en Australia",
     subtitle = "Índice de Precios al Consumo (CPI)",
     x = "Año",
-    y = "Índice (CPI)"
-  ) +
-  tema_economico()
+    y = "Índice del IPC"
+  ) + theme_classic()
 
 gg_cpi
+
+ggsave("Graficos Analisis/IPC_trimestre.png", gg_cpi, width = 10, height = 6, dpi = 300)
 
 # =========================
 #PIB (GDP) - Evolución trimestral
@@ -202,8 +161,7 @@ gg_gdp <- ggplot(st_gdp, aes(x = Date, y = GDP)) +
     title = "Evolución del PIB trimestral en Australia",
     subtitle = "Producto Interno Bruto (GDP)",
     x = "Año", y = "PIB (índice o millones AUD)"
-  ) +
-  tema_economico()
+  ) + theme_classic()
 
 ggplotly(gg_gdp)
 
@@ -214,7 +172,7 @@ ggplotly(gg_gdp)
 st_money_supply_df$Date <- as.yearqtr(st_money_supply_df$Date)
 
 gg_money <- ggplot(st_money_supply_df, aes(x = Date, y = Money_Supply)) +
-  geom_line(color = paleta_colores["verde"], size = 1.3) +
+  geom_line(color = "#c88fb2", size = 1.3) +
   scale_x_yearqtr(
     breaks = seq(from = min(st_money_supply_df$Date), to = max(st_money_supply_df$Date), by = 2),
     format = "%Y"
@@ -222,10 +180,11 @@ gg_money <- ggplot(st_money_supply_df, aes(x = Date, y = Money_Supply)) +
   labs(
     title = "Serie temporal de la masa monetaria (Money Supply) en Australia",
     x = "Año", y = "Masa monetaria (índice)"
-  ) +
-  tema_economico()
+  ) + theme_classic()
 
 ggplotly(gg_money)
+
+ggsave("Graficos Analisis/Money_supply.png", gg_money, width = 10, height = 6, dpi = 300)
 
 # =========================
 #Índice bursátil (Stock Market)
@@ -233,7 +192,7 @@ ggplotly(gg_money)
 st_stock_market_df$Date <- as.yearqtr(st_stock_market_df$Date)
 
 gg_stock <- ggplot(st_stock_market_df, aes(x = Date, y = Stock_Market)) +
-  geom_line(color = paleta_colores["berenjena"], size = 1.3) +
+  geom_line(color = "#93044e", size = 1.3) +
   scale_x_yearqtr(
     breaks = seq(from = min(st_stock_market_df$Date), to = max(st_stock_market_df$Date), by = 2),
     format = "%Y"
@@ -241,10 +200,11 @@ gg_stock <- ggplot(st_stock_market_df, aes(x = Date, y = Stock_Market)) +
   labs(
     title = "Serie temporal del índice bursátil en Australia",
     x = "Año", y = "Índice bursátil"
-  ) +
-  tema_economico()
+  ) + theme_classic()
 
 ggplotly(gg_stock)
+
+ggsave("Graficos Analisis/stock.png", gg_stock, width = 10, height = 6, dpi = 300)
 
 
 # =========================
@@ -252,7 +212,7 @@ ggplotly(gg_stock)
 # =========================
 # Puedes reutilizar el mismo de arriba o hacerlo distinto
 gg_unemp_series <- ggplot(st_unemployment_df, aes(x = Date, y = Unemployment)) +
-  geom_line(color = paleta_colores["magenta"], size = 1.3) +
+  geom_line(color = "#c88fb2", size = 1.3) +
   scale_x_yearqtr(
     breaks = seq(from = min(st_unemployment_df$Date), to = max(st_unemployment_df$Date), by = 2),
     format = "%Y"
@@ -280,8 +240,8 @@ gg_okun <- ggplot(df_okun, aes(x = Date)) +
   geom_line(aes(y = GDP_scaled, color = "PIB (GDP)"), size = 1.3) +
   geom_line(aes(y = Unemployment_scaled, color = "Desempleo"), size = 1.3) +
   scale_color_manual(
-    values = c("PIB (GDP)" = paleta_colores[["verde"]],
-               "Desempleo" = paleta_colores[["berenjena"]])
+    values = c("PIB (GDP)" = "#8db41c",
+               "Desempleo" = "#D1006F")
   ) +
   scale_x_yearqtr(
     breaks = seq(from = min(df_okun$Date),
@@ -295,10 +255,11 @@ gg_okun <- ggplot(df_okun, aes(x = Date)) +
     x = "Año",
     y = "Escala estandarizada",
     color = "Variable"
-  ) +
-  tema_economico()
+  ) + theme_classic()
 
 gg_okun
+
+ggsave("Graficos Analisis/PIB-Desempleo.png", gg_okun, width = 10, height = 6, dpi = 300)
 
 #==============
 #UNIR LOS DATAFRAMES
