@@ -744,14 +744,14 @@ money_supply_diff1_test <- diff(test_money_supply, differences = 1)
 tsdisplay(money_supply_diff1_test)
 
 #Aplicaremos los teses para asegurarnos de que no es estacionaria al 100%
-#TEST ADF
-adf_test_money_supply_1 <- adf.test(money_supply_diff1_test)
-if(adf_test_money_supply_1$p.value < 0.05){
-  print("Money Supply - ADF (diff1): estacionaria")
-} else{
-  print("Money Supply - ADF (diff1): NO estacionaria")
-}
-#NO ESTACIONARIA diff=1
+# #TEST ADF
+# adf_test_money_supply_1 <- adf.test(money_supply_diff1_test)
+# if(adf_test_money_supply_1$p.value < 0.05){
+#   print("Money Supply - ADF (diff1): estacionaria")
+# } else{
+#   print("Money Supply - ADF (diff1): NO estacionaria")
+# }
+# #NO ESTACIONARIA diff=1
 
 #TEST KPSS
 kpss_test_money_supply_1 <- kpss.test(money_supply_diff1, null="Level")
