@@ -344,7 +344,7 @@ paleta<-c("#c88fb2",  "#8db41c",  "#93044e","#D1006F",  "#F5F0E6","#4D4D4D")
 #GRÁFICOS CON LOS DATASETS SEPARADOS
 #Tasa de interés anual
 interes_anual$observation_date <- as.Date(interes_anual$observation_date)
-png("Tasa Interés Anual.png", width = 800, height = 600, res = 100)
+##png("Tasa Interés Anual.png", width = 800, height = 600, res = 100)
 ggplot(interes_anual, aes(x = observation_date, y = interes_anual)) +
   geom_line(color = paleta[2], size = 1) +  # Verde de la nueva paleta
   labs(title = "Tasa de interés anual en Australia",
@@ -358,11 +358,11 @@ ggplot(interes_anual, aes(x = observation_date, y = interes_anual)) +
     axis.text = element_text(color = paleta[6]),
     axis.title = element_text(color = paleta[6])
   )
-dev.off()
+#dev.off()
 
 #Tasa de interés trimestral
 interes_trimestral$observation_date<-as.Date(interes_trimestral$observation_date)
-png("Tasa Interés Trimestral.png", width = 800, height = 600, res = 100)
+#png("Tasa Interés Trimestral.png", width = 800, height = 600, res = 100)
 ggplot(interes_trimestral, aes(x = observation_date, y = interes_trimestral)) +
   geom_line(color = paleta[4], size = 1) +  # Rosa/magenta
   labs(title = "Tasa de interés trimestral en Australia",
@@ -376,11 +376,11 @@ ggplot(interes_trimestral, aes(x = observation_date, y = interes_trimestral)) +
     axis.text = element_text(color = paleta[6]),
     axis.title = element_text(color = paleta[6])
   )
-dev.off()
+#dev.off()
 
 #GRÁFICOS CON INTERÉS ANUAL Y TRIMESTRAL, Y TIPO DE CAMBIO JUNTOS
 #Comparación entre los tipos de interés
-png("Comparación Tasas Interés.png", width = 800, height = 600, res = 100)
+#png("Comparación Tasas Interés.png", width = 800, height = 600, res = 100)
 ggplot(cambio_interes) +
   geom_line(aes(x = observation_date, y = interes_anual, color = "Anual"), size = 1) +
   geom_line(aes(x = observation_date, y = interes_trimestral, color = "Trimestral"), size = 1) +
@@ -405,10 +405,10 @@ ggplot(cambio_interes) +
     legend.title = element_text(color = paleta[6]),
     legend.text = element_text(color = paleta[6])
   )
-dev.off()
+#dev.off()
 
 #Evolución del tipo de cambio
-png("Evolución del tipo de cambio.png", width = 800, height = 600, res = 100)
+#png("Evolución del tipo de cambio.png", width = 800, height = 600, res = 100)
 ggplot(cambio_interes, aes(x = observation_date, y = tipo_cambio)) +
   geom_line(color = paleta[3], size = 1) +  # Morado intenso
   labs(title = "Evolución del tipo de cambio AUD/USD",
@@ -422,13 +422,13 @@ ggplot(cambio_interes, aes(x = observation_date, y = tipo_cambio)) +
     axis.text = element_text(color = paleta[6]),
     axis.title = element_text(color = paleta[6])
   )
-dev.off()
+#dev.off()
 
 #Promedio de interés anual por año
 df<-cambio_interes %>%
   group_by(Año) %>%
   summarise(interes_promedio = mean(interes_anual, na.rm = TRUE))
-png("Promedio Anual Interés.png", width = 800, height = 600, res = 100)
+#png("Promedio Anual Interés.png", width = 800, height = 600, res = 100)
 ggplot(df, aes(x = factor(Año), y = interes_promedio)) +
   geom_col(fill = paleta[2]) +  # Verde
   geom_text(aes(label = round(interes_promedio, 2)),
@@ -445,7 +445,7 @@ ggplot(df, aes(x = factor(Año), y = interes_promedio)) +
     axis.text = element_text(color = paleta[6]),
     axis.title = element_text(color = paleta[6])
   )
-dev.off()
+#dev.off()
 
 
 # ============================================================
@@ -482,7 +482,7 @@ resumen_anual <- politica_fiscal %>%
     .groups = "drop"
   )
 
-png("Deficit Fiscal Anual.png", width = 800, height = 600, res = 100)
+#png("Deficit Fiscal Anual.png", width = 800, height = 600, res = 100)
 ggplot(resumen_anual, aes(x = Año, y = Media_Deficit)) +
   geom_col(fill = ifelse(resumen_anual$Media_Deficit < 0, paleta[4], paleta[2]), 
            alpha = 0.8) +  # rojo para negativo, verde para positivo
@@ -500,11 +500,11 @@ ggplot(resumen_anual, aes(x = Año, y = Media_Deficit)) +
     axis.text = element_text(color = paleta[6]),
     axis.title = element_text(color = paleta[6])
   )
-dev.off()
+#dev.off()
 
 
 #GRÁFICO 2: Evolución de la Deuda Pública (% de PIB)
-png("Deuda Pública.png", width = 800, height = 600, res = 100)
+#png("Deuda Pública.png", width = 800, height = 600, res = 100)
 ggplot(politica_fiscal, aes(x = Fecha, y = Deuda_PIB)) +
   geom_line(color = paleta[2], size = 1.2) +
   labs(
@@ -518,10 +518,10 @@ ggplot(politica_fiscal, aes(x = Fecha, y = Deuda_PIB)) +
     axis.text = element_text(color = paleta[6]),
     axis.title = element_text(color = paleta[6])
   )
-dev.off()
+#dev.off()
 
 #GRÁFICO 3: Evolución del Gasto Público
-png("Evolución Gasto Público.png", width = 800, height = 600, res = 100)
+#png("Evolución Gasto Público.png", width = 800, height = 600, res = 100)
 ggplot(politica_fiscal, aes(x = Fecha, y = Gasto_Público)) +
   geom_line(color = paleta[3], size = 1) +
   geom_point(color = paleta[3], size = 1.5) +
@@ -535,10 +535,10 @@ ggplot(politica_fiscal, aes(x = Fecha, y = Gasto_Público)) +
     axis.text = element_text(color = paleta[6]),
     axis.title = element_text(color = paleta[6])
   )
-dev.off()
+#dev.off()
 
 #GRÁFICO 4: Relación entre Déficit Fiscal y Gasto Público
-png("Déficit vs Gasto Público.png", width = 800, height = 600, res = 100)
+#png("Déficit vs Gasto Público.png", width = 800, height = 600, res = 100)
 ggplot(politica_fiscal, aes(x = Gasto_Público, y = Déficit_Fiscal)) +
   geom_point(color = paleta[3], size = 3, alpha = 0.7) +
   geom_smooth(method = "lm", se = TRUE, color = paleta[4]) +
@@ -553,7 +553,7 @@ ggplot(politica_fiscal, aes(x = Gasto_Público, y = Déficit_Fiscal)) +
     axis.text = element_text(color = paleta[6]),
     axis.title = element_text(color = paleta[6])
   )
-dev.off()
+#dev.off()
 
 #GRÁFICO 5: Evolución del Déficit y la Deuda Pública
 #Crear datos en formato largo para el gráfico
@@ -563,7 +563,7 @@ fiscal_long <- politica_fiscal %>%
                names_to = "variable", 
                values_to = "valor")
 
-png("Evolución Déficit y Deuda.png", width = 800, height = 600, res = 100)
+#png("Evolución Déficit y Deuda.png", width = 800, height = 600, res = 100)
 ggplot(fiscal_long, aes(x = Fecha, y = valor, color = variable)) +
   geom_line(size = 1) +
   scale_color_manual(values = c("Déficit_Fiscal" = paleta[4], 
@@ -582,10 +582,10 @@ ggplot(fiscal_long, aes(x = Fecha, y = valor, color = variable)) +
     axis.title = element_text(color = paleta[6]),
     legend.text = element_text(color = paleta[6])
   )
-dev.off()
+#dev.off()
 
 #GRÁFICO 6: Relación entre Déficit y Deuda
-png("Déficit vs Deuda.png", width = 800, height = 600, res = 100)
+#png("Déficit vs Deuda.png", width = 800, height = 600, res = 100)
 g2 <- ggplot(politica_fiscal, aes(x = Déficit_Fiscal, y = Deuda_PIB)) +
   geom_point(color = paleta[3], size = 3) +
   geom_smooth(method = "lm", se = FALSE, color = paleta[6], linetype = "dashed") +
@@ -598,7 +598,7 @@ g2 <- ggplot(politica_fiscal, aes(x = Déficit_Fiscal, y = Deuda_PIB)) +
     axis.title = element_text(color = paleta[6])
   )
 print(g2)
-dev.off()
+#dev.off()
 
 
 # ============================================================
